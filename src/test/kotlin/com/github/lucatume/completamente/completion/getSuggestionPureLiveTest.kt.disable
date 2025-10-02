@@ -1,0 +1,658 @@
+package com.github.lucatume.completamente.completion
+
+import com.github.lucatume.completamente.BaseCompletionTest
+import com.github.lucatume.completamente.services.BackgroundJobs
+import com.github.lucatume.completamente.services.Chunk
+import com.github.lucatume.completamente.services.ChunksRingBuffer
+import com.github.lucatume.completamente.services.Services
+import com.github.lucatume.completamente.services.Settings
+import com.github.lucatume.completamente.services.SuggestionCache
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.junit.Assume
+import java.io.File
+import java.io.RandomAccessFile
+import java.util.concurrent.TimeUnit
+
+data class LoggedFimRequest(
+    val json: String,
+    val inputPrefix: String,
+    val prompt: String,
+    val inputSuffix: String,
+)
+
+data class LoggedFimResponse(
+    val json: String,
+    val content: String
+)
+
+class getSuggestionPureLiveTest : BaseCompletionTest() {
+    private var serverProcess: Process? = null
+    private var serverPort: Int = 8097
+    private var logFile: File? = null
+    private var randomAccessLogFile: RandomAccessFile? = null
+    private var httpClient: HttpClient? = null
+    private lateinit var testCoroutineScope: CoroutineScope
+    private var backgroundJobs: BackgroundJobs? = null
+    private val jsonParser = Json { ignoreUnknownKeys = false }
+    private val shutdownHook = Thread { stopServer() }
+
+    private fun isLlamaServerAvailable(): Boolean {
+        return try {
+            val process = ProcessBuilder("which", "llama-server")
+                .redirectErrorStream(true)
+                .start()
+            val exitCode = process.waitFor()
+            exitCode == 0
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun startServer(): Boolean {
+        val port = serverPort
+        val log = logFile ?: return false
+
+        return try {
+            val processBuilder = ProcessBuilder(
+                "llama-server",
+                "--fim-qwen-3b-default",
+                "--log-verbose",
+                "--log-timestamps",
+                "--log-prefix",
+                "--port", port.toString()
+            )
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.to(log))
+            processBuilder.redirectErrorStream(true)
+            serverProcess = processBuilder.start()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun stopServer() {
+        serverProcess?.let { process ->
+            if (process.isAlive) {
+                process.destroy()
+                try {
+                    val exited = process.waitFor(5, TimeUnit.SECONDS)
+                    if (!exited) {
+                        process.destroyForcibly()
+                    }
+                } catch (_: InterruptedException) {
+                    process.destroyForcibly()
+                }
+            }
+        }
+        serverProcess = null
+    }
+
+    private fun readNextLogLine(timeoutMs: Long = 1000): String? {
+        val startTime = System.currentTimeMillis()
+        val raf = randomAccessLogFile ?: return null
+        val file = logFile ?: return null
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            // Check if there's more content to read
+            if (raf.filePointer < file.length()) {
+                val line = raf.readLine()
+                if (line != null) {
+                    return line
+                }
+            } else {
+                // Truly at EOF, wait for file to grow
+                Thread.sleep(100)
+            }
+        }
+
+        return null
+    }
+
+    private fun readLogFileUntil(predicate: (String) -> Boolean, timeoutMs: Long = 30000): Boolean {
+        val startTime = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            val line = readNextLogLine()
+
+            if (line != null && predicate(line)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    private fun waitForServerReady(timeoutMs: Long = 30000): Boolean {
+        val log = logFile ?: return false
+        randomAccessLogFile = RandomAccessFile(log, "r")
+
+        return readLogFileUntil({ line: String ->
+            line.contains("start_loop: waiting for new tasks")
+        }, timeoutMs)
+    }
+
+    private fun makeTestSettings(maxCacheKeys: Int = 250): Settings {
+        return Settings(
+            endpoint = "http://127.0.0.1:$serverPort/infill",
+            maxCacheKeys = maxCacheKeys
+        )
+    }
+
+    private fun makeRealHttpClient(): HttpClient {
+        return HttpClient(CIO) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 10000
+                connectTimeoutMillis = 10000
+                socketTimeoutMillis = 10000
+            }
+        }
+    }
+
+    private fun readRequestFromLog(timeoutMs: Long): LoggedFimRequest? {
+        val startTime = System.currentTimeMillis()
+
+        while ((System.currentTimeMillis() - startTime) < timeoutMs) {
+            val line = readNextLogLine()
+
+            if (line != null && line.contains("D srv  log_server_r: request:")) {
+                val jsonStart = line.indexOf("{")
+
+                if (jsonStart == -1) {
+                    throw Exception("Failed to find JSON start in log line: $line")
+                }
+
+                try {
+                    val jsonString = line.substring(jsonStart)
+                    val jsonElement = jsonParser.parseToJsonElement(jsonString)
+                    val jsonObject = jsonElement.jsonObject
+
+                    val inputPrefix = jsonObject["input_prefix"]?.jsonPrimitive?.content ?: ""
+                    val inputSuffix = jsonObject["input_suffix"]?.jsonPrimitive?.content ?: ""
+                    val prompt = jsonObject["prompt"]?.jsonPrimitive?.content ?: ""
+
+                    return LoggedFimRequest(
+                        json = jsonString,
+                        inputPrefix = inputPrefix,
+                        prompt = prompt,
+                        inputSuffix = inputSuffix
+                    )
+                } catch (_: Exception) {
+                    // Continue reading if JSON parsing fails
+                    continue
+                }
+            }
+        }
+
+        return null
+    }
+
+    private fun readResponseFromLog(timeoutMs: Long): LoggedFimResponse? {
+        val log = logFile ?: throw Exception("Log file not set")
+        if (!log.exists()) throw Exception("Log file does not exist")
+
+        val startTime = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            val line = randomAccessLogFile?.readLine()
+
+            if (line != null && line.contains("log_server_r: response:")) {
+                val jsonStart = line.indexOf("{")
+
+                if (jsonStart == -1) {
+                    throw Exception("Failed to find JSON start in log line: $line")
+                }
+
+                try {
+                    val jsonString = line.substring(jsonStart)
+                    val jsonElement = jsonParser.parseToJsonElement(jsonString)
+                    val jsonObject = jsonElement.jsonObject
+
+                    val content = jsonObject["content"]?.jsonPrimitive?.content ?: ""
+
+                    return LoggedFimResponse(
+                        json = jsonString,
+                        content = content,
+                    )
+                } catch (e: Exception) {
+                    // Continue reading if JSON parsing fails
+                    continue
+                }
+            }
+
+            Thread.sleep(100)
+        }
+
+        return null
+    }
+
+    override fun setUp() {
+        super.setUp()
+
+        Assume.assumeTrue("llama-server not available in PATH", isLlamaServerAvailable())
+
+        logFile = File.createTempFile("llama-server-test-", ".log")
+        randomAccessLogFile = RandomAccessFile(logFile, "r")
+
+        val started = startServer()
+        Assume.assumeTrue("Failed to start llama-server", started)
+
+        val ready = waitForServerReady()
+        Assume.assumeTrue("llama-server did not become ready in time", ready)
+
+        httpClient = makeRealHttpClient()
+        testCoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+        Runtime.getRuntime().addShutdownHook(shutdownHook)
+    }
+
+    override fun tearDown() {
+        try {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook)
+        } catch (e: IllegalStateException) {
+            // JVM is already shutting down.
+        }
+
+        httpClient?.close()
+        httpClient = null
+
+        stopServer()
+
+        logFile?.delete()
+        logFile = null
+
+        backgroundJobs?.dispose()
+        backgroundJobs = null
+
+        randomAccessLogFile?.close()
+        randomAccessLogFile = null
+
+        if (::testCoroutineScope.isInitialized) {
+            testCoroutineScope.cancel()
+        }
+
+        super.tearDown()
+    }
+
+    fun testServerStartsAndStopsSuccessfully() {
+        assertTrue("Server should be running", serverProcess?.isAlive == true)
+    }
+
+    private suspend fun typeInFile(
+        services: Services,
+        file: String,
+        text: String,
+        wait: Long
+    ): List<SuggestionResult> {
+        val suggestionResults: MutableList<SuggestionResult> = mutableListOf()
+        var lastFile: String? = null
+        var lastLine: Int? = null
+        val filePath: String = myFixture.editor.virtualFile.canonicalPath!!
+
+        text.forEachIndexed { index: Int, char: Char ->
+            // Update the file.
+            val currentFileContent = myFixture.editor.document.text
+            myFixture.configureByText(file, "${currentFileContent}${char}")
+            val currentStartOffset = currentFileContent.length
+            val currentEndOffset = currentFileContent.length + 1
+
+            val request = makeInlineCompletionRequest(file, currentStartOffset, currentEndOffset)
+
+            val suggestionResult: SuggestionResult = getSuggestionPure(
+                services = services,
+                request = request,
+                prev = null,
+                indentLast = 0,
+                lastFile = lastFile,
+                lastLine = lastLine
+            )
+
+            lastFile = filePath
+            lastLine = myFixture.editor.caretModel.logicalPosition.line
+
+            delay(wait)
+
+            suggestionResults.add(suggestionResult)
+        }
+
+        return suggestionResults
+    }
+
+    private suspend fun deleteInFile(
+        services: Services,
+        file: String,
+        delete: Int,
+        wait: Long
+    ): List<SuggestionResult> {
+        val suggestionResults: MutableList<SuggestionResult> = mutableListOf()
+        var lastFile: String? = null
+        var lastLine: Int? = null
+        val filePath: String = myFixture.editor.virtualFile.canonicalPath!!
+
+        // Get the current file content and remove the last `delete` characters
+        val currentFileContent = myFixture.editor.document.text
+        val newContent = currentFileContent.dropLast(delete)
+        myFixture.configureByText(file, newContent)
+        val currentStartOffset = newContent.length
+
+        // A delete request startOffset will be the same as the endOffset.
+        val request = makeInlineCompletionRequest(file, currentStartOffset, currentStartOffset)
+
+        val suggestionResult: SuggestionResult = getSuggestionPure(
+            services = services,
+            request = request,
+            prev = null,
+            indentLast = 0,
+            lastFile = lastFile,
+            lastLine = lastLine
+        )
+
+        lastFile = filePath
+        lastLine = myFixture.editor.caretModel.logicalPosition.line
+
+        delay(wait)
+
+        suggestionResults.add(suggestionResult)
+
+        return suggestionResults
+    }
+
+    fun testCacheSize() = runBlocking {
+        backgroundJobs = BackgroundJobs()
+        val services = Services(
+            // Set a low number for the cache to make sure it will be filled during the request.
+            settings = makeTestSettings(maxCacheKeys = 3),
+            cache = SuggestionCache(),
+            chunksRingBuffer = ChunksRingBuffer(myFixture.project),
+            backgroundJobs!!,
+            httpClient = httpClient ?: return@runBlocking
+        )
+
+        myFixture.configureByText("number.js", "")
+
+        // The user keeps typing to write "function isEvenNumber(num" and then waits for a suggestion.
+        val suggestions: List<SuggestionResult> = typeInFile(
+            services = services,
+            file = "number.js",
+            text = "function isEvenNumber(num",
+            wait = 50
+        )
+
+        assertTrue(
+            "The cache should been filled and have size 3",
+            services.cache.data.size == 3
+        )
+        assertEquals(
+            "Each typing action should provide a suggestion",
+            suggestions.size,
+            25
+        )
+    }
+
+    fun testCacheUse() = runBlocking {
+        backgroundJobs = BackgroundJobs()
+        val services = Services(
+            settings = makeTestSettings(),
+            cache = SuggestionCache(),
+            chunksRingBuffer = ChunksRingBuffer(myFixture.project),
+            backgroundJobs!!,
+            httpClient = httpClient ?: return@runBlocking
+        )
+
+        // Start with a file that contains 25 chars.
+        myFixture.configureByText(
+            "number.js", """
+            function isEvenNumber(num
+        """.trimIndent()
+        )
+
+        val suggestions: List<SuggestionResult> = typeInFile(
+            services = services, file = "number.js", "b", wait = 300
+        )
+
+        assertEquals(1, suggestions.size)
+        // After the first suggestion, there will be cache entries from:
+        // 1. The initial fim request (1 hash for the context "function isEvenNumber(numb")
+        // 2. The speculative fim request (potentially multiple hashes if the suggestion has multiple lines)
+        val cacheAfterFirstRequest = services.cache.data.size
+        assertTrue("Cache should have at least one entry", cacheAfterFirstRequest >= 1)
+        val loggedRequest = readRequestFromLog(100)!!
+        assertNotNull(loggedRequest)
+        assertEquals("", loggedRequest.inputPrefix)
+        assertEquals("function isEvenNumber(numb", loggedRequest.prompt)
+        assertEquals("\n\n", loggedRequest.inputSuffix)
+        val firstSuggestion = suggestions.first().suggestion.text
+
+        // Now delete the "b".
+        val deleteSuggestions : List<SuggestionResult> = deleteInFile(
+            services = services, file = "number.js", delete=1, wait = 300,
+        )
+
+        assertEquals(1, deleteSuggestions.size)
+        val cacheSizeAfterDelete = services.cache.data.size
+        // After delete, new cache entries may be added depending on the LLM response.
+        // The cache size should be >= the initial cache size
+        assertTrue("Cache should have entries after delete", cacheSizeAfterDelete >= cacheAfterFirstRequest)
+        val loggedDeleteRequest = readRequestFromLog(100)!!
+        assertNotNull(loggedDeleteRequest)
+        assertEquals("", loggedDeleteRequest.inputPrefix)
+        assertEquals("function isEvenNumber(num", loggedDeleteRequest.prompt)
+        assertEquals("\n\n", loggedDeleteRequest.inputSuffix)
+
+        // Re-type the "b" again: this should use the cache.
+        val retypeSuggestions: List<SuggestionResult> = typeInFile(
+            services = services, file = "number.js", "b", wait = 300
+        )
+        assertEquals(1, retypeSuggestions.size)
+        // The cache size should remain the same because the request should hit the cache
+        assertEquals(cacheSizeAfterDelete, services.cache.data.size)
+        val retypeRequest = readRequestFromLog(100)
+        assertNull("No new request should have been fired",retypeRequest)
+        assertEquals(firstSuggestion, retypeSuggestions.first().suggestion.text)
+    }
+
+    fun testExtraInput() = runBlocking {
+        backgroundJobs = BackgroundJobs()
+
+        // Extra input chunk 1: author.php
+        val authorPhpContent = """
+            <?php
+
+            class Author {
+                private string ${'$'}name;
+
+                public function __construct(string ${'$'}name){
+                    ${'$'}this->name = ${'$'}name;
+                }
+
+                public function getName(): string {
+                    return ${'$'}this->name;
+                }
+            }
+        """.trimIndent()
+
+        // Extra input chunk 2: blog.php
+        val blogPhpContent = """
+            <?php
+
+            class Blog {
+                private int ${'$'}id;
+
+                public function __construct(int ${'$'}id){
+                    ${'$'}this->id = ${'$'}id;
+                }
+
+                public function getId(): int {
+                    return ${'$'}this->id;
+                }
+            }
+        """.trimIndent()
+
+        // Extra input chunk 3: comment.php
+        val commentPhpContent = """
+            <?php
+
+            class Comment {
+                private int ${'$'}userId;
+                private string ${'$'}content;
+
+                public function __construct(int ${'$'}user${'$'}id, string ${'$'}content){
+                    ${'$'}this->userId = ${'$'}id;
+                    ${'$'}this->content = ${'$'}content;
+                }
+
+                public function getUserId(): int {
+                    return ${'$'}this->userId;
+                }
+
+                public function getContent(): string {
+                    return ${'$'}this->content;
+                }
+            }
+        """.trimIndent()
+
+        // Main file: post.php
+        val postPhpContent = """
+            <?php
+
+            class Post {
+                private Author ${'$'}author;
+                private Blog ${'$'}blog;
+                /** @var Comment[] ${'$'}comments */
+                private array ${'$'}comments;
+
+                public function __construct(
+            }
+        """.trimIndent()
+
+        // The file from which the chunks will be picked.
+        myFixture.configureByText("author.php", authorPhpContent)
+        myFixture.configureByText("blog.php", blogPhpContent)
+        myFixture.configureByText("comment.php", commentPhpContent)
+
+        // The file from wich the suggestion will be made.
+        myFixture.configureByText("post.php", postPhpContent)
+
+        val chunksRingBuffer: ChunksRingBuffer = ChunksRingBuffer(myFixture.project)
+        val services = Services(
+            settings = makeTestSettings(),
+            cache = SuggestionCache(),
+            chunksRingBuffer = chunksRingBuffer,
+            backgroundJobs = backgroundJobs!!,
+            httpClient = httpClient ?: return@runBlocking
+        )
+
+        // Pick chunks from the three files.
+        pickChunkFromFile(
+            file=myFixture.findFileInTempDir("author.php"),
+            cursorLine = 0,
+            isModified = false,
+            settings = services.settings,
+            ringChunks = services.chunksRingBuffer.getRingChunks(),
+            ringQueued = services.chunksRingBuffer.getRingQueued(),
+        )
+        pickChunkFromFile(
+            file=myFixture.findFileInTempDir("blog.php"),
+            cursorLine = 0,
+            isModified = false,
+            settings = services.settings,
+            ringChunks = services.chunksRingBuffer.getRingChunks(),
+            ringQueued = services.chunksRingBuffer.getRingQueued(),
+        )
+        pickChunkFromFile(
+            file=myFixture.findFileInTempDir("comment.php"),
+            cursorLine = 0,
+            isModified = false,
+            settings = services.settings,
+            ringChunks = services.chunksRingBuffer.getRingChunks(),
+            ringQueued = services.chunksRingBuffer.getRingQueued(),
+        )
+
+        assertEquals("To start there should be three queued chunks", 3, chunksRingBuffer.getRingQueued().size)
+        assertEquals("To start there should be no ring chunks", 0, chunksRingBuffer.getRingChunks().size)
+
+        // Process the chunks.
+        var extraInputProcessRequest: LoggedFimRequest? = null
+        var extraInputContents: JsonElement? = null
+        while (chunksRingBuffer.getRingQueued().isNotEmpty()) {
+            ringUpdate(
+                settings = services.settings,
+                ringChunks = services.chunksRingBuffer.getRingChunks(),
+                ringQueued = services.chunksRingBuffer.getRingQueued(),
+                // Last cursor move was 10 seconds ago.
+                lastMoveMs = System.currentTimeMillis() - 10000,
+                httpClient = services.httpClient,
+                coroutineScope = backgroundJobs!!
+            )
+
+            extraInputProcessRequest = readRequestFromLog(500)!!
+
+            assertNotNull(extraInputProcessRequest)
+            extraInputContents = Json.parseToJsonElement(extraInputProcessRequest.json).jsonObject["input_extra"]
+            assertNotNull(extraInputContents)
+            assertEquals(
+                "The extra_input of the request should contain all the ring chunks",
+                chunksRingBuffer.getRingChunks().size,
+                (extraInputContents as JsonArray).size
+            )
+            chunksRingBuffer.getRingChunks().forEachIndexed { index :Int, chunk:Chunk ->
+                assertEquals(
+                    chunk.text,
+                    (extraInputContents[index] as JsonObject)["text"]?.jsonPrimitive?.content ?: ""
+                )
+                assertEquals(
+                    chunk.time.toString(),
+                    (extraInputContents[index] as JsonObject)["time"]?.jsonPrimitive?.content ?: ""
+                )
+                assertEquals(
+                    chunk.filename,
+                    (extraInputContents[index] as JsonObject)["filename"]?.jsonPrimitive?.content ?: ""
+                )
+            }
+        }
+
+        // The suggestion should be made at the position after "public function __construct("
+        val startOffset = postPhpContent.length - 3
+        val request = makeInlineCompletionRequest("post.php", startOffset, startOffset +1)
+
+        val suggestionResult: SuggestionResult = getSuggestionPure(
+            services = services,
+            request = request,
+            prev = null,
+            indentLast = 0,
+            lastFile = null,
+            lastLine = null
+        )
+
+        val loggedRequest = readRequestFromLog(5000)!!
+        assertNotNull( loggedRequest)
+        val fimRequestExtraInput:JsonArray = (Json.parseToJsonElement(loggedRequest.json).jsonObject["input_extra"]!! as JsonArray)
+        chunksRingBuffer.getRingChunks().forEachIndexed { index :Int, chunk:Chunk ->
+            assertEquals(
+                chunk.text,
+                (fimRequestExtraInput[index] as JsonObject)["text"]?.jsonPrimitive?.content ?: ""
+            )
+            assertEquals(
+                chunk.time.toString(),
+                (fimRequestExtraInput[index] as JsonObject)["time"]?.jsonPrimitive?.content ?: ""
+            )
+            assertEquals(
+                chunk.filename,
+                (fimRequestExtraInput[index] as JsonObject)["filename"]?.jsonPrimitive?.content ?: ""
+            )
+        }
+    }
+}

@@ -1,0 +1,435 @@
+[
+  {
+    "file": "src/test/testData/completion/empty.ts",
+    "final_suggestion": "",
+    "fim_render": {
+      "pos_x": 0,
+      "pos_y": 0,
+      "line_cur": "",
+      "can_accept": false,
+      "content": []
+    },
+    "column": 0,
+    "line": 1,
+    "response": {
+      "tokens_cached": 100,
+      "result": "",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": ""
+    },
+    "test_id": "empty.ts::line_1_col_0",
+    "request": {
+      "input_suffix": "\n\n",
+      "input_prefix": "\n",
+      "n_indent": 0,
+      "prompt": ""
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": "greeting",
+    "fim_render": {
+      "pos_x": 10,
+      "pos_y": 1,
+      "line_cur": "// Comprehensive TypeScript test file with various indentation levels",
+      "can_accept": true,
+      "content": [
+        "greetingensive TypeScript test file with various indentation levels"
+      ]
+    },
+    "column": 10,
+    "line": 1,
+    "response": {
+      "tokens_cached": 100,
+      "result": "greeting",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": "greeting"
+    },
+    "test_id": "large.ts::line_1_col_10",
+    "request": {
+      "input_suffix": "ensive TypeScript test file with various indentation levels\n// This file is designed to test how the llama.vim plugin selects prefix/middle/suffix\n\ninterface DataItem {\n    id: number;\n    name: string;\n    value: number;\n}\n\nfunction greeting(): string {\n    return \"Hello, World!\";\n}\n\nfunction factorial(n: number): number {\n    if (n <= 1) {\n        return 1;\n    }\n    return n * factorial(n - 1);\n}\n\nfunction sum(a: number, b: number): number {\n    return a + b;\n}\n\nfunction multiply(x: number, y: number): number {\n    const result = x * y;\n    if (result > 1000) {\n        console.log(\"Result is large:\", result);\n    }\n    return result;\n}\n\nclass Calculator {\n    private value: number = 0;\n\n    constructor(initialValue: number = 0) {\n        this.value = initialValue;\n    }\n\n    add(n: number): void {\n        this.value += n;\n    }\n\n    subtract(n: number): void {\n        this.value -= n;\n    }\n\n    getResult(): number {\n        return this.value;\n    }\n}\n\nasync function processArray(items: DataItem[]): Promise<number[]> {\n    const results: number[] = [];\n\n    for (const item of items) {\n        if (item.value > 0) {\n            const processed = item.value * 2;\n            results.push(processed);\n            console.log(\"Processed:\", item.name);\n        }\n    }\n\n    return results;\n}\n",
+      "input_prefix": "\n",
+      "n_indent": 0,
+      "prompt": "// Compreh"
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": "// Function to calculate sum\nfunction sum(a: number, b: number): number {\n    return a + b;\n}",
+    "fim_render": {
+      "pos_x": 0,
+      "pos_y": 10,
+      "line_cur": "function greeting(): string {",
+      "can_accept": true,
+      "content": [
+        "// Function to calculate sum",
+        "function sum(a: number, b: number): number {",
+        "    return a + b;",
+        "}function greeting(): string {"
+      ]
+    },
+    "column": 0,
+    "line": 10,
+    "response": {
+      "tokens_cached": 100,
+      "result": "// Function to calculate sum\nfunction sum(a: number, b: number): number {\n    return a + b;\n}",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": "// Function to calculate sum\nfunction sum(a: number, b: number): number {\n    return a + b;\n}"
+    },
+    "test_id": "large.ts::line_10_col_0",
+    "request": {
+      "input_suffix": "function greeting(): string {\n    return \"Hello, World!\";\n}\n\nfunction factorial(n: number): number {\n    if (n <= 1) {\n        return 1;\n    }\n    return n * factorial(n - 1);\n}\n\nfunction sum(a: number, b: number): number {\n    return a + b;\n}\n\nfunction multiply(x: number, y: number): number {\n    const result = x * y;\n    if (result > 1000) {\n        console.log(\"Result is large:\", result);\n    }\n    return result;\n}\n\nclass Calculator {\n    private value: number = 0;\n\n    constructor(initialValue: number = 0) {\n        this.value = initialValue;\n    }\n\n    add(n: number): void {\n        this.value += n;\n    }\n\n    subtract(n: number): void {\n        this.value -= n;\n    }\n\n    getResult(): number {\n        return this.value;\n    }\n}\n\nasync function processArray(items: DataItem[]): Promise<number[]> {\n    const results: number[] = [];\n\n    for (const item of items) {\n        if (item.value > 0) {\n            const processed = item.value * 2;\n            results.push(processed);\n            console.log(\"Processed:\", item.name);\n        }\n    }\n\n    return results;\n}\n\nfunction filterData(data: DataItem[], threshold: number): DataItem[] {\n    return data.filter(item => {\n        if (item.value >= threshold) {\n            return true;\n        }\n        return false;\n    });\n}\n",
+      "input_prefix": "// Comprehensive TypeScript test file with various indentation levels\n// This file is designed to test how the llama.vim plugin selects prefix/middle/suffix\n\ninterface DataItem {\n    id: number;\n    name: string;\n    value: number;\n}\n\n",
+      "n_indent": 0,
+      "prompt": ""
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": "// Calculate factorial\nfunction factorial(n: number): number {",
+    "fim_render": {
+      "pos_x": 5,
+      "pos_y": 10,
+      "line_cur": "function greeting(): string {",
+      "can_accept": true,
+      "content": [
+        "// Calculate factorial",
+        "function factorial(n: number): number {ion greeting(): string {"
+      ]
+    },
+    "column": 5,
+    "line": 10,
+    "response": {
+      "tokens_cached": 100,
+      "result": "// Calculate factorial\nfunction factorial(n: number): number {",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": "// Calculate factorial\nfunction factorial(n: number): number {"
+    },
+    "test_id": "large.ts::line_10_col_5",
+    "request": {
+      "input_suffix": "ion greeting(): string {\n    return \"Hello, World!\";\n}\n\nfunction factorial(n: number): number {\n    if (n <= 1) {\n        return 1;\n    }\n    return n * factorial(n - 1);\n}\n\nfunction sum(a: number, b: number): number {\n    return a + b;\n}\n\nfunction multiply(x: number, y: number): number {\n    const result = x * y;\n    if (result > 1000) {\n        console.log(\"Result is large:\", result);\n    }\n    return result;\n}\n\nclass Calculator {\n    private value: number = 0;\n\n    constructor(initialValue: number = 0) {\n        this.value = initialValue;\n    }\n\n    add(n: number): void {\n        this.value += n;\n    }\n\n    subtract(n: number): void {\n        this.value -= n;\n    }\n\n    getResult(): number {\n        return this.value;\n    }\n}\n\nasync function processArray(items: DataItem[]): Promise<number[]> {\n    const results: number[] = [];\n\n    for (const item of items) {\n        if (item.value > 0) {\n            const processed = item.value * 2;\n            results.push(processed);\n            console.log(\"Processed:\", item.name);\n        }\n    }\n\n    return results;\n}\n\nfunction filterData(data: DataItem[], threshold: number): DataItem[] {\n    return data.filter(item => {\n        if (item.value >= threshold) {\n            return true;\n        }\n        return false;\n    });\n}\n",
+      "input_prefix": "// Comprehensive TypeScript test file with various indentation levels\n// This file is designed to test how the llama.vim plugin selects prefix/middle/suffix\n\ninterface DataItem {\n    id: number;\n    name: string;\n    value: number;\n}\n\n",
+      "n_indent": 0,
+      "prompt": "funct"
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": " {\n        console.log('Processing item:', item);\n        results.push(item * 2);\n    }",
+    "fim_render": {
+      "pos_x": 20,
+      "pos_y": 50,
+      "line_cur": "    }",
+      "can_accept": true,
+      "content": [
+        " {",
+        "        console.log('Processing item:', item);",
+        "        results.push(item * 2);",
+        "    }"
+      ]
+    },
+    "column": 20,
+    "line": 50,
+    "response": {
+      "tokens_cached": 100,
+      "result": " {\n        console.log('Processing item:', item);\n        results.push(item * 2);\n    }",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": " {\n        console.log('Processing item:', item);\n        results.push(item * 2);\n    }"
+    },
+    "test_id": "large.ts::line_50_col_20",
+    "request": {
+      "input_suffix": "\n}\n\nasync function processArray(items: DataItem[]): Promise<number[]> {\n    const results: number[] = [];\n\n    for (const item of items) {\n        if (item.value > 0) {\n            const processed = item.value * 2;\n            results.push(processed);\n            console.log(\"Processed:\", item.name);\n        }\n    }\n\n    return results;\n}\n\nfunction filterData(data: DataItem[], threshold: number): DataItem[] {\n    return data.filter(item => {\n        if (item.value >= threshold) {\n            return true;\n        }\n        return false;\n    });\n}\n\nconst mapData = (items: DataItem[]): Map<number, string> => {\n    const result = new Map<number, string>();\n\n    for (const item of items) {\n        if (!result.has(item.id)) {\n            result.set(item.id, item.name);\n        }\n    }\n\n    return result;\n};\n\ninterface Config {\n    debug: boolean;\n    timeout: number;\n    retries: number;\n}\n\nclass Service {\n    private config: Config;\n    private cache: Map<string, any> = new Map();\n\n    constructor(config: Config) {\n        this.config = config;\n        this.initializeCache();\n    }\n\n    private initializeCache(): void {\n        if (this.config.debug) {\n            console.log(\"Initializing cache\");\n        }\n        // Cache initialization logic\n    }\n\n    async execute(query: string): Promise<any> {\n        if (this.cache.has(query)) {\n            return this.cache.get(query);\n        }\n\n",
+      "input_prefix": "// Comprehensive TypeScript test file with various indentation levels\n// This file is designed to test how the llama.vim plugin selects prefix/middle/suffix\n\ninterface DataItem {\n    id: number;\n    name: string;\n    value: number;\n}\n\nfunction greeting(): string {\n    return \"Hello, World!\";\n}\n\nfunction factorial(n: number): number {\n    if (n <= 1) {\n        return 1;\n    }\n    return n * factorial(n - 1);\n}\n\nfunction sum(a: number, b: number): number {\n    return a + b;\n}\n\nfunction multiply(x: number, y: number): number {\n    const result = x * y;\n    if (result > 1000) {\n        console.log(\"Result is large:\", result);\n    }\n    return result;\n}\n\nclass Calculator {\n    private value: number = 0;\n\n    constructor(initialValue: number = 0) {\n        this.value = initialValue;\n    }\n\n    add(n: number): void {\n        this.value += n;\n    }\n\n    subtract(n: number): void {\n        this.value -= n;\n    }\n\n    getResult(): number {\n        return this.value;\n",
+      "n_indent": 4,
+      "prompt": "    }"
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": "",
+    "fim_render": {
+      "pos_x": 0,
+      "pos_y": 0,
+      "line_cur": "",
+      "can_accept": false,
+      "content": []
+    },
+    "column": 0,
+    "line": 50,
+    "response": {
+      "tokens_cached": 100,
+      "result": "",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": ""
+    },
+    "test_id": "large.ts::line_50_col_0",
+    "request": {
+      "input_suffix": "    }\n}\n\nasync function processArray(items: DataItem[]): Promise<number[]> {\n    const results: number[] = [];\n\n    for (const item of items) {\n        if (item.value > 0) {\n            const processed = item.value * 2;\n            results.push(processed);\n            console.log(\"Processed:\", item.name);\n        }\n    }\n\n    return results;\n}\n\nfunction filterData(data: DataItem[], threshold: number): DataItem[] {\n    return data.filter(item => {\n        if (item.value >= threshold) {\n            return true;\n        }\n        return false;\n    });\n}\n\nconst mapData = (items: DataItem[]): Map<number, string> => {\n    const result = new Map<number, string>();\n\n    for (const item of items) {\n        if (!result.has(item.id)) {\n            result.set(item.id, item.name);\n        }\n    }\n\n    return result;\n};\n\ninterface Config {\n    debug: boolean;\n    timeout: number;\n    retries: number;\n}\n\nclass Service {\n    private config: Config;\n    private cache: Map<string, any> = new Map();\n\n    constructor(config: Config) {\n        this.config = config;\n        this.initializeCache();\n    }\n\n    private initializeCache(): void {\n        if (this.config.debug) {\n            console.log(\"Initializing cache\");\n        }\n        // Cache initialization logic\n    }\n\n    async execute(query: string): Promise<any> {\n        if (this.cache.has(query)) {\n            return this.cache.get(query);\n        }\n\n",
+      "input_prefix": "// Comprehensive TypeScript test file with various indentation levels\n// This file is designed to test how the llama.vim plugin selects prefix/middle/suffix\n\ninterface DataItem {\n    id: number;\n    name: string;\n    value: number;\n}\n\nfunction greeting(): string {\n    return \"Hello, World!\";\n}\n\nfunction factorial(n: number): number {\n    if (n <= 1) {\n        return 1;\n    }\n    return n * factorial(n - 1);\n}\n\nfunction sum(a: number, b: number): number {\n    return a + b;\n}\n\nfunction multiply(x: number, y: number): number {\n    const result = x * y;\n    if (result > 1000) {\n        console.log(\"Result is large:\", result);\n    }\n    return result;\n}\n\nclass Calculator {\n    private value: number = 0;\n\n    constructor(initialValue: number = 0) {\n        this.value = initialValue;\n    }\n\n    add(n: number): void {\n        this.value += n;\n    }\n\n    subtract(n: number): void {\n        this.value -= n;\n    }\n\n    getResult(): number {\n        return this.value;\n",
+      "n_indent": 4,
+      "prompt": ""
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": " {\n        if (count > 0) {\n            await processData(data);\n        }\n    }",
+    "fim_render": {
+      "pos_x": 15,
+      "pos_y": 100,
+      "line_cur": "        this.initializeCache();",
+      "can_accept": true,
+      "content": [
+        " {",
+        "        if (count > 0) {",
+        "            await processData(data);",
+        "        }",
+        "    }itializeCache();"
+      ]
+    },
+    "column": 15,
+    "line": 100,
+    "response": {
+      "tokens_cached": 100,
+      "result": " {\n        if (count > 0) {\n            await processData(data);\n        }\n    }",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": " {\n        if (count > 0) {\n            await processData(data);\n        }\n    }"
+    },
+    "test_id": "large.ts::line_100_col_15",
+    "request": {
+      "input_suffix": "itializeCache();\n    }\n\n    private initializeCache(): void {\n        if (this.config.debug) {\n            console.log(\"Initializing cache\");\n        }\n        // Cache initialization logic\n    }\n\n    async execute(query: string): Promise<any> {\n        if (this.cache.has(query)) {\n            return this.cache.get(query);\n        }\n\n        try {\n            const result = await this.performQuery(query);\n            this.cache.set(query, result);\n            return result;\n        } catch (error) {\n            if (this.config.retries > 0) {\n                return this.execute(query);\n            }\n            throw error;\n        }\n    }\n\n    private async performQuery(query: string): Promise<any> {\n        // Query execution logic\n        return { status: \"success\", data: [] };\n    }\n}\n\nenum Status {\n    PENDING = \"PENDING\",\n    IN_PROGRESS = \"IN_PROGRESS\",\n    COMPLETED = \"COMPLETED\",\n    FAILED = \"FAILED\"\n}\n\ntype Task = {\n    id: string;\n    name: string;\n    status: Status;\n    dependencies: string[];\n};\n\nfunction executeTasks(tasks: Task[]): void {\n    const completed = new Set<string>();\n    const queue = tasks.filter(t => t.dependencies.length === 0);\n\n    while (queue.length > 0) {\n        const task = queue.shift();\n        if (!task) break;\n\n        console.log(`Executing: ${task.name}`);\n        completed.add(task.id);\n\n        const remaining = tasks.filter(t =>\n            !completed.has(t.id) &&\n            t.dependencies.every(dep => completed.has(dep))\n        );\n\n        queue.push(...remaining);\n    }\n",
+      "input_prefix": "// Comprehensive TypeScript test file with various indentation levels\n// This file is designed to test how the llama.vim plugin selects prefix/middle/suffix\n\ninterface DataItem {\n    id: number;\n    name: string;\n    value: number;\n}\n\nfunction greeting(): string {\n    return \"Hello, World!\";\n}\n\nfunction factorial(n: number): number {\n    if (n <= 1) {\n        return 1;\n    }\n    return n * factorial(n - 1);\n}\n\nfunction sum(a: number, b: number): number {\n    return a + b;\n}\n\nfunction multiply(x: number, y: number): number {\n    const result = x * y;\n    if (result > 1000) {\n        console.log(\"Result is large:\", result);\n    }\n    return result;\n}\n\nclass Calculator {\n    private value: number = 0;\n\n    constructor(initialValue: number = 0) {\n        this.value = initialValue;\n    }\n\n    add(n: number): void {\n        this.value += n;\n    }\n\n    subtract(n: number): void {\n        this.value -= n;\n    }\n\n    getResult(): number {\n        return this.value;\n    }\n}\n\nasync function processArray(items: DataItem[]): Promise<number[]> {\n    const results: number[] = [];\n\n    for (const item of items) {\n        if (item.value > 0) {\n            const processed = item.value * 2;\n            results.push(processed);\n            console.log(\"Processed:\", item.name);\n        }\n    }\n\n    return results;\n}\n\nfunction filterData(data: DataItem[], threshold: number): DataItem[] {\n    return data.filter(item => {\n        if (item.value >= threshold) {\n            return true;\n        }\n        return false;\n    });\n}\n\nconst mapData = (items: DataItem[]): Map<number, string> => {\n    const result = new Map<number, string>();\n\n    for (const item of items) {\n        if (!result.has(item.id)) {\n            result.set(item.id, item.name);\n        }\n    }\n\n    return result;\n};\n\ninterface Config {\n    debug: boolean;\n    timeout: number;\n    retries: number;\n}\n\nclass Service {\n    private config: Config;\n    private cache: Map<string, any> = new Map();\n\n    constructor(config: Config) {\n        this.config = config;\n",
+      "n_indent": 8,
+      "prompt": "        this.in"
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": "// TODO: complete this\n",
+    "fim_render": {
+      "pos_x": 10,
+      "pos_y": 300,
+      "line_cur": "                    errors.push({",
+      "can_accept": true,
+      "content": [
+        "// TODO: complete this          errors.push({"
+      ]
+    },
+    "column": 10,
+    "line": 300,
+    "response": {
+      "tokens_cached": 100,
+      "result": "// TODO: complete this\n",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": "// TODO: complete this\n"
+    },
+    "test_id": "large.ts::line_300_col_10",
+    "request": {
+      "input_suffix": "          errors.push({\n                        field: String(field),\n                        message: `Validation failed for field ${String(field)}`,\n                    });\n                }\n            }\n        }\n\n        return errors;\n    }\n}\n\ninterface PaginationParams {\n    page: number;\n    pageSize: number;\n    sortBy?: string;\n}\n\ninterface PaginatedResult<T> {\n    items: T[];\n    total: number;\n    page: number;\n    pageSize: number;\n    totalPages: number;\n}\n\nclass PaginationHelper {\n    static paginate<T>(\n        items: T[],\n        params: PaginationParams\n    ): PaginatedResult<T> {\n        const start = (params.page - 1) * params.pageSize;\n        const end = start + params.pageSize;\n        const paginatedItems = items.slice(start, end);\n\n        return {\n            items: paginatedItems,\n            total: items.length,\n            page: params.page,\n            pageSize: params.pageSize,\n            totalPages: Math.ceil(items.length / params.pageSize),\n        };\n    }\n}\n\ninterface CacheConfig {\n    ttl: number;\n    maxSize: number;\n}\n\nclass CacheManager<T> {\n    private cache: Map<string, { value: T; expiry: number }> = new Map();\n    private config: CacheConfig;\n\n    constructor(config: CacheConfig) {\n        this.config = config;\n    }\n\n    set(key: string, value: T): void {\n        if (this.cache.size >= this.config.maxSize) {\n            const firstKey = this.cache.keys().next().value;\n            this.cache.delete(firstKey);\n        }\n\n        const expiry = Date.now() + this.config.ttl;\n",
+      "input_prefix": "    subtract(n: number): void {\n        this.value -= n;\n    }\n\n    getResult(): number {\n        return this.value;\n    }\n}\n\nasync function processArray(items: DataItem[]): Promise<number[]> {\n    const results: number[] = [];\n\n    for (const item of items) {\n        if (item.value > 0) {\n            const processed = item.value * 2;\n            results.push(processed);\n            console.log(\"Processed:\", item.name);\n        }\n    }\n\n    return results;\n}\n\nfunction filterData(data: DataItem[], threshold: number): DataItem[] {\n    return data.filter(item => {\n        if (item.value >= threshold) {\n            return true;\n        }\n        return false;\n    });\n}\n\nconst mapData = (items: DataItem[]): Map<number, string> => {\n    const result = new Map<number, string>();\n\n    for (const item of items) {\n        if (!result.has(item.id)) {\n            result.set(item.id, item.name);\n        }\n    }\n\n    return result;\n};\n\ninterface Config {\n    debug: boolean;\n    timeout: number;\n    retries: number;\n}\n\nclass Service {\n    private config: Config;\n    private cache: Map<string, any> = new Map();\n\n    constructor(config: Config) {\n        this.config = config;\n        this.initializeCache();\n    }\n\n    private initializeCache(): void {\n        if (this.config.debug) {\n            console.log(\"Initializing cache\");\n        }\n        // Cache initialization logic\n    }\n\n    async execute(query: string): Promise<any> {\n        if (this.cache.has(query)) {\n            return this.cache.get(query);\n        }\n\n        try {\n            const result = await this.performQuery(query);\n            this.cache.set(query, result);\n            return result;\n        } catch (error) {\n            if (this.config.retries > 0) {\n                return this.execute(query);\n            }\n            throw error;\n        }\n    }\n\n    private async performQuery(query: string): Promise<any> {\n        // Query execution logic\n        return { status: \"success\", data: [] };\n    }\n}\n\nenum Status {\n    PENDING = \"PENDING\",\n    IN_PROGRESS = \"IN_PROGRESS\",\n    COMPLETED = \"COMPLETED\",\n    FAILED = \"FAILED\"\n}\n\ntype Task = {\n    id: string;\n    name: string;\n    status: Status;\n    dependencies: string[];\n};\n\nfunction executeTasks(tasks: Task[]): void {\n    const completed = new Set<string>();\n    const queue = tasks.filter(t => t.dependencies.length === 0);\n\n    while (queue.length > 0) {\n        const task = queue.shift();\n        if (!task) break;\n\n        console.log(`Executing: ${task.name}`);\n        completed.add(task.id);\n\n        const remaining = tasks.filter(t =>\n            !completed.has(t.id) &&\n            t.dependencies.every(dep => completed.has(dep))\n        );\n\n        queue.push(...remaining);\n    }\n}\n\n// Additional utility functions and classes for larger test file\n\nabstract class BaseRepository<T> {\n    protected cache: Map<string, T> = new Map();\n\n    abstract fetch(id: string): Promise<T>;\n\n    async getOrFetch(id: string): Promise<T> {\n        if (this.cache.has(id)) {\n            return this.cache.get(id)!;\n        }\n        const item = await this.fetch(id);\n        this.cache.set(id, item);\n        return item;\n    }\n\n    clear(): void {\n        this.cache.clear();\n    }\n}\n\ninterface Logger {\n    log(message: string): void;\n    error(message: string): void;\n    warn(message: string): void;\n}\n\nclass ConsoleLogger implements Logger {\n    log(message: string): void {\n        console.log(`[LOG] ${message}`);\n    }\n\n    error(message: string): void {\n        console.error(`[ERROR] ${message}`);\n    }\n\n    warn(message: string): void {\n        console.warn(`[WARN] ${message}`);\n    }\n}\n\ninterface RequestOptions {\n    method: string;\n    headers?: Record<string, string>;\n    body?: string;\n    timeout?: number;\n}\n\nclass HttpClient {\n    private logger: Logger;\n\n    constructor(logger: Logger) {\n        this.logger = logger;\n    }\n\n    async request<T>(url: string, options: RequestOptions): Promise<T> {\n        try {\n            this.logger.log(`Making request to ${url}`);\n            const response = await fetch(url, {\n                method: options.method,\n                headers: options.headers,\n                body: options.body,\n            });\n\n            if (!response.ok) {\n                throw new Error(`HTTP error! status: ${response.status}`);\n            }\n\n            const data: T = await response.json();\n            this.logger.log(`Request successful`);\n            return data;\n        } catch (error) {\n            this.logger.error(`Request failed: ${error}`);\n            throw error;\n        }\n    }\n}\n\ninterface StateAction<T> {\n    type: string;\n    payload?: T;\n}\n\nclass StateManager<T> {\n    private state: T;\n    private listeners: Array<(state: T) => void> = [];\n\n    constructor(initialState: T) {\n        this.state = initialState;\n    }\n\n    getState(): T {\n        return this.state;\n    }\n\n    setState(newState: T): void {\n        this.state = newState;\n        this.notifyListeners();\n    }\n\n    subscribe(listener: (state: T) => void): () => void {\n        this.listeners.push(listener);\n        return () => {\n            this.listeners = this.listeners.filter(l => l !== listener);\n        };\n    }\n\n    private notifyListeners(): void {\n        this.listeners.forEach(listener => listener(this.state));\n    }\n}\n\ntype ValidationRule<T> = (value: T) => boolean;\ntype ValidationError = { field: string; message: string };\n\nclass Validator<T> {\n    private rules: Map<keyof T, ValidationRule<any>[]> = new Map();\n\n    addRule<K extends keyof T>(field: K, rule: ValidationRule<T[K]>): this {\n        if (!this.rules.has(field)) {\n            this.rules.set(field, []);\n        }\n        this.rules.get(field)!.push(rule);\n        return this;\n    }\n\n    validate(data: T): ValidationError[] {\n        const errors: ValidationError[] = [];\n\n        for (const [field, rules] of this.rules.entries()) {\n            const value = data[field];\n            for (const rule of rules) {\n                if (!rule(value)) {\n",
+      "n_indent": 20,
+      "prompt": "          "
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": "// TODO: complete this\n",
+    "fim_render": {
+      "pos_x": 20,
+      "pos_y": 350,
+      "line_cur": "class CacheManager<T> {",
+      "can_accept": true,
+      "content": [
+        "// TODO: complete this> {"
+      ]
+    },
+    "column": 20,
+    "line": 350,
+    "response": {
+      "tokens_cached": 100,
+      "result": "// TODO: complete this\n",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": "// TODO: complete this\n"
+    },
+    "test_id": "large.ts::line_350_col_20",
+    "request": {
+      "input_suffix": "> {\n    private cache: Map<string, { value: T; expiry: number }> = new Map();\n    private config: CacheConfig;\n\n    constructor(config: CacheConfig) {\n        this.config = config;\n    }\n\n    set(key: string, value: T): void {\n        if (this.cache.size >= this.config.maxSize) {\n            const firstKey = this.cache.keys().next().value;\n            this.cache.delete(firstKey);\n        }\n\n        const expiry = Date.now() + this.config.ttl;\n        this.cache.set(key, { value, expiry });\n    }\n\n    get(key: string): T | null {\n        const item = this.cache.get(key);\n        if (!item) return null;\n\n        if (Date.now() > item.expiry) {\n            this.cache.delete(key);\n            return null;\n        }\n\n        return item.value;\n    }\n\n    clear(): void {\n        this.cache.clear();\n    }\n\n    size(): number {\n        return this.cache.size;\n    }\n}\n\ninterface EventHandler<T> {\n    (event: T): void;\n}\n\nclass EventEmitter<T> {\n    private handlers: Map<string, EventHandler<T>[]> = new Map();\n\n    on(event: string, handler: EventHandler<T>): void {\n        if (!this.handlers.has(event)) {\n            this.handlers.set(event, []);\n        }\n        this.handlers.get(event)!.push(handler);\n    }\n\n    off(event: string, handler: EventHandler<T>): void {\n        const handlers = this.handlers.get(event);\n        if (handlers) {\n            const index = handlers.indexOf(handler);\n            if (index > -1) {\n                handlers.splice(index, 1);\n            }\n        }\n    }\n\n    emit(event: string, data: T): void {\n        const handlers = this.handlers.get(event);\n",
+      "input_prefix": "class Service {\n    private config: Config;\n    private cache: Map<string, any> = new Map();\n\n    constructor(config: Config) {\n        this.config = config;\n        this.initializeCache();\n    }\n\n    private initializeCache(): void {\n        if (this.config.debug) {\n            console.log(\"Initializing cache\");\n        }\n        // Cache initialization logic\n    }\n\n    async execute(query: string): Promise<any> {\n        if (this.cache.has(query)) {\n            return this.cache.get(query);\n        }\n\n        try {\n            const result = await this.performQuery(query);\n            this.cache.set(query, result);\n            return result;\n        } catch (error) {\n            if (this.config.retries > 0) {\n                return this.execute(query);\n            }\n            throw error;\n        }\n    }\n\n    private async performQuery(query: string): Promise<any> {\n        // Query execution logic\n        return { status: \"success\", data: [] };\n    }\n}\n\nenum Status {\n    PENDING = \"PENDING\",\n    IN_PROGRESS = \"IN_PROGRESS\",\n    COMPLETED = \"COMPLETED\",\n    FAILED = \"FAILED\"\n}\n\ntype Task = {\n    id: string;\n    name: string;\n    status: Status;\n    dependencies: string[];\n};\n\nfunction executeTasks(tasks: Task[]): void {\n    const completed = new Set<string>();\n    const queue = tasks.filter(t => t.dependencies.length === 0);\n\n    while (queue.length > 0) {\n        const task = queue.shift();\n        if (!task) break;\n\n        console.log(`Executing: ${task.name}`);\n        completed.add(task.id);\n\n        const remaining = tasks.filter(t =>\n            !completed.has(t.id) &&\n            t.dependencies.every(dep => completed.has(dep))\n        );\n\n        queue.push(...remaining);\n    }\n}\n\n// Additional utility functions and classes for larger test file\n\nabstract class BaseRepository<T> {\n    protected cache: Map<string, T> = new Map();\n\n    abstract fetch(id: string): Promise<T>;\n\n    async getOrFetch(id: string): Promise<T> {\n        if (this.cache.has(id)) {\n            return this.cache.get(id)!;\n        }\n        const item = await this.fetch(id);\n        this.cache.set(id, item);\n        return item;\n    }\n\n    clear(): void {\n        this.cache.clear();\n    }\n}\n\ninterface Logger {\n    log(message: string): void;\n    error(message: string): void;\n    warn(message: string): void;\n}\n\nclass ConsoleLogger implements Logger {\n    log(message: string): void {\n        console.log(`[LOG] ${message}`);\n    }\n\n    error(message: string): void {\n        console.error(`[ERROR] ${message}`);\n    }\n\n    warn(message: string): void {\n        console.warn(`[WARN] ${message}`);\n    }\n}\n\ninterface RequestOptions {\n    method: string;\n    headers?: Record<string, string>;\n    body?: string;\n    timeout?: number;\n}\n\nclass HttpClient {\n    private logger: Logger;\n\n    constructor(logger: Logger) {\n        this.logger = logger;\n    }\n\n    async request<T>(url: string, options: RequestOptions): Promise<T> {\n        try {\n            this.logger.log(`Making request to ${url}`);\n            const response = await fetch(url, {\n                method: options.method,\n                headers: options.headers,\n                body: options.body,\n            });\n\n            if (!response.ok) {\n                throw new Error(`HTTP error! status: ${response.status}`);\n            }\n\n            const data: T = await response.json();\n            this.logger.log(`Request successful`);\n            return data;\n        } catch (error) {\n            this.logger.error(`Request failed: ${error}`);\n            throw error;\n        }\n    }\n}\n\ninterface StateAction<T> {\n    type: string;\n    payload?: T;\n}\n\nclass StateManager<T> {\n    private state: T;\n    private listeners: Array<(state: T) => void> = [];\n\n    constructor(initialState: T) {\n        this.state = initialState;\n    }\n\n    getState(): T {\n        return this.state;\n    }\n\n    setState(newState: T): void {\n        this.state = newState;\n        this.notifyListeners();\n    }\n\n    subscribe(listener: (state: T) => void): () => void {\n        this.listeners.push(listener);\n        return () => {\n            this.listeners = this.listeners.filter(l => l !== listener);\n        };\n    }\n\n    private notifyListeners(): void {\n        this.listeners.forEach(listener => listener(this.state));\n    }\n}\n\ntype ValidationRule<T> = (value: T) => boolean;\ntype ValidationError = { field: string; message: string };\n\nclass Validator<T> {\n    private rules: Map<keyof T, ValidationRule<any>[]> = new Map();\n\n    addRule<K extends keyof T>(field: K, rule: ValidationRule<T[K]>): this {\n        if (!this.rules.has(field)) {\n            this.rules.set(field, []);\n        }\n        this.rules.get(field)!.push(rule);\n        return this;\n    }\n\n    validate(data: T): ValidationError[] {\n        const errors: ValidationError[] = [];\n\n        for (const [field, rules] of this.rules.entries()) {\n            const value = data[field];\n            for (const rule of rules) {\n                if (!rule(value)) {\n                    errors.push({\n                        field: String(field),\n                        message: `Validation failed for field ${String(field)}`,\n                    });\n                }\n            }\n        }\n\n        return errors;\n    }\n}\n\ninterface PaginationParams {\n    page: number;\n    pageSize: number;\n    sortBy?: string;\n}\n\ninterface PaginatedResult<T> {\n    items: T[];\n    total: number;\n    page: number;\n    pageSize: number;\n    totalPages: number;\n}\n\nclass PaginationHelper {\n    static paginate<T>(\n        items: T[],\n        params: PaginationParams\n    ): PaginatedResult<T> {\n        const start = (params.page - 1) * params.pageSize;\n        const end = start + params.pageSize;\n        const paginatedItems = items.slice(start, end);\n\n        return {\n            items: paginatedItems,\n            total: items.length,\n            page: params.page,\n            pageSize: params.pageSize,\n            totalPages: Math.ceil(items.length / params.pageSize),\n        };\n    }\n}\n\ninterface CacheConfig {\n    ttl: number;\n    maxSize: number;\n}\n\n",
+      "n_indent": 0,
+      "prompt": "class CacheManager<T"
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "final_suggestion": "// TODO: complete this\n",
+    "fim_render": {
+      "pos_x": 0,
+      "pos_y": 454,
+      "line_cur": "};",
+      "can_accept": true,
+      "content": [
+        "// TODO: complete this};"
+      ]
+    },
+    "column": 0,
+    "line": 454,
+    "response": {
+      "tokens_cached": 100,
+      "result": "// TODO: complete this\n",
+      "timings/predicted_ms": "50.2",
+      "timings/predicted_per_second": "398.4",
+      "timings/prompt_per_second": "4761.9",
+      "timings/prompt_n": 50,
+      "timings/prompt_ms": "10.5",
+      "timings/predicted_n": 20,
+      "timings/truncated": false,
+      "content": "// TODO: complete this\n"
+    },
+    "test_id": "large.ts::line_454_col_0",
+    "request": {
+      "input_suffix": "};\n\n",
+      "input_prefix": "\n    error(message: string): void {\n        console.error(`[ERROR] ${message}`);\n    }\n\n    warn(message: string): void {\n        console.warn(`[WARN] ${message}`);\n    }\n}\n\ninterface RequestOptions {\n    method: string;\n    headers?: Record<string, string>;\n    body?: string;\n    timeout?: number;\n}\n\nclass HttpClient {\n    private logger: Logger;\n\n    constructor(logger: Logger) {\n        this.logger = logger;\n    }\n\n    async request<T>(url: string, options: RequestOptions): Promise<T> {\n        try {\n            this.logger.log(`Making request to ${url}`);\n            const response = await fetch(url, {\n                method: options.method,\n                headers: options.headers,\n                body: options.body,\n            });\n\n            if (!response.ok) {\n                throw new Error(`HTTP error! status: ${response.status}`);\n            }\n\n            const data: T = await response.json();\n            this.logger.log(`Request successful`);\n            return data;\n        } catch (error) {\n            this.logger.error(`Request failed: ${error}`);\n            throw error;\n        }\n    }\n}\n\ninterface StateAction<T> {\n    type: string;\n    payload?: T;\n}\n\nclass StateManager<T> {\n    private state: T;\n    private listeners: Array<(state: T) => void> = [];\n\n    constructor(initialState: T) {\n        this.state = initialState;\n    }\n\n    getState(): T {\n        return this.state;\n    }\n\n    setState(newState: T): void {\n        this.state = newState;\n        this.notifyListeners();\n    }\n\n    subscribe(listener: (state: T) => void): () => void {\n        this.listeners.push(listener);\n        return () => {\n            this.listeners = this.listeners.filter(l => l !== listener);\n        };\n    }\n\n    private notifyListeners(): void {\n        this.listeners.forEach(listener => listener(this.state));\n    }\n}\n\ntype ValidationRule<T> = (value: T) => boolean;\ntype ValidationError = { field: string; message: string };\n\nclass Validator<T> {\n    private rules: Map<keyof T, ValidationRule<any>[]> = new Map();\n\n    addRule<K extends keyof T>(field: K, rule: ValidationRule<T[K]>): this {\n        if (!this.rules.has(field)) {\n            this.rules.set(field, []);\n        }\n        this.rules.get(field)!.push(rule);\n        return this;\n    }\n\n    validate(data: T): ValidationError[] {\n        const errors: ValidationError[] = [];\n\n        for (const [field, rules] of this.rules.entries()) {\n            const value = data[field];\n            for (const rule of rules) {\n                if (!rule(value)) {\n                    errors.push({\n                        field: String(field),\n                        message: `Validation failed for field ${String(field)}`,\n                    });\n                }\n            }\n        }\n\n        return errors;\n    }\n}\n\ninterface PaginationParams {\n    page: number;\n    pageSize: number;\n    sortBy?: string;\n}\n\ninterface PaginatedResult<T> {\n    items: T[];\n    total: number;\n    page: number;\n    pageSize: number;\n    totalPages: number;\n}\n\nclass PaginationHelper {\n    static paginate<T>(\n        items: T[],\n        params: PaginationParams\n    ): PaginatedResult<T> {\n        const start = (params.page - 1) * params.pageSize;\n        const end = start + params.pageSize;\n        const paginatedItems = items.slice(start, end);\n\n        return {\n            items: paginatedItems,\n            total: items.length,\n            page: params.page,\n            pageSize: params.pageSize,\n            totalPages: Math.ceil(items.length / params.pageSize),\n        };\n    }\n}\n\ninterface CacheConfig {\n    ttl: number;\n    maxSize: number;\n}\n\nclass CacheManager<T> {\n    private cache: Map<string, { value: T; expiry: number }> = new Map();\n    private config: CacheConfig;\n\n    constructor(config: CacheConfig) {\n        this.config = config;\n    }\n\n    set(key: string, value: T): void {\n        if (this.cache.size >= this.config.maxSize) {\n            const firstKey = this.cache.keys().next().value;\n            this.cache.delete(firstKey);\n        }\n\n        const expiry = Date.now() + this.config.ttl;\n        this.cache.set(key, { value, expiry });\n    }\n\n    get(key: string): T | null {\n        const item = this.cache.get(key);\n        if (!item) return null;\n\n        if (Date.now() > item.expiry) {\n            this.cache.delete(key);\n            return null;\n        }\n\n        return item.value;\n    }\n\n    clear(): void {\n        this.cache.clear();\n    }\n\n    size(): number {\n        return this.cache.size;\n    }\n}\n\ninterface EventHandler<T> {\n    (event: T): void;\n}\n\nclass EventEmitter<T> {\n    private handlers: Map<string, EventHandler<T>[]> = new Map();\n\n    on(event: string, handler: EventHandler<T>): void {\n        if (!this.handlers.has(event)) {\n            this.handlers.set(event, []);\n        }\n        this.handlers.get(event)!.push(handler);\n    }\n\n    off(event: string, handler: EventHandler<T>): void {\n        const handlers = this.handlers.get(event);\n        if (handlers) {\n            const index = handlers.indexOf(handler);\n            if (index > -1) {\n                handlers.splice(index, 1);\n            }\n        }\n    }\n\n    emit(event: string, data: T): void {\n        const handlers = this.handlers.get(event);\n        if (handlers) {\n            handlers.forEach(handler => handler(data));\n        }\n    }\n\n    clear(): void {\n        this.handlers.clear();\n    }\n}\n\n// Export all new classes and interfaces\nexport {\n    greeting,\n    Calculator,\n    Service,\n    executeTasks,\n    BaseRepository,\n    ConsoleLogger,\n    HttpClient,\n    StateManager,\n    Validator,\n    PaginationHelper,\n    CacheManager,\n    EventEmitter,\n};\n\nexport type {\n    DataItem,\n    Config,\n    Task,\n    Logger,\n    RequestOptions,\n    StateAction,\n    ValidationRule,\n    ValidationError,\n    PaginationParams,\n    PaginatedResult,\n    CacheConfig,\n    EventHandler,\n",
+      "n_indent": 0,
+      "prompt": ""
+    }
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "column": 0,
+    "line": 10,
+    "fim_render": {
+      "pos_x": 0,
+      "pos_y": 10,
+      "line_cur": "function greeting(): string {",
+      "can_accept": true,
+      "content": [
+        "",
+        "function greeting(): string {function greeting(): string {"
+      ]
+    },
+    "test_id": "fim_render_dedup::empty_first_repeating",
+    "input_content": "\nfunction greeting(): string {"
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "column": 9,
+    "line": 10,
+    "fim_render": {
+      "pos_x": 9,
+      "pos_y": 10,
+      "line_cur": "function greeting(): string {",
+      "can_accept": true,
+      "content": [
+        "greeting(): string {"
+      ]
+    },
+    "test_id": "fim_render_dedup::repeats_suffix",
+    "input_content": "greeting(): string {"
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "column": 0,
+    "line": 50,
+    "fim_render": {
+      "pos_x": 0,
+      "pos_y": 50,
+      "line_cur": "    }",
+      "can_accept": true,
+      "content": [
+        "const result = {",
+        "    value: 42,",
+        "    valid: true",
+        "};    }"
+      ]
+    },
+    "test_id": "fim_render_dedup::normal_multiline",
+    "input_content": "const result = {\n    value: 42,\n    valid: true\n};"
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "column": 10,
+    "line": 25,
+    "fim_render": {
+      "pos_x": 10,
+      "pos_y": 25,
+      "line_cur": "function multiply(x: number, y: number): number {",
+      "can_accept": true,
+      "content": [
+        "   ",
+        "  ",
+        "   ultiply(x: number, y: number): number {"
+      ]
+    },
+    "test_id": "fim_render_dedup::whitespace_only",
+    "input_content": "   \n  \n   "
+  },
+  {
+    "file": "src/test/testData/completion/large.ts",
+    "column": 15,
+    "line": 100,
+    "fim_render": {
+      "pos_x": 15,
+      "pos_y": 100,
+      "line_cur": "        this.initializeCache();",
+      "can_accept": true,
+      "content": [
+        "console.log('test');itializeCache();"
+      ]
+    },
+    "test_id": "fim_render_dedup::trailing_newlines",
+    "input_content": "console.log('test');\n\n\n"
+  }
+]

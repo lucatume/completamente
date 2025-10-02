@@ -1,0 +1,10 @@
+.DS_Store
+.gradle
+.idea
+.intellijPlatform
+.kotlin
+.qodana
+build
+ref/llama.vim
+ref/llama.cpp
+ref/bin/*.log
