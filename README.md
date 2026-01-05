@@ -32,7 +32,7 @@ The plugin is set up to connect to the server at `http://localhost:8012`.
 
 ### Configuration
 
-TODO - currently the setting are hard-coded and not available for changing.
+Plugin settings can be configured via `Settings/Preferences` -> `Tools` -> `completamente`.
 
 ## Support
 
