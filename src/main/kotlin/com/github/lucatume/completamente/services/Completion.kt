@@ -33,7 +33,7 @@ class Completion() : InlineCompletionProvider {
         val project: Project = request.editor.project ?: return StringSuggestion("")
 
         val services = Services(
-            settings = ApplicationManager.getApplication().getService(Settings::class.java),
+            settings = SettingsState.getInstance().toSettings(),
             cache = project.service<SuggestionCache>(),
             chunksRingBuffer = project.service<ChunksRingBuffer>(),
             backgroundJobs = project.service<BackgroundJobs>(),

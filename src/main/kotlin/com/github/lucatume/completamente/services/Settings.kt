@@ -1,8 +1,5 @@
 package com.github.lucatume.completamente.services
 
-import com.intellij.openapi.components.Service
-
-@Service(Service.Level.APP)
 data class Settings(
     val endpoint: String = "http://127.0.0.1:8012/infill",
     val apiKey: String = "",

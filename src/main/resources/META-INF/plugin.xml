@@ -9,5 +9,10 @@
     <extensions defaultExtensionNs="com.intellij">
         <inline.completion.provider implementation="com.github.lucatume.completamente.services.Completion"/>
         <postStartupActivity implementation="com.github.lucatume.completamente.startup.CompletamenteStartupActivity"/>
+        <applicationConfigurable
+            parentId="tools"
+            instance="com.github.lucatume.completamente.settings.SettingsConfigurable"
+            id="com.github.lucatume.completamente.settings.SettingsConfigurable"
+            displayName="completamente"/>
     </extensions>
 </idea-plugin>

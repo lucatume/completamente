@@ -4,8 +4,8 @@ import com.github.lucatume.completamente.services.ClipboardCopyService
 import com.github.lucatume.completamente.services.FileOpenCloseService
 import com.github.lucatume.completamente.services.FileSaveService
 import com.github.lucatume.completamente.services.Settings
+import com.github.lucatume.completamente.services.SettingsState
 import com.github.lucatume.completamente.services.ChunksRingBuffer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -44,7 +44,7 @@ class CompletamenteStartupActivity : ProjectActivity {
     }
 
     override suspend fun execute(project: Project) {
-        val settings = ApplicationManager.getApplication().getService<Settings>(Settings::class.java)
+        val settings = SettingsState.getInstance().toSettings()
 
         project.service<FileOpenCloseService>().onFileOpened { event ->
             // When opening a file, set the cursor line at `null` to pick from its center.
