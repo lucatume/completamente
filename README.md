@@ -1,10 +1,12 @@
 # completamente
 
+<!-- Plugin description -->
 Code writing helper from local models.
 "Completamente" means "completely" in Italian and it's also the union of the words "complete" and "mind".
 
-This plugin is my attempt at a port of the excellent [llama.vim][1] plugin to the IntelliJ plaform.
+This plugin is my attempt at a port of the excellent [llama.vim][1] plugin to the IntelliJ platform.
 All the good ideas in this code come from the original plugin, all the bad ideas are my mistakes.
+<!-- Plugin description end -->
 
 ## Installation
 
