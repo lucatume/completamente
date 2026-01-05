@@ -19,5 +19,6 @@ data class Settings(
     val ringChunkSize: Int = 64,
     val ringScope: Int = 1024,
     val ringNChunks: Int = 16,
-    val maxQueuedChunks: Int = 16
+    val maxQueuedChunks: Int = 16,
+    val maxLineSuffix: Int = 8
 )

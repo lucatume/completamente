@@ -90,6 +90,16 @@ suspend fun getSuggestionPure(
         indentLast = indentLast
     )
 
+    // Port of llama.vim lines 599-601: Check max_line_suffix threshold
+    // Don't auto-trigger completion if there are too many characters to the right of cursor
+    if (localContext.lineCurSuffix.length > services.settings.maxLineSuffix) {
+        return SuggestionResult(
+            StringSuggestion(""),
+            prev,
+            indentLast
+        )
+    }
+
     var updatedPrev = prev
     var updatedIndentLast = indentLast
 
