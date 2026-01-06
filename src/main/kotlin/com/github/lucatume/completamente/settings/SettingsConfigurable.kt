@@ -2,6 +2,7 @@ package com.github.lucatume.completamente.settings
 
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.openapi.options.Configurable
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
@@ -58,16 +59,19 @@ class SettingsConfigurable : Configurable {
             group("Server Connection") {
                 row("Endpoint:") {
                     textField()
+                        .align(AlignX.FILL)
                         .bindText(::endpoint)
                         .comment("llama.cpp server endpoint")
                 }
                 row("API Key:") {
                     passwordField()
+                        .align(AlignX.FILL)
                         .bindText(::apiKey)
                         .comment("llama.cpp server API key (optional)")
                 }
                 row("Model:") {
                     textField()
+                        .align(AlignX.FILL)
                         .bindText(::model)
                         .comment("Model name when multiple models are loaded (optional)")
                 }
