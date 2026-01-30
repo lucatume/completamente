@@ -96,8 +96,9 @@ class suggestionTest : BaseCompletionTest() {
 
         // When suffix length equals maxLineSuffix (8 == 8), it should NOT trigger the early return
         // because the check is > not >=
-        // The suggestion is combined with the existing suffix (lineCurSuffix) by fimRender
-        assertEquals("completion12345678", result.suggestion.text)
+        // Note: fimRender does NOT append lineCurSuffix because IntelliJ inserts at cursor
+        // (unlike Vim which replaces the line)
+        assertEquals("completion", result.suggestion.text)
         assertTrue(requestTracker.get() > 0)
     }
 
@@ -554,8 +555,8 @@ class suggestionTest : BaseCompletionTest() {
             lastLine = null
         )
 
-        // The suggestion is combined with the existing suffix (lineCurSuffix) by fimRender
-        assertEquals("completion1234567", result.suggestion.text)
+        // Note: fimRender does NOT append lineCurSuffix because IntelliJ inserts at cursor
+        assertEquals("completion", result.suggestion.text)
         assertTrue(requestTracker.get() >= 1)
     }
 

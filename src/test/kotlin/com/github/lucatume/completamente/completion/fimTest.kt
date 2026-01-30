@@ -766,6 +766,19 @@ class fimTest : BaseCompletionTest() {
         assertEquals("line1\nline2\nline3", result)
     }
 
+    // Helper to strip lineCurSuffix from expected content (corpus was generated with Vim behavior
+    // which appends suffix, but IntelliJ inserts at cursor so we don't append it)
+    private fun stripSuffixFromExpectedContent(expectedContent: List<String>, lineCurSuffix: String): String {
+        if (expectedContent.isEmpty()) return ""
+        val lastLine = expectedContent.last()
+        val strippedLastLine = if (lastLine.endsWith(lineCurSuffix)) {
+            lastLine.dropLast(lineCurSuffix.length)
+        } else {
+            lastLine
+        }
+        return (expectedContent.dropLast(1) + strippedLastLine).joinToString("\n")
+    }
+
     fun testFimRenderEmptyFirstRepeating() {
         val testCase = fimRenderTestCases!!.find { it.testId == "fim_render_dedup::empty_first_repeating" }
             ?: throw AssertionError("Test case fim_render_dedup::empty_first_repeating not found")
@@ -776,9 +789,9 @@ class fimTest : BaseCompletionTest() {
 
         val result = fimRender(context, testCase.inputContent, request)
 
-        // If a result is returned, verify it matches the expected content
+        // If a result is returned, verify it matches the expected content (with suffix stripped)
         if (result != null) {
-            val expectedOutput = testCase.expectedContent.joinToString("\n")
+            val expectedOutput = stripSuffixFromExpectedContent(testCase.expectedContent, context.lineCurSuffix)
             assertEquals("Content mismatch for ${testCase.testId}", expectedOutput, result)
         }
     }
@@ -794,7 +807,7 @@ class fimTest : BaseCompletionTest() {
         val result = fimRender(context, testCase.inputContent, request)
 
         if (result != null) {
-            val expectedOutput = testCase.expectedContent.joinToString("\n")
+            val expectedOutput = stripSuffixFromExpectedContent(testCase.expectedContent, context.lineCurSuffix)
             assertEquals("Content mismatch for ${testCase.testId}", expectedOutput, result)
         }
     }
@@ -810,7 +823,7 @@ class fimTest : BaseCompletionTest() {
         val result = fimRender(context, testCase.inputContent, request)
 
         if (result != null) {
-            val expectedOutput = testCase.expectedContent.joinToString("\n")
+            val expectedOutput = stripSuffixFromExpectedContent(testCase.expectedContent, context.lineCurSuffix)
             assertEquals("Content mismatch for ${testCase.testId}", expectedOutput, result)
         }
     }
@@ -826,7 +839,7 @@ class fimTest : BaseCompletionTest() {
         val result = fimRender(context, testCase.inputContent, request)
 
         if (result != null) {
-            val expectedOutput = testCase.expectedContent.joinToString("\n")
+            val expectedOutput = stripSuffixFromExpectedContent(testCase.expectedContent, context.lineCurSuffix)
             assertEquals("Content mismatch for ${testCase.testId}", expectedOutput, result)
         }
     }
@@ -842,8 +855,246 @@ class fimTest : BaseCompletionTest() {
         val result = fimRender(context, testCase.inputContent, request)
 
         if (result != null) {
-            val expectedOutput = testCase.expectedContent.joinToString("\n")
+            val expectedOutput = stripSuffixFromExpectedContent(testCase.expectedContent, context.lineCurSuffix)
             assertEquals("Content mismatch for ${testCase.testId}", expectedOutput, result)
         }
+    }
+
+    // Tests for fimRender not duplicating lineCurSuffix
+    // In IntelliJ, inline completion inserts text at cursor - the existing suffix remains.
+    // Unlike Vim which replaces the entire line, so we must NOT append lineCurSuffix.
+
+    fun testFimRenderDoesNotAppendSuffixForStringCompletion() {
+        // Simulates completing inside tribe('') where cursor is between quotes
+        val fileContent = "\$tickets = tribe('')"
+        myFixture.configureByText("test.php", fileContent)
+
+        // Cursor after "tribe('" at offset 18
+        val cursorOffset = 18
+        val request = makeInlineCompletionRequest("test.php", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        // Verify the context has the expected suffix
+        assertEquals("')", context.lineCurSuffix)
+
+        val result = fimRender(context, "tickets.commerce", request)
+
+        // The suggestion should NOT include the suffix - just the completion
+        assertEquals("tickets.commerce", result)
+    }
+
+    fun testFimRenderDoesNotAppendSuffixWithSemicolon() {
+        // Simulates completing inside tribe(''); where cursor is between quotes
+        val fileContent = "\$tickets = tribe('');"
+        myFixture.configureByText("test.php", fileContent)
+
+        // Cursor after "tribe('" at offset 18
+        val cursorOffset = 18
+        val request = makeInlineCompletionRequest("test.php", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        // Verify the context has the expected suffix including semicolon
+        assertEquals("');", context.lineCurSuffix)
+
+        val result = fimRender(context, "tickets.commerce", request)
+
+        // The suggestion should NOT include the suffix
+        assertEquals("tickets.commerce", result)
+    }
+
+    fun testFimRenderDoesNotAppendSuffixForMultilineCompletion() {
+        val fileContent = "function test() {\n    return \n}"
+        myFixture.configureByText("test.js", fileContent)
+
+        // Cursor at end of "    return " (offset 27)
+        val cursorOffset = 27
+        val request = makeInlineCompletionRequest("test.js", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        val result = fimRender(context, "{\n        value: 1\n    };", request)
+
+        // Should return multiline completion without appending any suffix
+        assertNotNull(result)
+        assertEquals("{\n        value: 1\n    };", result)
+    }
+
+    fun testFimRenderDoesNotAppendSuffixWhenCompletingMidLine() {
+        // Completing in the middle of: console.log(|, "hello")
+        val fileContent = "console.log(, \"hello\")"
+        myFixture.configureByText("test.js", fileContent)
+
+        // Cursor after "console.log(" at offset 12
+        val cursorOffset = 12
+        val request = makeInlineCompletionRequest("test.js", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        // Suffix should be ', "hello")'
+        assertEquals(", \"hello\")", context.lineCurSuffix)
+
+        val result = fimRender(context, "value", request)
+
+        // Should just return the completion, not "value, \"hello\")"
+        assertEquals("value", result)
+    }
+
+    fun testFimRenderDoesNotAppendSuffixForPhpArrayCompletion() {
+        // PHP array access: $data[''] where cursor is between quotes
+        val fileContent = "\$data['']"
+        myFixture.configureByText("test.php", fileContent)
+
+        // Cursor after "$data['" at offset 7
+        val cursorOffset = 7
+        val request = makeInlineCompletionRequest("test.php", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals("']", context.lineCurSuffix)
+
+        val result = fimRender(context, "key_name", request)
+
+        assertEquals("key_name", result)
+    }
+
+    fun testFimRenderDoesNotAppendSuffixForNestedParentheses() {
+        // Nested function call: outer(inner(|))
+        val fileContent = "outer(inner())"
+        myFixture.configureByText("test.js", fileContent)
+
+        // Cursor inside inner() at offset 12
+        val cursorOffset = 12
+        val request = makeInlineCompletionRequest("test.js", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals("))", context.lineCurSuffix)
+
+        val result = fimRender(context, "arg", request)
+
+        assertEquals("arg", result)
+    }
+
+    // Tests for suffix overlap stripping
+    // When the server returns content that ends with text matching the start of lineCurSuffix,
+    // we must strip that overlap to avoid duplication.
+
+    fun testFimRenderStripsSuffixOverlapForStringCompletion() {
+        // Simulates the exact issue: completing tribe('') where server returns "tickets')"
+        val fileContent = "\$repo = tribe('')"
+        myFixture.configureByText("test.php", fileContent)
+
+        // Cursor after "tribe('" at offset 15
+        val cursorOffset = 15
+        val request = makeInlineCompletionRequest("test.php", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals("')", context.lineCurSuffix)
+
+        // Server returns content that includes the suffix (model quirk)
+        val result = fimRender(context, "tickets.rsvp.repository')", request)
+
+        // The overlap ')' should be stripped
+        assertEquals("tickets.rsvp.repository", result)
+    }
+
+    fun testFimRenderStripsSuffixOverlapWithNewline() {
+        // Server returns content ending with ")\n" when suffix starts with ")"
+        val fileContent = "func()"
+        myFixture.configureByText("test.js", fileContent)
+
+        // Cursor inside func() at offset 5
+        val cursorOffset = 5
+        val request = makeInlineCompletionRequest("test.js", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals(")", context.lineCurSuffix)
+
+        // Server returns "arg)" - the ")" overlaps with suffix
+        val result = fimRender(context, "arg)", request)
+
+        assertEquals("arg", result)
+    }
+
+    fun testFimRenderStripsPartialSuffixOverlap() {
+        // Suffix is "');" but server only returns partial overlap "')"
+        val fileContent = "\$x = get('');"
+        myFixture.configureByText("test.php", fileContent)
+
+        // Cursor after "get('" at offset 10
+        val cursorOffset = 10
+        val request = makeInlineCompletionRequest("test.php", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals("');", context.lineCurSuffix)
+
+        // Server returns "value')" - overlaps with first 2 chars of suffix "')"
+        val result = fimRender(context, "value')", request)
+
+        assertEquals("value", result)
+    }
+
+    fun testFimRenderStripsFullSuffixOverlap() {
+        // Server returns content ending with entire suffix
+        val fileContent = "\$arr['']"
+        myFixture.configureByText("test.php", fileContent)
+
+        // Cursor after "$arr['" at offset 6
+        val cursorOffset = 6
+        val request = makeInlineCompletionRequest("test.php", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals("']", context.lineCurSuffix)
+
+        // Server returns "key']" - full suffix overlap
+        val result = fimRender(context, "key']", request)
+
+        assertEquals("key", result)
+    }
+
+    fun testFimRenderNoOverlapWhenContentDoesNotMatchSuffix() {
+        // Server returns content that doesn't end with suffix - no stripping needed
+        val fileContent = "console.log('')"
+        myFixture.configureByText("test.js", fileContent)
+
+        // Cursor after "log('" at offset 13 (between the two quotes)
+        // console.log('') = positions 0-14, first ' at 12, second ' at 13, ) at 14
+        val cursorOffset = 13
+        val request = makeInlineCompletionRequest("test.js", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals("')", context.lineCurSuffix)
+
+        // Server returns "hello" - no overlap with "')"
+        val result = fimRender(context, "hello", request)
+
+        assertEquals("hello", result)
+    }
+
+    fun testFimRenderStripsOverlapOnMultilineCompletion() {
+        // Multi-line completion where last line has suffix overlap
+        val fileContent = "obj.method('')"
+        myFixture.configureByText("test.js", fileContent)
+
+        // Cursor after "method('" at offset 12
+        val cursorOffset = 12
+        val request = makeInlineCompletionRequest("test.js", cursorOffset - 1, cursorOffset)
+        val settings = Settings()
+        val context = buildLocalContext(request, settings, null)
+
+        assertEquals("')", context.lineCurSuffix)
+
+        // Server returns multi-line with last line having overlap
+        val result = fimRender(context, "line1\nline2')", request)
+
+        // Overlap should be stripped from last line only
+        assertEquals("line1\nline2", result)
     }
 }

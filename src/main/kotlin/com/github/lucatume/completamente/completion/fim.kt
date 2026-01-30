@@ -304,9 +304,29 @@ fun fimRender(
         }
     }
 
-    // Append lineCurSuffix to the last line
-    // Translation of line 994 in llama.vim.
-    content[content.lastIndex] = content.last() + lineCurSuffix
+    // NOTE: In llama.vim (line 1015), lineCurSuffix is appended to the last line for display.
+    // However, in Vim's llama#fim_accept, the entire line is REPLACED with the suggestion.
+    // In IntelliJ's inline completion, the suggestion is INSERTED at the cursor, so the
+    // existing text after the cursor (lineCurSuffix) remains. Appending it here would cause
+    // duplication. Therefore, we do NOT append lineCurSuffix.
+    //
+    // Original llama.vim line 1015: let l:content[-1] .= l:line_cur_suffix
+
+    // Strip suffix overlap: Sometimes the model returns content that ends with text matching
+    // the beginning of lineCurSuffix (e.g., completing "tribe('" with "tickets')" when the
+    // suffix is "')"). Since IntelliJ inserts at cursor without replacing existing text,
+    // we must strip this overlap to avoid duplication.
+    // Note: llama.vim has this same issue but it's less visible due to line replacement.
+    if (lineCurSuffix.isNotEmpty() && content.isNotEmpty() && content.last().isNotEmpty()) {
+        val lastLine = content.last()
+        val maxOverlap = minOf(lastLine.length, lineCurSuffix.length)
+        for (len in maxOverlap downTo 1) {
+            if (lastLine.takeLast(len) == lineCurSuffix.take(len)) {
+                content[content.lastIndex] = lastLine.dropLast(len)
+                break
+            }
+        }
+    }
 
     // If only whitespaces - reject
     // Translation of lines 997-999 in llama.vim.
