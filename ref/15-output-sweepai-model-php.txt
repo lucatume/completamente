@@ -1,0 +1,230 @@
+Server reachable at http://127.0.0.1:8017
+
+================================================================================
+  FIM: Complete function body (PHP)
+================================================================================
+CURRENT:
+<?php
+
+function isEven(int $n): bool
+{
+
+}
+
+echo isEven(4) ? 'true' : 'false';
+
+--- Predicted updated file (0.36s) ---
+
+<?php
+
+function isEven(int $n): bool
+{
+    return $n % 2 === 0;
+}
+
+echo isEven(4) ? 'true' : 'false';
+
+---
+
+================================================================================
+  FIM: Fill middle of conditional (PHP)
+================================================================================
+CURRENT:
+<?php
+
+function classifyAge(int $age): string
+{
+    if ($age < 0) {
+        return 'invalid';
+    } elseif () {
+        return 'senior';
+    } else {
+        return 'adult';
+    }
+}
+
+--- Predicted updated file (0.52s) ---
+
+<?php
+
+function classifyAge(int $age): string
+{
+    if ($age < 0) {
+        return 'invalid';
+    } elseif ($age < 18) {
+        return 'child';
+    } elseif ($age < 65) {
+        return 'adult';
+    } else {
+        return 'senior';
+    }
+}
+
+---
+
+================================================================================
+  FIM: Complete use statement (PHP)
+================================================================================
+CURRENT:
+<?php
+
+use DateTime
+
+function formatToday(): string
+{
+    $now = new DateTime();
+    return $now->format('Y-m-d');
+}
+
+--- Predicted updated file (0.24s) ---
+
+<?php
+
+use DateTime;
+
+function formatToday(): string
+{
+    $now = new DateTime();
+    return $now->format('Y-m-d');
+}
+
+---
+
+================================================================================
+  NEP: Add parameter usage (PHP)
+================================================================================
+ORIGINAL:
+<?php
+
+function greet(string $name): void
+{
+    echo "Hello, {$name}!";
+}
+
+greet('Alice');
+
+CURRENT:
+<?php
+
+require_once 'utils.php';
+
+function greet(string $name): void
+{
+    echo "Hello, {$name}!";
+}
+
+greet('Alice');
+
+--- Predicted updated file (0.25s) ---
+
+<?php
+
+require_once 'utils.php';
+
+function greet(string $name): void
+{
+    echo "Hello, {$name}!";
+}
+
+greet('Alice');
+
+---
+
+================================================================================
+  NEP: Rename variable propagation (PHP)
+================================================================================
+ORIGINAL:
+<?php
+
+function add(int $a, int $b): int
+{
+    $result = $a + $b;
+    echo "The result is {$result}";
+    return $result;
+}
+
+CURRENT:
+<?php
+
+function add(int $a, int $b): int
+{
+    $total = $a + $b;
+    echo "The result is {$result}";
+    return $result;
+}
+
+--- Predicted updated file (0.30s) ---
+
+<?php
+
+function add(int $a, int $b): int
+{
+    $total = $a + $b;
+    echo "The result is {$total}";
+    return $total;
+}
+
+---
+
+================================================================================
+  NEP: Add error handling (PHP)
+================================================================================
+ORIGINAL:
+<?php
+
+function readConfig(string $path): array
+{
+    $content = file_get_contents($path);
+    return json_decode($content, true);
+}
+
+CURRENT:
+<?php
+
+function readConfig(string $path): array
+{
+    try {
+        $content = file_get_contents($path);
+        return json_decode($content, true);
+    }
+}
+
+--- Predicted updated file (0.40s) ---
+
+<?php
+
+function readConfig(string $path): array
+{
+    try {
+        $content = file_get_contents($path);
+        return json_decode($content, true);
+    } catch (\Throwable $e) {
+        return [];
+    }
+}
+
+---
+
+================================================================================
+  NEP: New file completion (FIM through NEP, PHP)
+================================================================================
+ORIGINAL: (empty — new file)
+
+CURRENT:
+<?php
+
+function isEven(
+
+--- Predicted updated file (0.19s) ---
+
+<?php
+
+function isEven($number) {
+    return $number % 2 === 0;
+}
+
+---
+
+================================================================================
+  All tests completed
+================================================================================

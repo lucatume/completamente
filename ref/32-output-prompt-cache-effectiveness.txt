@@ -1,0 +1,244 @@
+Prompt Cache Effectiveness Test Results
+========================================
+Server: http://127.0.0.1:8017
+Edit steps: 6
+Definition chunks: 2
+Ring chunks: 1
+
+
+======================================================================
+  Strategy: CURRENT ORDER (defs → rings → diffs → original → current → updated)
+======================================================================
+  Edit 0: prompt_chars= 1199  total_tokens= 266  cached= 259  new_eval=   7  cache%= 97.4%  prompt_ms=   20.6  gen_tokens= 95  total=0.64s
+  Edit 1: prompt_chars= 1293  total_tokens= 288  cached= 287  new_eval=   1  cache%= 99.7%  prompt_ms=    0.6  gen_tokens= 87  total=0.55s
+  Edit 2: prompt_chars= 1343  total_tokens= 298  cached= 297  new_eval=   1  cache%= 99.7%  prompt_ms=    0.7  gen_tokens=104  total=0.66s
+  Edit 3: prompt_chars= 1449  total_tokens= 322  cached= 321  new_eval=   1  cache%= 99.7%  prompt_ms=    0.6  gen_tokens= 94  total=0.60s
+  Edit 4: prompt_chars= 1501  total_tokens= 332  cached= 331  new_eval=   1  cache%= 99.7%  prompt_ms=    0.5  gen_tokens= 94  total=0.59s
+  Edit 5: prompt_chars= 1557  total_tokens= 346  cached= 345  new_eval=   1  cache%= 99.7%  prompt_ms=    1.4  gen_tokens= 94  total=0.62s
+
+  Average cache hit (edits 1-5): 99.7%
+
+======================================================================
+  Strategy: STABLE-FIRST ORDER (defs → rings → original → current → diffs → updated)
+======================================================================
+  Edit 0: prompt_chars= 1199  total_tokens= 266  cached= 265  new_eval=   1  cache%= 99.6%  prompt_ms=    0.6  gen_tokens= 95  total=0.60s
+  Edit 1: prompt_chars= 1293  total_tokens= 288  cached= 259  new_eval=  29  cache%= 89.9%  prompt_ms=    1.1  gen_tokens= 87  total=0.56s
+  Edit 2: prompt_chars= 1343  total_tokens= 298  cached= 261  new_eval=  37  cache%= 87.6%  prompt_ms=    1.1  gen_tokens= 35  total=0.25s
+  Edit 3: prompt_chars= 1449  total_tokens= 322  cached= 268  new_eval=  54  cache%= 83.2%  prompt_ms=    1.1  gen_tokens= 35  total=0.25s
+  Edit 4: prompt_chars= 1501  total_tokens= 332  cached= 280  new_eval=  52  cache%= 84.3%  prompt_ms=    1.2  gen_tokens= 94  total=0.61s
+  Edit 5: prompt_chars= 1557  total_tokens= 346  cached= 285  new_eval=  61  cache%= 82.4%  prompt_ms=    1.1  gen_tokens= 94  total=0.62s
+
+  Average cache hit (edits 1-5): 85.5%
+
+======================================================================
+  Strategy: NO CACHE (baseline)
+======================================================================
+  Edit 0: total_tokens= 266  cached=   0  new_eval= 266  prompt_ms=    1.4  total=0.67s
+  Edit 1: total_tokens= 288  cached=   0  new_eval= 288  prompt_ms=    1.5  total=0.63s
+  Edit 2: total_tokens= 298  cached=   0  new_eval= 298  prompt_ms=    1.5  total=0.73s
+  Edit 3: total_tokens= 322  cached=   0  new_eval= 322  prompt_ms=    1.6  total=0.68s
+  Edit 4: total_tokens= 332  cached=   0  new_eval= 332  prompt_ms=    1.7  total=0.69s
+  Edit 5: total_tokens= 346  cached=   0  new_eval= 346  prompt_ms=    1.6  total=0.68s
+
+======================================================================
+  COMPARISON SUMMARY
+======================================================================
+  Current order  — avg cache:  99.7%  avg prompt_ms:     0.8
+  Stable-first   — avg cache:  85.5%  avg prompt_ms:     1.1
+  Prompt processing speedup (stable-first vs current): 0.69x
+
+======================================================================
+  RAW RESPONSE FIELDS (last request of each strategy)
+======================================================================
+
+  Current order:
+  {
+  "index": 0,
+  "tokens": [],
+  "id_slot": 3,
+  "stop": true,
+  "model": "sweep-next-edit-1.5b.q8_0.v2.gguf",
+  "tokens_predicted": 94,
+  "tokens_evaluated": 346,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 8192,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [
+      "<|file_sep|>",
+      "</s>"
+    ],
+    "max_tokens": 256,
+    "n_predict": 256,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "lora": []
+  },
+  "prompt": "<|file_sep|>UserRepository.kt\ninterface UserRepository {\n    fun findById(id: Long): User?\n    fun findAll(): List<User>\n    fun save(user: User): User\n    fun delete(user: User)\n}\n<|file_sep|>User.kt\ndata class User(\n    val id: Long,\n    val name: String,\n    val email: String,\n    val active: Boolean = true,\n    val createdAt: LocalDate = LocalDate.now()\n)\n<|file_sep|>Application.kt\nfun main() {\n    val repo = InMemoryUserRepository()\n    val service = UserService(repo)\n    service.getUser(1)?.let { println(it.name) }\n}\n<|file_sep|>UserService.kt.diff\noriginal:\n    }\n}\nupdated:\n    }\n\n    fun deleteUser(id: Long): Boolean {\n        val user = repo.findById(id) ?: return false\n        repo.delete(user)\n        return true\n    }\n}\n<|file_sep|>original/UserService.kt\npackage com.example.app\n\nimport java.time.LocalDate\n\nclass UserService(private val repo: UserRepository) {\n\n    fun getUser(id: Long): User? {\n        return repo.findById(id)\n    }\n\n    fun listActiveUsers(): List<User> {\n        return repo.findAll().filter { it.active }\n    }\n}\n<|file_sep|>current/UserService.kt\npackage com.example.app\n\nimport java.time.LocalDate\n\nclass UserService(private val repo: UserRepository) {\n\n    fun getUser(id: Long): User? {\n        return repo.findById(id)\n    }\n\n    fun listActiveUsers(): List<User> {\n        return repo.findAll().filter { it.active }\n    }\n\n    fun deleteUser(id: Long): Boolean {\n        val user = repo.findById(id) ?: return false\n        repo.delete(user)\n        return true\n    }\n}\n<|file_sep|>updated/UserService.kt",
+  "has_new_line": true,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 439,
+  "timings": {
+    "cache_n": 345,
+    "prompt_n": 1,
+    "prompt_ms": 0.714,
+    "prompt_per_token_ms": 0.714,
+    "prompt_per_second": 1400.560224089636,
+    "predicted_n": 94,
+    "predicted_ms": 587.589,
+    "predicted_per_token_ms": 6.250946808510639,
+    "predicted_per_second": 159.97576537341575
+  }
+}
+
+  Stable-first:
+  {
+  "index": 0,
+  "tokens": [],
+  "id_slot": 3,
+  "stop": true,
+  "model": "sweep-next-edit-1.5b.q8_0.v2.gguf",
+  "tokens_predicted": 94,
+  "tokens_evaluated": 346,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 8192,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [
+      "<|file_sep|>",
+      "</s>"
+    ],
+    "max_tokens": 256,
+    "n_predict": 256,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "lora": []
+  },
+  "prompt": "<|file_sep|>UserRepository.kt\ninterface UserRepository {\n    fun findById(id: Long): User?\n    fun findAll(): List<User>\n    fun save(user: User): User\n    fun delete(user: User)\n}\n<|file_sep|>User.kt\ndata class User(\n    val id: Long,\n    val name: String,\n    val email: String,\n    val active: Boolean = true,\n    val createdAt: LocalDate = LocalDate.now()\n)\n<|file_sep|>Application.kt\nfun main() {\n    val repo = InMemoryUserRepository()\n    val service = UserService(repo)\n    service.getUser(1)?.let { println(it.name) }\n}\n<|file_sep|>original/UserService.kt\npackage com.example.app\n\nimport java.time.LocalDate\n\nclass UserService(private val repo: UserRepository) {\n\n    fun getUser(id: Long): User? {\n        return repo.findById(id)\n    }\n\n    fun listActiveUsers(): List<User> {\n        return repo.findAll().filter { it.active }\n    }\n}\n<|file_sep|>current/UserService.kt\npackage com.example.app\n\nimport java.time.LocalDate\n\nclass UserService(private val repo: UserRepository) {\n\n    fun getUser(id: Long): User? {\n        return repo.findById(id)\n    }\n\n    fun listActiveUsers(): List<User> {\n        return repo.findAll().filter { it.active }\n    }\n\n    fun deleteUser(id: Long): Boolean {\n        val user = repo.findById(id) ?: return false\n        repo.delete(user)\n        return true\n    }\n}\n<|file_sep|>UserService.kt.diff\noriginal:\n    }\n}\nupdated:\n    }\n\n    fun deleteUser(id: Long): Boolean {\n        val user = repo.findById(id) ?: return false\n        repo.delete(user)\n        return true\n    }\n}\n<|file_sep|>updated/UserService.kt",
+  "has_new_line": true,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 439,
+  "timings": {
+    "cache_n": 259,
+    "prompt_n": 87,
+    "prompt_ms": 1.196,
+    "prompt_per_token_ms": 0.01374712643678161,
+    "prompt_per_second": 72742.47491638796,
+    "predicted_n": 94,
+    "predicted_ms": 616.23,
+    "predicted_per_token_ms": 6.55563829787234,
+    "predicted_per_second": 152.5404475601642
+  }
+}

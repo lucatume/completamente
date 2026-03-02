@@ -1,0 +1,241 @@
+Server reachable at http://127.0.0.1:8017
+
+================================================================================
+  FIM: Complete function body
+================================================================================
+CURRENT:
+def is_even(n):
+
+
+is_even(4)
+
+--- Predicted updated file (0.25s) ---
+
+def is_even(n):
+    return n % 2 == 0
+
+
+is_even(4)
+
+---
+
+================================================================================
+  FIM: Fill middle of conditional
+================================================================================
+CURRENT:
+def classify_age(age):
+    if age < 0:
+        return "invalid"
+    elif :
+        return "senior"
+    else:
+        return "adult"
+
+
+--- Predicted updated file (0.48s) ---
+
+def classify_age(age):
+    if age < 0:
+        return "invalid"
+    elif age < 13:
+        return "child"
+    elif age < 20:
+        return "teenager"
+    elif age < 65:
+        return "adult"
+    else:
+        return "senior"
+
+
+---
+
+================================================================================
+  FIM: Complete import statement
+================================================================================
+CURRENT:
+from datetime import
+
+def format_today():
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+--- Predicted updated file (0.18s) ---
+
+from datetime import datetime
+
+def format_today():
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+---
+
+================================================================================
+  NEP: Add parameter usage (canonical example)
+================================================================================
+ORIGINAL:
+def greet(name):
+    print(f"Hello, {name}!")
+
+greet("Alice")
+
+CURRENT:
+from utils import get_time_of_day
+
+def greet(name):
+    print(f"Hello, {name}!")
+
+greet("Alice")
+
+--- Predicted updated file (0.32s) ---
+
+from utils import get_time_of_day
+
+def greet(name):
+    time_of_day = get_time_of_day()
+    print(f"Hello, {name}! Good {time_of_day}.")
+
+greet("Alice")
+
+---
+
+================================================================================
+  NEP: Rename variable propagation
+================================================================================
+ORIGINAL:
+def add(a, b):
+    result = a + b
+    print(f"The result is {result}")
+    return result
+
+CURRENT:
+def add(a, b):
+    total = a + b
+    print(f"The result is {result}")
+    return result
+
+--- Predicted updated file (0.20s) ---
+
+def add(a, b):
+    total = a + b
+    print(f"The result is {total}")
+    return total
+
+---
+
+================================================================================
+  NEP: Add error handling
+================================================================================
+ORIGINAL:
+def read_config(path):
+    with open(path) as f:
+        return json.load(f)
+
+CURRENT:
+def read_config(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+
+--- Predicted updated file (0.22s) ---
+
+def read_config(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+---
+
+================================================================================
+  NEP: New file completion (FIM through NEP)
+================================================================================
+ORIGINAL: (empty — new file)
+
+CURRENT:
+function isEven(
+
+--- Predicted updated file (3.52s) ---
+
+function isEven(number) {
+  return number % 2 === 0;
+}
+
+function isOdd(number) {
+  return number % 2 !== 0;
+}
+
+function isPrime(number) {
+  if (number <= 1) {
+    return false;
+  }
+  for (let i = 2; i <= Math.sqrt(number); i++) {
+    if (number % i === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isComposite(number) {
+  return !isPrime(number);
+}
+
+function isFactor(number, factor) {
+  return number % factor === 0;
+}
+
+function isMultiple(number, multiple) {
+  return number % multiple === 0;
+}
+
+function isDivisible(number, divisor) {
+  return number % divisor === 0;
+}
+
+function isDivisibleBy(number, divisor) {
+  return number % divisor === 0;
+}
+
+function isDivisibleByAll(number, divsors) {
+  return divsors.every((divisor) => isDivisible(number, divisor));
+}
+
+function isDivisibleByAny(number, divsors) {
+  return divsors.some((divisor) => isDivisible(number, divisor));
+}
+
+function isDivisibleByAllFactors(number, factors) {
+  return factors.every((factor) => isFactor(number, factor));
+}
+
+function isDivisibleByAnyFactors(number, factors) {
+  return factors.some((factor) => isFactor(number, factor));
+}
+
+function isDivisibleByAllMultiples(number, multipliers) {
+  return multipliers.every((multiplier) => isMultiple(number, multiplier));
+}
+
+function isDivisibleByAnyMultiples(number, multipliers) {
+  return multipliers.some((multiplier) => isMultiple(number, multiplier));
+}
+
+function isDivisibleByAllDivisibles(number, divisibles) {
+  return divisibles.every((divisible) => isDivisible(number, divisible));
+}
+
+function isDivisibleByAnyDivisibles(number, divisibles) {
+  return divisibles.some((divisible) => isDivisible(number, divisible));
+}
+
+function isDivisibleByAllDivisiblesAndFactors(number, divisibles, factors) {
+  return isDivisibleByAllDivisibles(number, divisibles) && isDivisibleByAllFactors(number, factors);
+}
+
+function isDivisibleByAnyDivisiblesAndFactors(number, divisibles, factors)
+---
+
+================================================================================
+  All tests completed
+================================================================================

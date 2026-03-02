@@ -1,0 +1,265 @@
+Server reachable at http://127.0.0.1:8017
+
+================================================================================
+  FIM: Complete function body (JS)
+================================================================================
+CURRENT:
+function isEven(n) {
+
+}
+
+console.log(isEven(4));
+
+--- Predicted updated file (0.44s) ---
+
+function isEven(n) {
+  if (n === 0) {
+    return true;
+  }
+  if (n === 1) {
+    return false;
+  }
+  return isEven(n - 2);
+}
+
+console.log(isEven(4));
+
+---
+
+================================================================================
+  FIM: Fill middle of conditional (JS)
+================================================================================
+CURRENT:
+function classifyAge(age) {
+    if (age < 0) {
+        return 'invalid';
+    } else if () {
+        return 'senior';
+    } else {
+        return 'adult';
+    }
+}
+
+--- Predicted updated file (0.66s) ---
+
+function classifyAge(age) {
+    if (age < 0) {
+        return 'invalid';
+    } else if (age < 20) {
+        return 'child';
+    } else if (age < 40) {
+        return 'adult';
+    } else {
+        return 'senior';
+    }
+}
+
+---
+
+================================================================================
+  FIM: Complete import statement (JS)
+================================================================================
+CURRENT:
+import { } from 'date-fns';
+
+function formatToday() {
+    return format(new Date(), 'yyyy-MM-dd');
+}
+
+--- Predicted updated file (0.29s) ---
+
+import { format } from 'date-fns';
+
+function formatToday() {
+    return format(new Date(), 'yyyy-MM-dd');
+}
+
+---
+
+================================================================================
+  NEP: Add parameter usage (JS)
+================================================================================
+ORIGINAL:
+function greet(name) {
+    console.log(`Hello, ${name}!`);
+}
+
+greet('Alice');
+
+CURRENT:
+import { getTimeOfDay } from './utils.js';
+
+function greet(name) {
+    console.log(`Hello, ${name}!`);
+}
+
+greet('Alice');
+
+--- Predicted updated file (0.45s) ---
+
+import { getTimeOfDay } from './utils.js';
+
+function greet(name) {
+    console.log(`Hello, ${name}!`);
+}
+
+greet('Alice');
+
+---
+
+================================================================================
+  NEP: Rename variable propagation (JS)
+================================================================================
+ORIGINAL:
+function add(a, b) {
+    const result = a + b;
+    console.log(`The result is ${result}`);
+    return result;
+}
+
+CURRENT:
+function add(a, b) {
+    const total = a + b;
+    console.log(`The result is ${result}`);
+    return result;
+}
+
+--- Predicted updated file (0.42s) ---
+
+function add(a, b) {
+    const total = a + b;
+    console.log(`The result is ${total}`);
+    return total;
+}
+
+---
+
+================================================================================
+  NEP: Add error handling (JS)
+================================================================================
+ORIGINAL:
+import fs from 'fs/promises';
+
+async function readConfig(path) {
+    const data = await fs.readFile(path, 'utf-8');
+    return JSON.parse(data);
+}
+
+CURRENT:
+import fs from 'fs/promises';
+
+async function readConfig(path) {
+    try {
+        const data = await fs.readFile(path, 'utf-8');
+        return JSON.parse(data);
+    }
+}
+
+--- Predicted updated file (0.75s) ---
+
+import fs from 'fs/promises';
+
+async function readConfig(path) {
+    try {
+        const data = await fs.readFile(path, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error(`Error reading config file: ${error.message}`);
+        return null;
+    }
+}
+
+---
+
+================================================================================
+  NEP: New file completion (FIM through NEP, JS)
+================================================================================
+ORIGINAL: (empty — new file)
+
+CURRENT:
+function isEven(
+
+--- Predicted updated file (4.66s) ---
+
+function isEven(number) {
+  return number % 2 === 0;
+}
+
+function isOdd(number) {
+  return number % 2 !== 0;
+}
+
+function isPrime(number) {
+  if (number <= 1) {
+    return false;
+  }
+  for (let i = 2; i <= Math.sqrt(number); i++) {
+    if (number % i === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isComposite(number) {
+  return !isPrime(number);
+}
+
+function isFactor(number, factor) {
+  return number % factor === 0;
+}
+
+function isMultiple(number, multiple) {
+  return number % multiple === 0;
+}
+
+function isDivisible(number, divisor) {
+  return number % divisor === 0;
+}
+
+function isDivisibleBy(number, divisor) {
+  return number % divisor === 0;
+}
+
+function isDivisibleByAll(number, divsors) {
+  return divsors.every((divisor) => isDivisible(number, divisor));
+}
+
+function isDivisibleByAny(number, divsors) {
+  return divsors.some((divisor) => isDivisible(number, divisor));
+}
+
+function isDivisibleByAllFactors(number, factors) {
+  return factors.every((factor) => isFactor(number, factor));
+}
+
+function isDivisibleByAnyFactors(number, factors) {
+  return factors.some((factor) => isFactor(number, factor));
+}
+
+function isDivisibleByAllMultiples(number, multipliers) {
+  return multipliers.every((multiplier) => isMultiple(number, multiplier));
+}
+
+function isDivisibleByAnyMultiples(number, multipliers) {
+  return multipliers.some((multiplier) => isMultiple(number, multiplier));
+}
+
+function isDivisibleByAllDivisibles(number, divisibles) {
+  return divisibles.every((divisible) => isDivisible(number, divisible));
+}
+
+function isDivisibleByAnyDivisibles(number, divisibles) {
+  return divisibles.some((divisible) => isDivisible(number, divisible));
+}
+
+function isDivisibleByAllDivisiblesAndFactors(number, divisibles, factors) {
+  return isDivisibleByAllDivisibles(number, divisibles) && isDivisibleByAllFactors(number, factors);
+}
+
+function isDivisibleByAnyDivisiblesAndFactors(number, divisibles, factors)
+---
+
+================================================================================
+  All tests completed
+================================================================================
