@@ -1,439 +1,490 @@
 package com.github.lucatume.completamente.completion
 
-import com.github.lucatume.completamente.services.Chunk
-import com.github.lucatume.completamente.services.Settings
-import com.github.lucatume.completamente.services.SuggestionCache
-import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import io.ktor.client.HttpClient
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import com.github.lucatume.completamente.services.Chunk
+import com.github.lucatume.completamente.services.DiffEntry
+import java.net.HttpURLConnection
+import java.net.URI
 
-/**
- * Request body for FIM completion sent to the llama.cpp server.
- * Translation of the request dict in llama.vim llama#fim (lines 646-674).
- */
+// --- Data classes ---
+
 @Serializable
-data class FimRequest(
-    val slot_id: Int = 0,
-    val input_prefix: String,
-    val input_suffix: String,
-    val input_extra: List<FimExtraContext>,
+data class CompletionRequestBody(
     val prompt: String,
-    val n_predict: Int,
+    @SerialName("n_predict") val nPredict: Int,
+    val temperature: Double,
     val stop: List<String>,
-    val n_indent: Int,
-    val top_k: Int = 40,
-    val top_p: Double = 0.90,
-    val stream: Boolean = false,
-    val samplers: List<String> = listOf("top_k", "top_p", "infill"),
-    val cache_prompt: Boolean = true,
-    val t_max_prompt_ms: Int,
-    val t_max_predict_ms: Int,
-    val response_fields: List<String> = listOf(
-        "content",
-//        "timings/prompt_n",
-//        "timings/prompt_ms",
-//        "timings/prompt_per_token_ms",
-//        "timings/prompt_per_second",
-//        "timings/predicted_n",
-//        "timings/predicted_ms",
-//        "timings/predicted_per_token_ms",
-//        "timings/predicted_per_second",
-//        "truncated",
-//        "tokens_cached"
-    ),
-    val model: String? = null
+    val stream: Boolean,
+    @SerialName("cache_prompt") val cachePrompt: Boolean = true
 )
 
-/**
- * Extra context entry for the FIM request.
- * Translation of the extra_ctx dict items in llama.vim.
- */
 @Serializable
-data class FimExtraContext(
-    val text: String,
-    val time: Long,
-    val filename: String
+data class CompletionResponseBody(
+    val content: String
 )
 
-/**
- * Build extra context list from ring buffer chunks.
- * Translation of the extra_ctx preparation in llama.vim llama#fim (lines 637-644):
- * ```vim
- * let l:extra_ctx = []
- * for l:chunk in s:ring_chunks
- *     call add(l:extra_ctx, {
- *         \ 'text':     l:chunk.str,
- *         \ 'time':     l:chunk.time,
- *         \ 'filename': l:chunk.filename
- *         \ })
- * endfor
- * ```
- *
- * @param ringChunks The list of chunks from the ring buffer.
- * @return List of FimExtraContext entries for the request.
- */
-fun buildExtraContext(ringChunks: List<Chunk>): List<FimExtraContext> {
-    return ringChunks.map { chunk ->
-        FimExtraContext(
-            text = chunk.text,
-            time = chunk.time,
-            filename = chunk.filename
-        )
-    }
+data class EditRegion(
+    val startOffset: Int,
+    val endOffset: Int,
+    val newText: String
+)
+
+sealed class EditKind {
+    data class Inline(val editRegion: EditRegion) : EditKind()
+    data class Jump(val editRegion: EditRegion) : EditKind()
+    data object Suppress : EditKind()
 }
 
-/**
- * Build the FIM request body.
- *
- * @param localContext The local context containing prefix, middle, suffix.
- * @param extraContext The extra context from ring buffer chunks.
- * @param settings The settings containing server and prediction configuration.
- * @param tMaxPredictMs The max predict time (may be overridden for speculative requests).
- * @return The FimRequest ready to be serialized and sent.
- */
+data class FimRequest(
+    val filePath: String,
+    val currentContent: String,
+    val originalContent: String = "",
+    val cursorLine: Int,
+    val windowedContent: String = "",
+    val windowStartLine: Int = 0,
+    val recentDiffs: List<DiffEntry> = emptyList(),
+    val chunks: List<Chunk> = emptyList(),
+    val definitionChunks: List<Chunk> = emptyList()
+)
+
+data class FimResponse(
+    val content: String,
+    val error: String? = null
+)
+
+// --- Sweepai limits ---
+
+const val MAX_DIFF_CHARS = 20_000
+const val MAX_FILE_CHUNK_LINES = 60
+const val MAX_FILE_CHARACTERS = 500_000
+const val MAX_FILE_LINES = 10_000
+const val MAX_AVG_LINE_LENGTH = 500
+
+private val json = Json { ignoreUnknownKeys = true }
+
+fun truncateDiffText(text: String): String {
+    if (text.length <= MAX_DIFF_CHARS) return text
+    return text.substring(0, MAX_DIFF_CHARS) + "...[truncated]"
+}
+
+fun isFileTooLarge(text: String): Boolean {
+    if (text.length > MAX_FILE_CHARACTERS) return true
+    val lines = text.lines()
+    if (lines.size > MAX_FILE_LINES) return true
+    if (lines.isNotEmpty()) {
+        val avgLength = text.length.toDouble() / lines.size
+        if (avgLength > MAX_AVG_LINE_LENGTH) return true
+    }
+    return false
+}
+
+fun buildLineWindowWithStart(lines: List<String>, focusLine: Int, maxLines: Int = MAX_FILE_CHUNK_LINES): Pair<String, Int> {
+    if (lines.size <= maxLines) return Pair(lines.joinToString("\n"), 0)
+
+    val half = maxLines / 2
+    val start = (focusLine - half).coerceAtLeast(0)
+    val end = (start + maxLines).coerceAtMost(lines.size)
+    val adjustedStart = (end - maxLines).coerceAtLeast(0)
+
+    return Pair(lines.subList(adjustedStart, end).joinToString("\n"), adjustedStart)
+}
+
+fun buildLineWindow(lines: List<String>, focusLine: Int, maxLines: Int = MAX_FILE_CHUNK_LINES): String {
+    return buildLineWindowWithStart(lines, focusLine, maxLines).first
+}
+
+// --- Offset helpers ---
+
+fun computeWindowStartOffset(fullText: String, windowStartLine: Int): Int {
+    if (windowStartLine <= 0) return 0
+    var offset = 0
+    var line = 0
+    for (ch in fullText) {
+        if (line >= windowStartLine) return offset
+        if (ch == '\n') line++
+        offset++
+    }
+    return offset
+}
+
+fun computeOffsetInWindow(windowedContent: String, lineInWindow: Int): Int {
+    if (lineInWindow <= 0) return 0
+    var offset = 0
+    var line = 0
+    for (ch in windowedContent) {
+        if (line >= lineInWindow) return offset
+        if (ch == '\n') line++
+        offset++
+    }
+    return offset
+}
+
+// --- Token estimation ---
+
+fun estimateTokens(text: String): Int = (text.length + 2) / 3
+
+// --- Prompt & request ---
+
 fun buildFimRequest(
-    localContext: LocalContext,
-    extraContext: List<FimExtraContext>,
-    settings: Settings,
-    tMaxPredictMs: Int
+    filePath: String,
+    currentContent: String,
+    cursorLine: Int,
+    originalContent: String = "",
+    recentDiffs: List<DiffEntry> = emptyList(),
+    chunks: List<Chunk> = emptyList(),
+    definitionChunks: List<Chunk> = emptyList()
 ): FimRequest {
+    val lines = currentContent.lines()
+    val (windowedContent, windowStartLine) = buildLineWindowWithStart(lines, cursorLine)
     return FimRequest(
-        input_prefix = localContext.prefix,
-        input_suffix = localContext.suffix,
-        input_extra = extraContext,
-        prompt = localContext.middle,
-        n_predict = settings.nPredict,
-        stop = settings.stopStrings,
-        n_indent = localContext.indent,
-        t_max_prompt_ms = settings.tMaxPromptMs,
-        t_max_predict_ms = tMaxPredictMs,
-        model = settings.model.ifEmpty { null }
+        filePath = filePath,
+        currentContent = currentContent,
+        originalContent = originalContent,
+        cursorLine = cursorLine,
+        windowedContent = windowedContent,
+        windowStartLine = windowStartLine,
+        recentDiffs = recentDiffs,
+        chunks = chunks,
+        definitionChunks = definitionChunks
     )
 }
 
-/**
- * Validate that the response from the server is a valid JSON with content.
- * Translation of the validation in llama.vim s:fim_on_response (lines 756-758):
- * ```vim
- * if l:raw !~# '^\s*{' || l:raw !~# '\v"content"\s*:"'
- *     return
- * endif
- * ```
- *
- * @param raw The raw response string from the server.
- * @return True if the response appears to be valid, false otherwise.
- */
-fun isValidFimResponse(raw: String): Boolean {
-    if (raw.isEmpty()) {
-        return false
-    }
-    // Check starts with { (ignoring leading whitespace)
-    if (!raw.trimStart().startsWith("{")) {
-        return false
-    }
-    // Check contains "content": pattern
-    if (!raw.contains(Regex(""""content"\s*:"""))) {
-        return false
-    }
-    return true
-}
-
-/**
- * Result of processing a FIM completion for rendering.
- *
- * @property canAccept Whether the suggestion can be accepted (not empty/whitespace only).
- * @property content The processed content lines ready for display.
- *                   The last line includes the line suffix appended.
- * @property posX The x position where the suggestion should be displayed.
- * @property posY The y position (line number) where the suggestion should be displayed.
- * @property lineCur The current line text (possibly modified for whitespace lines).
- */
-data class FimRenderResult(
-    val canAccept: Boolean,
-    val content: List<String>,
-    val posX: Int,
-    val posY: Int,
-    val lineCur: String
-)
-
-/**
- * Process a FIM completion response for rendering as a suggestion.
- *
- * Translation of s:fim_render from llama.vim (lines 866-1086), excluding:
- * - The actual rendering logic (virtual text display)
- * - Statistics/info display
- * - Keymap setup
- *
- * This function processes the suggestion and prepares it for display:
- * 1. Splits the suggestion into lines and removes trailing empty lines
- * 2. Handles whitespace-only current lines by trimming leading whitespace from suggestion
- * 3. Removes duplicate suggestions that repeat existing text
- * 4. Appends the line suffix to the last line of content
- * 5. Returns null if the result is only whitespace
- *
- * @param localContext The local context containing current line information.
- * @param suggestion The suggestion text from the server (already extracted from JSON).
- * @param inlineCompletionRequest The request containing document for deduplication checks.
- * @return The processed suggestion ready for rendering, or null if it should be rejected.
- */
-fun fimRender(
-    localContext: LocalContext,
-    suggestion: String,
-    inlineCompletionRequest: InlineCompletionRequest
-): String? {
-    // Split the suggestion into lines, preserving empty entries (like Vim's split with keepempty=1)
-    // Translation of lines 891-893 in llama.vim.
-    val content = suggestion.split("\n").toMutableList()
-
-    // Remove trailing empty lines
-    // Translation of lines 896-898 in llama.vim.
-    while (content.isNotEmpty() && content.last().isEmpty()) {
-        content.removeAt(content.lastIndex)
-    }
-
-    // If no content, add empty string and mark as non-acceptable
-    // Translation of lines 918-921 in llama.vim.
-    if (content.isEmpty()) {
-        return null
-    }
-
-    var lineCur = localContext.lineCur
-    val lineCurPrefix = localContext.lineCurPrefix
-    val lineCurSuffix = localContext.lineCurSuffix
-
-    // If the current line is full of whitespaces, trim matching whitespace from suggestion
-    // Translation of lines 929-934 in llama.vim.
-    if (lineCur.matches(Regex("^\\s*$"))) {
-        val leadingWhitespaceInSuggestion = content[0].takeWhile { it.isWhitespace() }.length
-        val lead = minOf(leadingWhitespaceInSuggestion, lineCur.length)
-
-        lineCur = content[0].substring(0, lead)
-        content[0] = content[0].substring(lead)
-    }
-
-    // Get document info for deduplication checks
-    val document = inlineCompletionRequest.document
-    val offset = inlineCompletionRequest.startOffset
-    val posY = document.getLineNumber(offset)
-    val maxY = document.lineCount
-
-    // Helper function to get line text at a given line number
-    fun getLineText(lineNum: Int): String {
-        if (lineNum < 0 || lineNum >= maxY) return ""
-        val start = document.getLineStartOffset(lineNum)
-        val end = document.getLineEndOffset(lineNum)
-        return document.getText(com.intellij.openapi.util.TextRange(start, end))
-    }
-
-    // NOTE: the following is logic for discarding predictions that repeat existing text
-    // Translation of lines 939-993 in llama.vim.
-
-    // Truncate if first line is empty
-    // Translation of lines 948-950 in llama.vim.
-    if (content.size == 1 && content[0].isEmpty()) {
-        return null
-    }
-
-    // Truncate if first line is empty and next lines repeat existing lines
-    // Translation of lines 953-955 in llama.vim.
-    if (content.size > 1 && content[0].isEmpty()) {
-        val linesAfter = (posY + 1 until posY + content.size)
-            .filter { it < maxY }
-            .map { getLineText(it) }
-
-        if (content.subList(1, content.size) == linesAfter) {
-            return null
-        }
-    }
-
-    // Truncate if suggestion repeats the suffix
-    // Translation of lines 958-960 in llama.vim.
-    if (content.size == 1 && content[0] == lineCurSuffix) {
-        return null
-    }
-
-    // Find the first non-empty line (skip whitespace-only lines)
-    // Translation of lines 963-966 in llama.vim.
-    var cmpY = posY + 1
-    while (cmpY < maxY && getLineText(cmpY).matches(Regex("^\\s*$"))) {
-        cmpY++
-    }
-
-    // Check if suggestion repeats content starting at cmpY
-    // Translation of lines 968-983 in llama.vim.
-    if (cmpY < maxY) {
-        val cmpLineText = getLineText(cmpY)
-
-        if ((lineCurPrefix + content[0]) == cmpLineText) {
-            // Truncate if repeats the next line
-            // Translation of lines 970-972 in llama.vim.
-            if (content.size == 1) {
-                return null
-            }
-
-            // Truncate if second line is prefix of cmpY + 1
-            // Translation of lines 975-977 in llama.vim.
-            if (content.size == 2 && cmpY + 1 < maxY) {
-                val nextLineText = getLineText(cmpY + 1)
-                if (content[1] == nextLineText.take(content[1].length)) {
-                    return null
-                }
-            }
-
-            // Truncate if middle chunk matches lines [cmpY + 1, cmpY + content.size - 1)
-            // Translation of lines 980-982 in llama.vim.
-            if (content.size > 2) {
-                val middleContent = content.subList(1, content.size).joinToString("\n")
-                val docLines = (cmpY + 1 until cmpY + content.size)
-                    .filter { it < maxY }
-                    .map { getLineText(it) }
-                    .joinToString("\n")
-
-                if (middleContent == docLines) {
-                    return null
-                }
-            }
-        }
-    }
-
-    // NOTE: In llama.vim (line 1015), lineCurSuffix is appended to the last line for display.
-    // However, in Vim's llama#fim_accept, the entire line is REPLACED with the suggestion.
-    // In IntelliJ's inline completion, the suggestion is INSERTED at the cursor, so the
-    // existing text after the cursor (lineCurSuffix) remains. Appending it here would cause
-    // duplication. Therefore, we do NOT append lineCurSuffix.
-    //
-    // Original llama.vim line 1015: let l:content[-1] .= l:line_cur_suffix
-
-    // Strip suffix overlap: Sometimes the model returns content that ends with text matching
-    // the beginning of lineCurSuffix (e.g., completing "tribe('" with "tickets')" when the
-    // suffix is "')"). Since IntelliJ inserts at cursor without replacing existing text,
-    // we must strip this overlap to avoid duplication.
-    // Note: llama.vim has this same issue but it's less visible due to line replacement.
-    if (lineCurSuffix.isNotEmpty() && content.isNotEmpty() && content.last().isNotEmpty()) {
-        val lastLine = content.last()
-        val maxOverlap = minOf(lastLine.length, lineCurSuffix.length)
-        for (len in maxOverlap downTo 1) {
-            if (lastLine.takeLast(len) == lineCurSuffix.take(len)) {
-                content[content.lastIndex] = lastLine.dropLast(len)
-                break
-            }
-        }
-    }
-
-    // If only whitespaces - reject
-    // Translation of lines 997-999 in llama.vim.
-    val fullContent = content.joinToString("\n")
-    if (fullContent.matches(Regex("^\\s*$"))) {
-        return null
-    }
-
-    return fullContent
-}
-
-/**
- * Main FIM (Fill-In-the-Middle) completion function.
- * Takes local context around the cursor and sends it together with extra context
- * to the llama.cpp server for completion.
- *
- * Translation of llama#fim from llama.vim (lines 543-740).
- *
- * Key differences from the original:
- * - Does not use callbacks - blocks until completion is received
- * - Does not access any globals/services - everything is passed as parameters
- * - Returns the result directly instead of rendering it
- * - The caller is responsible for debouncing/throttling requests
- *
- * @param localContext The local context containing prefix, middle, suffix, and indent.
- * @param extraContext The mutable list of Chunk objects from the ring buffer.
- * @param settings The settings containing server, prediction, and cache configuration.
- * @param cache The suggestion cache for storing and retrieving completions.
- *              The raw JSON response will be cached under all computed context hashes.
- * @param httpClient The Ktor HTTP client for making the request.
- * @param useCache If true, check cache first and skip request if a cached result exists.
- *                 Translation of a:use_cache in llama.vim.
- * @param isSpeculative If true, this is a speculative (follow-up) request.
- *                      Speculative requests use the full tMaxPredictMs timeout.
- *                      Non-speculative (first) requests use a shorter timeout (250ms).
- *                      Translation of checking empty(a:prev) in llama.vim (lines 584-587).
- * @return The raw JSON response from the server, or null if:
- *         - A cached result already exists (when useCache=true)
- *         - The server request failed
- *         - The response was invalid
- */
-suspend fun fim(
-    localContext: LocalContext,
-    extraContext: MutableList<Chunk>,
-    settings: Settings,
-    cache: SuggestionCache,
-    httpClient: HttpClient,
-    useCache: Boolean = true,
-    isSpeculative: Boolean = false
-): String? {
-    val prefix = localContext.prefix
-    val middle = localContext.middle
-    val suffix = localContext.suffix
-
-    // Compute multiple hashes that can be used to find cached completions
-    // where the first few lines are missing (e.g., after scrolling down).
-    // Translation of lines 593-605 in llama.vim.
-    val hashes = computeContextHashes(prefix, middle, suffix)
-
-    // If we already have a cached completion for one of the hashes, don't send a request.
-    // Translation of lines 608-614 in llama.vim.
-    if (useCache) {
-        if (cacheHasAny(cache, hashes)) {
-            return null
-        }
-    }
-
-    // The first request is quick - we will launch a speculative request after it's displayed.
-    // Speculative requests (isSpeculative=true) use the full timeout.
-    // Translation of lines 584-587 in llama.vim.
-    val tMaxPredictMs = if (isSpeculative) {
-        settings.tMaxPredictMs
+fun buildFimPrompt(request: FimRequest, tokenBudget: Int = 7680): String {
+    val windowedContent = if (request.windowedContent.isNotEmpty()) {
+        request.windowedContent
     } else {
-        // First request uses shorter timeout (250ms)
-        minOf(250, settings.tMaxPredictMs)
+        buildLineWindow(request.currentContent.lines(), request.cursorLine)
     }
 
-    // Build the request
-    val fimExtraContext = buildExtraContext(extraContext)
-    val request = buildFimRequest(localContext, fimExtraContext, settings, tMaxPredictMs)
+    val windowedOriginal = if (request.originalContent.isNotEmpty()) {
+        buildLineWindow(request.originalContent.lines(), request.cursorLine)
+    } else {
+        ""
+    }
 
-    val json = Json { encodeDefaults = true }
-    val requestJson = json.encodeToString(request)
+    val originalSection = "<|file_sep|>original/${request.filePath}\n$windowedOriginal"
+    val currentSection = "<|file_sep|>current/${request.filePath}\n$windowedContent"
 
-    // Send the request to the server
-    val raw: String = try {
-        val response = httpClient.post(settings.endpoint) {
-            contentType(ContentType.Application.Json)
-            if (settings.apiKey.isNotEmpty()) {
-                header("Authorization", "Bearer ${settings.apiKey}")
+    val updatedMarker = "<|file_sep|>updated/${request.filePath}"
+    val mandatoryTokens = estimateTokens(originalSection) +
+            estimateTokens(currentSection) +
+            estimateTokens(updatedMarker) +
+            request.recentDiffs.sumOf { it.estimatedTokens }
+    var remaining = tokenBudget - mandatoryTokens
+
+    val parts = mutableListOf<String>()
+
+    for (chunk in request.definitionChunks) {
+        if (chunk.estimatedTokens > remaining) break
+        parts.add("<|file_sep|>${chunk.filename}")
+        parts.add(chunk.text)
+        remaining -= chunk.estimatedTokens
+    }
+
+    for (chunk in request.chunks) {
+        if (chunk.estimatedTokens > remaining) break
+        parts.add("<|file_sep|>${chunk.filename}")
+        parts.add(chunk.text)
+        remaining -= chunk.estimatedTokens
+    }
+
+    for (diff in request.recentDiffs) {
+        parts.add("<|file_sep|>${diff.filePath}.diff")
+        parts.add("original:")
+        parts.add(diff.original)
+        parts.add("updated:")
+        parts.add(diff.updated)
+    }
+
+    parts.add(originalSection)
+    parts.add(currentSection)
+    parts.add(updatedMarker)
+
+    return parts.joinToString("\n")
+}
+
+fun requestFimCompletion(serverUrl: String, request: FimRequest): FimResponse {
+    val prompt = buildFimPrompt(request)
+    val body = CompletionRequestBody(
+        prompt = prompt,
+        nPredict = 512,
+        temperature = 0.0,
+        stop = listOf("<|file_sep|>", "</s>"),
+        stream = false
+    )
+
+    return try {
+        val url = URI("$serverUrl/completion").toURL()
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.connectTimeout = 5_000
+        connection.readTimeout = 30_000
+        connection.doOutput = true
+
+        try {
+            connection.outputStream.use { os ->
+                os.write(json.encodeToString(body).toByteArray())
             }
-            setBody(requestJson)
+
+            val responseCode = connection.responseCode
+            if (responseCode != 200) {
+                return FimResponse(content = "", error = "Server returned HTTP $responseCode")
+            }
+
+            val responseText = connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
+            val parsed = json.decodeFromString<CompletionResponseBody>(responseText)
+
+            FimResponse(content = parsed.content)
+        } finally {
+            connection.disconnect()
         }
-        response.bodyAsText()
-    } catch (_: Exception) {
-        return null
+    } catch (e: Exception) {
+        FimResponse(content = "", error = e.message ?: "Unknown error")
+    }
+}
+
+// --- Edit extraction ---
+
+fun extractEdit(
+    windowedCurrentContent: String,
+    updatedContent: String,
+    cursorLineInWindow: Int
+): EditKind {
+    val trimmed = updatedContent.trimStart('\n').trimEnd()
+    if (trimmed.isEmpty()) return EditKind.Suppress
+
+    val trimmedCurrent = windowedCurrentContent.trimEnd()
+    if (trimmed == trimmedCurrent) return EditKind.Suppress
+
+    val currentLines = trimmedCurrent.lines()
+    val updatedLines = trimmed.lines()
+
+    // Find first differing line from the top.
+    var firstDiff = 0
+    while (firstDiff < currentLines.size && firstDiff < updatedLines.size
+        && currentLines[firstDiff] == updatedLines[firstDiff]
+    ) {
+        firstDiff++
     }
 
-    // Validate the response
-    // Translation of lines 751-763 in llama.vim s:fim_on_response.
-    if (!isValidFimResponse(raw)) {
-        return null
+    // Find first differing line from the bottom.
+    var currentBottom = currentLines.size - 1
+    var updatedBottom = updatedLines.size - 1
+    while (currentBottom >= firstDiff && updatedBottom >= firstDiff
+        && currentLines[currentBottom] == updatedLines[updatedBottom]
+    ) {
+        currentBottom--
+        updatedBottom--
     }
 
-    // Cache the response for all hashes
-    // Translation of lines 766-768 in llama.vim s:fim_on_response.
-    cacheInsertResponse(cache, hashes, raw, settings.maxCacheKeys)
+    // If no actual diff found.
+    if (firstDiff > updatedBottom && firstDiff > currentBottom) return EditKind.Suppress
 
-    return extractContentFromResponse(raw)
+    // Special case: when the cursor line is being modified and the updated version
+    // merely extends the current content (ignoring leading whitespace from the model),
+    // produce a suffix insertion at the end of the current cursor line rather than
+    // replacing the whole line. This avoids visual artifacts when the model normalizes
+    // whitespace differently from the editor.
+    if (firstDiff == cursorLineInWindow && firstDiff < currentLines.size && firstDiff < updatedLines.size) {
+        val currentLine = currentLines[firstDiff]
+        val updatedLine = updatedLines[firstDiff]
+        val currentTrimmed = currentLine.trimStart()
+        val updatedTrimmed = updatedLine.trimStart()
+
+        if (currentTrimmed.isNotEmpty() && updatedTrimmed.startsWith(currentTrimmed)
+            && updatedTrimmed.length > currentTrimmed.length
+        ) {
+            val suffix = updatedTrimmed.substring(currentTrimmed.length)
+            val lineStartOffset = computeOffsetInWindow(windowedCurrentContent, firstDiff)
+            val cursorLineEndOffset = lineStartOffset + currentLine.length
+
+            // End of the replaced region in current content (same logic as the main path).
+            val replaceEndOffset = if (currentBottom >= firstDiff) {
+                val afterLastLine = computeOffsetInWindow(windowedCurrentContent, currentBottom + 1)
+                if (currentBottom + 1 < currentLines.size) afterLastLine
+                else trimmedCurrent.length
+            } else {
+                cursorLineEndOffset
+            }
+
+            // Additional new lines beyond the cursor line.
+            val additionalLines = if (firstDiff + 1 <= updatedBottom) {
+                updatedLines.subList(firstDiff + 1, updatedBottom + 1)
+            } else {
+                emptyList()
+            }
+
+            val allParts = mutableListOf(suffix)
+            allParts.addAll(additionalLines)
+            val joined = allParts.joinToString("\n")
+
+            val newText = if (replaceEndOffset > cursorLineEndOffset) {
+                // Replacing content after cursor (e.g., the newline), preserve line structure.
+                joined + "\n"
+            } else {
+                // Pure insertion at cursor position.
+                joined
+            }
+
+            val region = EditRegion(cursorLineEndOffset, replaceEndOffset, newText)
+            return EditKind.Inline(region)
+        }
+    }
+
+    // Determine if edit is near cursor (inline) or far (jump).
+    val isFarFromCursor = kotlin.math.abs(firstDiff - cursorLineInWindow) > 2
+
+    // Compute startOffset: byte offset of firstDiff line start in windowed content.
+    val startOffset = computeOffsetInWindow(windowedCurrentContent, firstDiff)
+
+    // Compute endOffset: byte offset after the last changed line in current content.
+    val endOffset = if (currentBottom >= firstDiff) {
+        // There are lines being replaced: end is after currentBottom line.
+        val afterLastLine = computeOffsetInWindow(windowedCurrentContent, currentBottom + 1)
+        if (currentBottom + 1 < currentLines.size) {
+            // There are lines after the changed region; endOffset is start of next line.
+            afterLastLine
+        } else {
+            // Changed region goes to end of content.
+            trimmedCurrent.length
+        }
+    } else {
+        // Pure insertion: startOffset == endOffset.
+        startOffset
+    }
+
+    // Assemble new text from updated lines in the diff range.
+    val newLines = if (firstDiff <= updatedBottom) {
+        updatedLines.subList(firstDiff, updatedBottom + 1)
+    } else {
+        emptyList()
+    }
+
+    val newText = if (newLines.isEmpty()) {
+        ""
+    } else {
+        val joined = newLines.joinToString("\n")
+        if (firstDiff >= currentLines.size) {
+            // Appending after the last line: need a leading newline.
+            "\n" + joined
+        } else if (currentBottom + 1 < currentLines.size && endOffset > startOffset) {
+            // Replacing lines with more lines after: add trailing newline to match line structure.
+            joined + "\n"
+        } else if (firstDiff <= updatedBottom && currentBottom < firstDiff && currentBottom + 1 < currentLines.size) {
+            // Pure insertion before existing lines.
+            joined + "\n"
+        } else {
+            joined
+        }
+    }
+
+    if (newText.isEmpty() && startOffset == endOffset) return EditKind.Suppress
+
+    val region = EditRegion(startOffset, endOffset, newText)
+    return if (isFarFromCursor) EditKind.Jump(region) else EditKind.Inline(region)
+}
+
+// --- Sub-edit splitting ---
+
+/**
+ * Splits a single EditRegion into multiple smaller sub-edits by comparing the old text
+ * and new text line by line. Each contiguous group of differing lines becomes a sub-edit.
+ * For single-line sub-edits, character-level refinement narrows the replacement range.
+ *
+ * @param oldText the text currently in the document at [baseOffset..baseOffset+oldText.length]
+ * @param newText the replacement text for that region
+ * @param baseOffset the document offset where oldText starts
+ * @return list of EditRegion sub-edits; single-element list if splitting is not possible
+ */
+fun splitEditIntoSubEdits(oldText: String, newText: String, baseOffset: Int): List<EditRegion> {
+    // Pure insertion: nothing to split.
+    if (oldText.isEmpty()) {
+        return listOf(EditRegion(baseOffset, baseOffset, newText))
+    }
+
+    val oldLines = oldText.lines()
+    val newLines = newText.lines()
+
+    // Different line counts: fall back to single edit (safe default).
+    if (oldLines.size != newLines.size) {
+        return listOf(EditRegion(baseOffset, baseOffset + oldText.length, newText))
+    }
+
+    // Walk lines in lockstep, group consecutive differing lines into sub-edits.
+    data class DiffGroup(val firstLine: Int, val lastLine: Int)
+
+    val groups = mutableListOf<DiffGroup>()
+    var i = 0
+    while (i < oldLines.size) {
+        if (oldLines[i] != newLines[i]) {
+            val start = i
+            while (i < oldLines.size && oldLines[i] != newLines[i]) {
+                i++
+            }
+            groups.add(DiffGroup(start, i - 1))
+        } else {
+            i++
+        }
+    }
+
+    if (groups.isEmpty()) {
+        return emptyList()
+    }
+
+    // Convert groups to EditRegions.
+    // Precompute line start offsets relative to baseOffset.
+    val lineStartOffsets = IntArray(oldLines.size + 1)
+    lineStartOffsets[0] = 0
+    for (idx in oldLines.indices) {
+        lineStartOffsets[idx + 1] = lineStartOffsets[idx] + oldLines[idx].length + if (idx < oldLines.size - 1) 1 else 0
+    }
+
+    return groups.map { group ->
+        val groupStartOffset = baseOffset + lineStartOffsets[group.firstLine]
+        val groupEndOffset = baseOffset + lineStartOffsets[group.lastLine] + oldLines[group.lastLine].length
+
+        val groupNewText = (group.firstLine..group.lastLine).joinToString("\n") { newLines[it] }
+
+        // For single-line sub-edits, refine to character level.
+        if (group.firstLine == group.lastLine) {
+            val oldLine = oldLines[group.firstLine]
+            val newLine = newLines[group.firstLine]
+            val commonPrefix = oldLine.zip(newLine).takeWhile { (a, b) -> a == b }.size
+            val oldSuffix = oldLine.substring(commonPrefix)
+            val newSuffix = newLine.substring(commonPrefix)
+            val commonSuffix = oldSuffix.reversed().zip(newSuffix.reversed()).takeWhile { (a, b) -> a == b }.size
+
+            val charStart = groupStartOffset + commonPrefix
+            val charEnd = groupEndOffset - commonSuffix
+            val charNewText = newLine.substring(commonPrefix, newLine.length - commonSuffix)
+
+            EditRegion(charStart, charEnd, charNewText)
+        } else {
+            EditRegion(groupStartOffset, groupEndOffset, groupNewText)
+        }
+    }
+}
+
+/**
+ * Returns a new list of edits with offsets adjusted after applying the edit at [currentIndex].
+ * Edits before and at [currentIndex] are kept as-is. Edits after are shifted by the size
+ * delta of [appliedEdit].
+ */
+fun advanceSubEdit(edits: List<EditRegion>, currentIndex: Int, appliedEdit: EditRegion): List<EditRegion> {
+    val sizeDelta = appliedEdit.newText.length - (appliedEdit.endOffset - appliedEdit.startOffset)
+    return edits.mapIndexed { idx, edit ->
+        if (idx <= currentIndex) {
+            edit
+        } else {
+            EditRegion(
+                startOffset = edit.startOffset + sizeDelta,
+                endOffset = edit.endOffset + sizeDelta,
+                newText = edit.newText
+            )
+        }
+    }
 }

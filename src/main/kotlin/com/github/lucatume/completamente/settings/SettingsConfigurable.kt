@@ -1,118 +1,109 @@
 package com.github.lucatume.completamente.settings
 
+import com.github.lucatume.completamente.services.ServerManager
 import com.github.lucatume.completamente.services.SettingsState
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
+import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JTextField
+import javax.swing.ScrollPaneConstants
 
 class SettingsConfigurable : Configurable {
-    private var panel: JComponent? = null
+    private var dialogPanel: DialogPanel? = null
     private val state = SettingsState.getInstance()
 
-    // Store copies for modification detection
-    private var savedEndpoint = ""
-    private var savedApiKey = ""
-    private var savedModel = ""
-    private var savedNPrefix = ""
-    private var savedNSuffix = ""
-    private var savedNPredict = ""
-    private var savedMaxLineSuffix = ""
-    private var savedTMaxPromptMs = ""
-    private var savedTMaxPredictMs = ""
-    private var savedRingNChunks = ""
-    private var savedRingChunkSize = ""
-    private var savedRingScope = ""
-    private var savedRingUpdateMs = ""
-    private var savedMaxQueuedChunks = ""
-    private var savedMaxCacheKeys = ""
-    private var savedTabstop = ""
-    private var savedStopStrings = ""
-
-    // Current field values
-    private var endpoint = ""
-    private var apiKey = ""
-    private var model = ""
-    private var nPrefix = ""
-    private var nSuffix = ""
-    private var nPredict = ""
-    private var maxLineSuffix = ""
-    private var tMaxPromptMs = ""
-    private var tMaxPredictMs = ""
+    // Current field values — kept in sync with the UI via bind*() on apply/reset
+    private var serverUrl = ""
     private var ringNChunks = ""
     private var ringChunkSize = ""
-    private var ringScope = ""
-    private var ringUpdateMs = ""
     private var maxQueuedChunks = ""
-    private var maxCacheKeys = ""
-    private var tabstop = ""
-    private var stopStrings = ""
+    private var autoSuggestions = true
+    private var maxRecentDiffs = ""
+    private var serverCommand = ""
+
+    // Server management UI components
+    private var serverCommandArea: JBTextArea? = null
+    private var serverUrlField: JTextField? = null
+    private var statusLabel: JBLabel? = null
+    private var serverButton: JButton? = null
+    private var viewLogsLink: HyperlinkLabel? = null
 
     override fun getDisplayName(): String = "completamente"
 
     override fun createComponent(): JComponent {
         loadFromState()
-        saveCurrent()
 
-        panel = panel {
-            group("Server Connection") {
-                row("Endpoint:") {
+        dialogPanel = panel {
+            group("FIM Suggestions") {
+                row("Server URL:") {
                     textField()
-                        .align(AlignX.FILL)
-                        .bindText(::endpoint)
-                        .comment("llama.cpp server endpoint")
+                        .bindText(::serverUrl)
+                        .comment("URL of the llama.cpp completion server")
+                        .applyToComponent { serverUrlField = this }
                 }
-                row("API Key:") {
-                    passwordField()
-                        .align(AlignX.FILL)
-                        .bindText(::apiKey)
-                        .comment("llama.cpp server API key (optional)")
+                row {
+                    checkBox("Automatic suggestions")
+                        .bindSelected(::autoSuggestions)
+                        .comment("Automatically show FIM suggestions while typing")
                 }
-                row("Model:") {
+                row("Recent diffs:") {
                     textField()
-                        .align(AlignX.FILL)
-                        .bindText(::model)
-                        .comment("Model name when multiple models are loaded (optional)")
+                        .bindText(::maxRecentDiffs)
+                        .comment("Max number of recent edit diffs sent as context (0 to disable)")
                 }
             }
+            group("Server Management") {
+                row("Server command:") {
+                    val area = JBTextArea(3, 40)
+                    area.lineWrap = true
+                    area.wrapStyleWord = true
+                    area.text = serverCommand
+                    serverCommandArea = area
+                    val scrollPane = JBScrollPane(
+                        area,
+                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+                    )
+                    cell(scrollPane)
+                        .align(AlignX.FILL)
+                        .comment("Full command to start the server. Use {{host}} and {{port}} placeholders (replaced from Server URL). Use -hf to load models from HuggingFace.")
+                }
+                row("Status:") {
+                    val label = JBLabel("Checking...")
+                    statusLabel = label
+                    cell(label)
 
-            group("Context Configuration") {
-                row("Prefix lines:") {
-                    textField()
-                        .bindText(::nPrefix)
-                        .comment("Number of lines before cursor to include in local prefix")
+                    val link = HyperlinkLabel("View Logs")
+                    viewLogsLink = link
+                    link.isVisible = false
+                    link.addHyperlinkListener {
+                        val logFile = ServerManager.getInstance().serverLogFile
+                        if (logFile != null && logFile.exists()) {
+                            RevealFileAction.openFile(logFile)
+                        }
+                    }
+                    cell(link)
                 }
-                row("Suffix lines:") {
-                    textField()
-                        .bindText(::nSuffix)
-                        .comment("Number of lines after cursor to include in local suffix")
-                }
-                row("Max tokens to predict:") {
-                    textField()
-                        .bindText(::nPredict)
-                        .comment("Maximum number of tokens to predict")
-                }
-                row("Max line suffix:") {
-                    textField()
-                        .bindText(::maxLineSuffix)
-                        .comment("Do not auto-trigger if more than this many characters to the right of cursor")
+                row {
+                    val btn = JButton("Start Server")
+                    serverButton = btn
+                    btn.isVisible = false
+                    btn.addActionListener { onServerButtonClick() }
+                    cell(btn)
                 }
             }
-
-            group("Timing") {
-                row("Max prompt time (ms):") {
-                    textField()
-                        .bindText(::tMaxPromptMs)
-                        .comment("Maximum allotted time for prompt processing")
-                }
-                row("Max predict time (ms):") {
-                    textField()
-                        .bindText(::tMaxPredictMs)
-                        .comment("Maximum allotted time for prediction")
-                }
-            }
-
             group("Ring Buffer (Extra Context)") {
                 row("Number of chunks:") {
                     textField()
@@ -124,132 +115,165 @@ class SettingsConfigurable : Configurable {
                         .bindText(::ringChunkSize)
                         .comment("Max size of chunks in number of lines")
                 }
-                row("Scope (lines):") {
-                    textField()
-                        .bindText(::ringScope)
-                        .comment("Range around cursor for gathering chunks after FIM")
-                }
-                row("Update interval (ms):") {
-                    textField()
-                        .bindText(::ringUpdateMs)
-                        .comment("How often to process queued chunks")
-                }
                 row("Max queued chunks:") {
                     textField()
                         .bindText(::maxQueuedChunks)
                         .comment("Maximum number of chunks in the queue")
                 }
             }
+        }
 
-            group("Cache") {
-                row("Max cache keys:") {
-                    textField()
-                        .bindText(::maxCacheKeys)
-                        .comment("Max number of cached completions to keep")
+        // Check server status asynchronously when panel opens
+        refreshServerStatus()
+
+        return dialogPanel!!
+    }
+
+    private fun refreshServerStatus() {
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val manager = ServerManager.getInstance()
+            manager.checkServerHealth()
+            val serverState = manager.serverState
+            val ownership = manager.ownershipState
+            ApplicationManager.getApplication().invokeLater({
+                updateStatusUI(serverState, ownership)
+            }, ModalityState.any())
+        }
+    }
+
+    private fun updateStatusUI(serverState: ServerManager.ServerState, ownership: ServerManager.OwnershipState) {
+        val label = statusLabel ?: return
+        val btn = serverButton ?: return
+
+        val binaryConfigured = (serverCommandArea?.text ?: serverCommand).isNotBlank()
+        val logFile = ServerManager.getInstance().serverLogFile
+        val hasLogFile = logFile != null && logFile.exists()
+
+        val managed = ownership == ServerManager.OwnershipState.MANAGED
+
+        when (serverState) {
+            ServerManager.ServerState.RUNNING -> {
+                val suffix = if (managed) " (managed)" else " (external)"
+                label.text = "\u25CF Running$suffix"
+                viewLogsLink?.isVisible = hasLogFile
+                if (managed) {
+                    btn.text = "Stop Server"
+                    btn.isVisible = true
+                } else {
+                    btn.isVisible = false
                 }
             }
-
-            group("Miscellaneous") {
-                row("Tab stop:") {
-                    textField()
-                        .bindText(::tabstop)
-                        .comment("Tab width for indentation calculation")
+            ServerManager.ServerState.STOPPED, ServerManager.ServerState.UNKNOWN -> {
+                viewLogsLink?.isVisible = false
+                if (binaryConfigured) {
+                    label.text = "\u25CB Not running"
+                    btn.text = "Start Server"
+                    btn.isVisible = true
+                } else {
+                    label.text = "\u25CB Not running (binary not configured)"
+                    btn.isVisible = false
                 }
-                row("Stop strings:") {
-                    textField()
-                        .bindText(::stopStrings)
-                        .comment("Comma-separated strings that immediately stop generation")
-                }
+            }
+            ServerManager.ServerState.STARTING -> {
+                label.text = "\u25CB Starting..."
+                viewLogsLink?.isVisible = true
+                btn.isVisible = false
+            }
+            ServerManager.ServerState.ERROR -> {
+                label.text = "\u25CF Error starting server."
+                viewLogsLink?.isVisible = hasLogFile
+                btn.text = "Retry"
+                btn.isVisible = binaryConfigured
             }
         }
 
-        return panel!!
+        // When server is managed and running/starting, lock the URL field to match the command
+        val lockUrl = managed && (serverState == ServerManager.ServerState.RUNNING || serverState == ServerManager.ServerState.STARTING)
+        serverUrlField?.isEditable = !lockUrl
+        if (lockUrl) {
+            val (host, port) = ServerManager.extractHostPort(state.serverUrl)
+            val displayHost = if (host == "127.0.0.1") "localhost" else host
+            val url = "http://$displayHost:$port"
+            serverUrlField?.text = url
+            serverUrl = url
+        }
+    }
+
+    private fun onServerButtonClick() {
+        val manager = ServerManager.getInstance()
+        val btn = serverButton ?: return
+        val label = statusLabel ?: return
+
+        btn.isEnabled = false
+
+        if (manager.serverState == ServerManager.ServerState.RUNNING
+            && manager.ownershipState == ServerManager.OwnershipState.MANAGED
+        ) {
+            // Stop
+            ApplicationManager.getApplication().executeOnPooledThread {
+                manager.stopServer()
+                ApplicationManager.getApplication().invokeLater({
+                    btn.isEnabled = true
+                    refreshServerStatus()
+                }, ModalityState.any())
+            }
+        } else {
+            // Start — apply settings first so the manager picks up current values
+            dialogPanel?.apply()
+            serverCommand = serverCommandArea?.text ?: ""
+            applyToState()
+
+            label.text = "\u25CB Starting..."
+            viewLogsLink?.isVisible = true
+            serverUrlField?.isEditable = false
+
+            ApplicationManager.getApplication().executeOnPooledThread {
+                manager.startServer()
+                val state = manager.serverState
+                val ownership = manager.ownershipState
+                ApplicationManager.getApplication().invokeLater({
+                    btn.isEnabled = true
+                    updateStatusUI(state, ownership)
+                }, ModalityState.any())
+            }
+        }
     }
 
     private fun loadFromState() {
-        endpoint = state.endpoint
-        apiKey = state.apiKey
-        model = state.model
-        nPrefix = state.nPrefix.toString()
-        nSuffix = state.nSuffix.toString()
-        nPredict = state.nPredict.toString()
-        maxLineSuffix = state.maxLineSuffix.toString()
-        tMaxPromptMs = state.tMaxPromptMs.toString()
-        tMaxPredictMs = state.tMaxPredictMs.toString()
+        serverUrl = state.serverUrl
         ringNChunks = state.ringNChunks.toString()
         ringChunkSize = state.ringChunkSize.toString()
-        ringScope = state.ringScope.toString()
-        ringUpdateMs = state.ringUpdateMs.toString()
         maxQueuedChunks = state.maxQueuedChunks.toString()
-        maxCacheKeys = state.maxCacheKeys.toString()
-        tabstop = state.tabstop.toString()
-        stopStrings = state.stopStrings
-    }
-
-    private fun saveCurrent() {
-        savedEndpoint = endpoint
-        savedApiKey = apiKey
-        savedModel = model
-        savedNPrefix = nPrefix
-        savedNSuffix = nSuffix
-        savedNPredict = nPredict
-        savedMaxLineSuffix = maxLineSuffix
-        savedTMaxPromptMs = tMaxPromptMs
-        savedTMaxPredictMs = tMaxPredictMs
-        savedRingNChunks = ringNChunks
-        savedRingChunkSize = ringChunkSize
-        savedRingScope = ringScope
-        savedRingUpdateMs = ringUpdateMs
-        savedMaxQueuedChunks = maxQueuedChunks
-        savedMaxCacheKeys = maxCacheKeys
-        savedTabstop = tabstop
-        savedStopStrings = stopStrings
+        autoSuggestions = state.autoSuggestions
+        maxRecentDiffs = state.maxRecentDiffs.toString()
+        serverCommand = state.serverCommand
     }
 
     override fun isModified(): Boolean {
-        return endpoint != savedEndpoint ||
-                apiKey != savedApiKey ||
-                model != savedModel ||
-                nPrefix != savedNPrefix ||
-                nSuffix != savedNSuffix ||
-                nPredict != savedNPredict ||
-                maxLineSuffix != savedMaxLineSuffix ||
-                tMaxPromptMs != savedTMaxPromptMs ||
-                tMaxPredictMs != savedTMaxPredictMs ||
-                ringNChunks != savedRingNChunks ||
-                ringChunkSize != savedRingChunkSize ||
-                ringScope != savedRingScope ||
-                ringUpdateMs != savedRingUpdateMs ||
-                maxQueuedChunks != savedMaxQueuedChunks ||
-                maxCacheKeys != savedMaxCacheKeys ||
-                tabstop != savedTabstop ||
-                stopStrings != savedStopStrings
+        val panelModified = dialogPanel?.isModified() ?: false
+        val commandModified = (serverCommandArea?.text ?: "") != state.serverCommand
+        return panelModified || commandModified
     }
 
     override fun apply() {
-        state.endpoint = endpoint
-        state.apiKey = apiKey
-        state.model = model
-        state.nPrefix = nPrefix.toIntOrNull() ?: 256
-        state.nSuffix = nSuffix.toIntOrNull() ?: 64
-        state.nPredict = nPredict.toIntOrNull() ?: 128
-        state.maxLineSuffix = maxLineSuffix.toIntOrNull() ?: 8
-        state.tMaxPromptMs = tMaxPromptMs.toIntOrNull() ?: 500
-        state.tMaxPredictMs = tMaxPredictMs.toIntOrNull() ?: 1000
+        dialogPanel?.apply()
+        serverCommand = serverCommandArea?.text ?: ""
+        applyToState()
+    }
+
+    private fun applyToState() {
+        state.serverUrl = serverUrl
         state.ringNChunks = ringNChunks.toIntOrNull() ?: 16
         state.ringChunkSize = ringChunkSize.toIntOrNull() ?: 64
-        state.ringScope = ringScope.toIntOrNull() ?: 1024
-        state.ringUpdateMs = ringUpdateMs.toLongOrNull() ?: 1000L
         state.maxQueuedChunks = maxQueuedChunks.toIntOrNull() ?: 16
-        state.maxCacheKeys = maxCacheKeys.toIntOrNull() ?: 250
-        state.tabstop = tabstop.toIntOrNull() ?: 4
-        state.stopStrings = stopStrings
-
-        saveCurrent()
+        state.autoSuggestions = autoSuggestions
+        state.maxRecentDiffs = maxRecentDiffs.toIntOrNull() ?: 10
+        state.serverCommand = serverCommand
     }
 
     override fun reset() {
         loadFromState()
-        saveCurrent()
+        serverCommandArea?.text = serverCommand
+        dialogPanel?.reset()
     }
 }
