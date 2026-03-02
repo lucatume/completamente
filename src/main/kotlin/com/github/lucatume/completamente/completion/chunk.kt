@@ -60,17 +60,17 @@ fun pickChunk(
     ringQueued: MutableList<Chunk>,
     filename: String
 ): Int {
-    // If the extra context option is disabled - do nothing
+    // If the extra context option is disabled - do nothing.
     if (settings.ringNChunks <= 0) {
         return 0
     }
 
-    // Don't pick very small chunks
+    // Don't pick very small chunks.
     if (text.size < 3) {
         return 0
     }
 
-    // Select chunk: if text is smaller than chunk size, use all; otherwise pick a random portion
+    // Select chunk: if text is smaller than chunk size, use all; otherwise pick a random portion.
     val chunk: List<String> = if (text.size + 1 < settings.ringChunkSize) {
         text
     } else {
@@ -82,7 +82,7 @@ fun pickChunk(
 
     val chunkStr = chunk.joinToString("\n") + "\n"
 
-    // Check if this chunk is already added (exact match)
+    // Check if this chunk is already added (exact match).
     for (existingChunk in ringChunks) {
         if (existingChunk.text == chunkStr) {
             return 0
@@ -96,7 +96,7 @@ fun pickChunk(
 
     var evictCount = 0
 
-    // Evict queued chunks that are very similar to the new one
+    // Evict queued chunks that are very similar to the new one.
     val queuedIterator = ringQueued.listIterator(ringQueued.size)
     while (queuedIterator.hasPrevious()) {
         val queuedChunk = queuedIterator.previous()
@@ -111,7 +111,7 @@ fun pickChunk(
         }
     }
 
-    // Also evict from ringChunks
+    // Also evict from ringChunks.
     val chunksIterator = ringChunks.listIterator(ringChunks.size)
     while (chunksIterator.hasPrevious()) {
         val existingChunk = chunksIterator.previous()
@@ -126,17 +126,18 @@ fun pickChunk(
         }
     }
 
-    // If ringQueued is at max size, remove the oldest entry
+    // If ringQueued is at max size, remove the oldest entry.
     if (ringQueued.size == settings.maxQueuedChunks) {
         ringQueued.removeAt(0)
     }
 
-    // Add the new chunk
+    // Add the new chunk.
     ringQueued.add(
         Chunk(
             text = chunkStr,
             time = System.currentTimeMillis(),
-            filename = filename
+            filename = filename,
+            estimatedTokens = estimateTokens("<|file_sep|>$filename\n$chunkStr")
         )
     )
 
@@ -165,17 +166,17 @@ fun pickChunkFromFile(
     ringChunks: MutableList<Chunk>,
     ringQueued: MutableList<Chunk>
 ): Int {
-    // Skip if file has pending modifications (noMod=true in vim)
+    // Skip if file has pending modifications (noMod=true in vim).
     if (isModified) {
         return -1
     }
 
-    // Skip if file is not readable
+    // Skip if file is not readable.
     if (!file.isValid) {
         return -1
     }
 
-    // Read file content
+    // Read file content.
     val content = try {
         String(file.contentsToByteArray(), file.charset)
     } catch (_: Exception) {
@@ -189,19 +190,19 @@ fun pickChunkFromFile(
         return -1
     }
 
-    // Determine cursor position (1-indexed, as in vim)
-    // If no cursor provided, use center of file
+    // Determine cursor position (1-indexed, as in vim).
+    // If no cursor provided, use center of file.
     val effectiveCursorLine = cursorLine ?: ((totalLines / 2) + 1)
 
-    // Extract lines around cursor: from max(1, cursor - ringChunkSize/2) to min(cursor + ringChunkSize/2, totalLines)
-    // Convert to 0-indexed for Kotlin list access
+    // Extract lines around cursor: from max(1, cursor - ringChunkSize/2) to min(cursor + ringChunkSize/2, totalLines).
+    // Convert to 0-indexed for Kotlin list access.
     val halfChunkSize = settings.ringChunkSize / 2
     val startLine = maxOf(0, effectiveCursorLine - 1 - halfChunkSize)
     val endLine = minOf(totalLines, effectiveCursorLine - 1 + halfChunkSize + 1)
 
     val linesAroundCursor = allLines.subList(startLine, endLine)
 
-    // Call pickChunk with noMod=true (already checked), doEvict=true
+    // Call pickChunk with noMod=true (already checked), doEvict=true.
     return pickChunk(
         text = linesAroundCursor,
         doEvict = true,
@@ -233,10 +234,10 @@ fun pickChunkFromText(
     ringChunks: MutableList<Chunk>,
     ringQueued: MutableList<Chunk>
 ): Int {
-    // Split text into lines (matching vim's regcontents which is a list of lines)
+    // Split text into lines (matching vim's regcontents which is a list of lines).
     val lines = text.lines()
 
-    // Call pickChunk with noMod=false (no modification check for raw text), doEvict=true
+    // Call pickChunk with noMod=false (no modification check for raw text), doEvict=true.
     return pickChunk(
         text = lines,
         doEvict = true,

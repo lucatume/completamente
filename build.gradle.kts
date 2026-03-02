@@ -5,11 +5,11 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 plugins {
     id("java") // Java support
     alias(libs.plugins.kotlin) // Kotlin support
-    alias(libs.plugins.kotlinSerialization) // Kotlin serialization support
     alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
     alias(libs.plugins.qodana) // Gradle Qodana Plugin
     alias(libs.plugins.kover) // Gradle Kover Plugin
+    alias(libs.plugins.kotlinSerialization) // Kotlin Serialization
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -23,6 +23,7 @@ kotlin {
 // Configure project's dependencies
 repositories {
     mavenCentral()
+    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 
     // IntelliJ Platform Gradle Plugin Repositories Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
     intellijPlatform {
@@ -30,10 +31,38 @@ repositories {
     }
 }
 
+// UI test source set
+sourceSets {
+    create("uiTest") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+}
+
+val uiTestImplementation by configurations.getting {
+    extendsFrom(configurations.testImplementation.get())
+}
+val uiTestRuntimeOnly by configurations.getting {
+    extendsFrom(configurations.testRuntimeOnly.get())
+}
+
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)
+
+    implementation(libs.kotlinx.serialization.core) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }
+    implementation(libs.kotlinx.serialization.json) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }
+
+    // Remote Robot dependencies for UI tests
+    uiTestImplementation(libs.junit)
+    uiTestImplementation(libs.remote.robot)
+    uiTestImplementation(libs.remote.robot.fixtures)
+    uiTestImplementation(libs.remote.robot.ide.launcher)
 
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
@@ -48,32 +77,25 @@ dependencies {
         // Module Dependencies. Uses `platformBundledModules` property from the gradle.properties file for bundled IntelliJ Platform modules.
         bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
 
-        // Exclude from each the coroutine module to use the bundled one.
-        implementation(libs.ktor.client.core) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.ktor.client.cio) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.ktor.client.content.negotiation) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.ktor.serialization.json) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.kotlinx.serialization.core)
-        implementation(libs.kotlinx.serialization.json)
-
-        testImplementation(libs.ktor.client.mock) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
         testFramework(TestFrameworkType.Platform)
     }
+}
+
+// UI test task
+tasks.register<Test>("uiTest") {
+    description = "Runs UI tests against a running IDE instance with Remote Robot."
+    group = "verification"
+
+    testClassesDirs = sourceSets["uiTest"].output.classesDirs
+    classpath = sourceSets["uiTest"].runtimeClasspath
+
+    useJUnit()
+
+    // Required for Gson serialization on JDK 17+
+    jvmArgs(
+        "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util=ALL-UNNAMED",
+    )
 }
 
 // Configure IntelliJ Platform Gradle Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html

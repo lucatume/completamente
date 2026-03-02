@@ -1,0 +1,87 @@
+Server reachable at http://127.0.0.1:8017
+
+================================================================================
+  NEP: Update caller after dependency signature change (PHP)
+================================================================================
+CONTEXT FILES: ['DataFetcher.php']
+ORIGINAL:
+<?php
+
+namespace App\Reports;
+
+use App\Services\DataFetcher;
+
+class ReportGenerator
+{
+    private DataFetcher $fetcher;
+
+    public function __construct(DataFetcher $fetcher)
+    {
+        $this->fetcher = $fetcher;
+    }
+
+    public function generateUserReport(): string
+    {
+        $users = $this->fetcher->fetchUsers();
+        $count = count($users);
+        return "Total users: {$count}";
+    }
+}
+
+CURRENT:
+<?php
+
+namespace App\Reports;
+
+use App\Services\DataFetcher;
+
+class ReportGenerator
+{
+    private DataFetcher $fetcher;
+
+    public function __construct(DataFetcher $fetcher)
+    {
+        $this->fetcher = $fetcher;
+    }
+
+    public function generateUserReport(): string
+    {
+        $users = $this->fetcher->fetchUsers();
+        $count = count($users);
+        return "Total users: {$count}";
+    }
+}
+
+--- Predicted updated file (0.81s) ---
+
+<?php
+
+namespace App\Reports;
+
+use App\Services\DataFetcher;
+
+class ReportGenerator
+{
+    private DataFetcher $fetcher;
+
+    public function __construct(DataFetcher $fetcher)
+    {
+        $this->fetcher = $fetcher;
+    }
+
+    /**
+     * @return string
+     */
+    public function generateUserReport(int $page = 1, int $perPage = 50): string
+    {
+        $users = $this->fetcher->fetchUsers($page, $perPage);
+        $count = count($users['data']);
+        return "Total users: {$count}";
+    }
+}
+
+---
+
+================================================================================
+  All tests completed
+================================================================================

@@ -8,3 +8,4 @@ build
 ref/llama.vim
 ref/llama.cpp
 ref/bin/*.log
+__pycache__
