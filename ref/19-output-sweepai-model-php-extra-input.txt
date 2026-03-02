@@ -1,0 +1,506 @@
+Server reachable at http://127.0.0.1:8017
+
+================================================================================
+  FIM: Complete method using interface from dependency (PHP)
+================================================================================
+CONTEXT FILES: ['RepositoryInterface.php', 'Database.php']
+
+CURRENT:
+<?php
+
+namespace App\Repositories;
+
+use App\Contracts\RepositoryInterface;
+use App\Database\Database;
+
+class UserRepository implements RepositoryInterface
+{
+    private Database $db;
+
+    public function __construct(Database $db)
+    {
+        $this->db = $db;
+    }
+
+    public function find(int $id): ?array
+    {
+
+    }
+}
+
+--- Predicted updated file (1.20s) ---
+
+<?php
+
+namespace App\Repositories;
+
+use App\Contracts\RepositoryInterface;
+use App\Database\Database;
+
+class UserRepository implements RepositoryInterface
+{
+    private Database $db;
+
+    public function __construct(Database $db)
+    {
+        $this->db = $db;
+    }
+
+    public function find(int $id): ?array
+    {
+        return $this->db->query('SELECT * FROM users WHERE id = :id', ['id' => $id]);
+    }
+}
+
+---
+
+================================================================================
+  FIM: Complete code using helper functions (PHP)
+================================================================================
+CONTEXT FILES: ['PriceCalculator.php']
+
+CURRENT:
+<?php
+
+namespace App\Services;
+
+class OrderService
+{
+    private PriceCalculator $calculator;
+
+    public function __construct(PriceCalculator $calculator)
+    {
+        $this->calculator = $calculator;
+    }
+
+    public function calculateTotal(array $items, float $discountPercent = 0): float
+    {
+
+    }
+}
+
+--- Predicted updated file (1.48s) ---
+
+<?php
+
+namespace App\Services;
+
+class OrderService
+{
+    private PriceCalculator $calculator;
+
+    public function __construct(PriceCalculator $calculator)
+    {
+        $this->calculator = $calculator;
+    }
+
+    public function calculateTotal(array $items, float $discountPercent = 0): float
+    {
+        $subtotal = $this->calculator->calculateSubtotal($items);
+        $discountedSubtotal = $this->calculator->applyDiscount($subtotal, $discountPercent);
+        $tax = $this->calculator->calculateTax($discountedSubtotal);
+        return $discountedSubtotal + $tax;
+    }
+}
+
+---
+
+================================================================================
+  FIM: Extend abstract class from dependency (PHP)
+================================================================================
+CONTEXT FILES: ['AbstractLogger.php']
+
+CURRENT:
+<?php
+
+namespace App\Logging;
+
+class JsonLogger extends AbstractLogger
+{
+    public function log(string $level, string $message, array $context = []): void
+    {
+
+    }
+}
+
+--- Predicted updated file (0.97s) ---
+
+<?php
+
+namespace App\Logging;
+
+class JsonLogger extends AbstractLogger
+{
+    public function log(string $level, string $message, array $context = []): void
+    {
+        $formatted = json_encode([
+            'level' => $level,
+            'message' => $message,
+            'context' => $context,
+            'timestamp' => $this->formatTimestamp(),
+        ]);
+        $this->write($formatted);
+    }
+}
+
+---
+
+================================================================================
+  NEP: Add method using newly imported dependency (PHP)
+================================================================================
+CONTEXT FILES: ['Validator.php', 'UserRepository.php']
+ORIGINAL:
+<?php
+
+namespace App\Controllers;
+
+use App\Repositories\UserRepository;
+
+class UserController
+{
+    private UserRepository $users;
+
+    public function __construct(UserRepository $users)
+    {
+        $this->users = $users;
+    }
+
+    public function show(int $id): array
+    {
+        $user = $this->users->find($id);
+        if ($user === null) {
+            throw new \RuntimeException('User not found');
+        }
+        return $user;
+    }
+}
+
+CURRENT:
+<?php
+
+namespace App\Controllers;
+
+use App\Repositories\UserRepository;
+use App\Validation\Validator;
+
+class UserController
+{
+    private UserRepository $users;
+
+    public function __construct(UserRepository $users)
+    {
+        $this->users = $users;
+    }
+
+    public function show(int $id): array
+    {
+        $user = $this->users->find($id);
+        if ($user === null) {
+            throw new \RuntimeException('User not found');
+        }
+        return $user;
+    }
+}
+
+--- Predicted updated file (1.01s) ---
+
+<?php
+
+namespace App\Controllers;
+
+use App\Repositories\UserRepository;
+use App\Validation\Validator;
+
+class UserController
+{
+    private UserRepository $users;
+
+    public function __construct(UserRepository $users)
+    {
+        $this->users = $users;
+    }
+
+    public function show(int $id): array
+    {
+        $user = $this->users->find($id);
+        if ($user === null) {
+            throw new \RuntimeException('User not found');
+        }
+        return $user;
+    }
+}
+
+---
+
+================================================================================
+  NEP: Update caller after dependency signature change (PHP)
+================================================================================
+CONTEXT FILES: ['DataFetcher.php']
+ORIGINAL:
+<?php
+
+namespace App\Reports;
+
+use App\Services\DataFetcher;
+
+class ReportGenerator
+{
+    private DataFetcher $fetcher;
+
+    public function __construct(DataFetcher $fetcher)
+    {
+        $this->fetcher = $fetcher;
+    }
+
+    public function generateUserReport(): string
+    {
+        $users = $this->fetcher->fetchUsers();
+        $count = count($users);
+        return "Total users: {$count}";
+    }
+}
+
+CURRENT:
+<?php
+
+namespace App\Reports;
+
+use App\Services\DataFetcher;
+
+class ReportGenerator
+{
+    private DataFetcher $fetcher;
+
+    public function __construct(DataFetcher $fetcher)
+    {
+        $this->fetcher = $fetcher;
+    }
+
+    public function generateUserReport(): string
+    {
+        $users = $this->fetcher->fetchUsers();
+        $count = count($users);
+        return "Total users: {$count}";
+    }
+}
+
+--- Predicted updated file (0.83s) ---
+
+<?php
+
+namespace App\Reports;
+
+use App\Services\DataFetcher;
+
+class ReportGenerator
+{
+    private DataFetcher $fetcher;
+
+    public function __construct(DataFetcher $fetcher)
+    {
+        $this->fetcher = $fetcher;
+    }
+
+    /**
+     * @return string
+     */
+    public function generateUserReport(): string
+    {
+        $users = $this->fetcher->fetchUsers();
+        $count = count($users);
+        return "Total users: {$count}";
+    }
+}
+
+---
+
+================================================================================
+  NEP: Implement interface methods using dependency context (PHP)
+================================================================================
+CONTEXT FILES: ['CacheInterface.php', 'Serializer.php']
+ORIGINAL:
+<?php
+
+namespace App\Cache;
+
+use App\Support\Serializer;
+
+class FileCache
+{
+    private string $dir;
+    private Serializer $serializer;
+
+    public function __construct(string $dir, Serializer $serializer)
+    {
+        $this->dir = $dir;
+        $this->serializer = $serializer;
+    }
+}
+
+CURRENT:
+<?php
+
+namespace App\Cache;
+
+use App\Contracts\CacheInterface;
+use App\Support\Serializer;
+
+class FileCache implements CacheInterface
+{
+    private string $dir;
+    private Serializer $serializer;
+
+    public function __construct(string $dir, Serializer $serializer)
+    {
+        $this->dir = $dir;
+        $this->serializer = $serializer;
+    }
+}
+
+--- Predicted updated file (2.03s) ---
+
+<?php
+
+namespace App\Cache;
+
+use App\Contracts\CacheInterface;
+use App\Support\Serializer;
+
+class FileCache implements CacheInterface
+{
+    private string $dir;
+    private Serializer $serializer;
+
+    public function __construct(string $dir, Serializer $serializer)
+    {
+        $this->dir = $dir;
+        $this->serializer = $serializer;
+    }
+
+    public function get(string $key, mixed $default = null): mixed
+    {
+        $file = $this->dir . '/' . $key;
+        if (file_exists($file)) {
+            return $this->serializer->unserialize(file_get_contents($file));
+        }
+        return $default;
+    }
+
+    public function set(string $key, mixed $value, int $ttl = 3600): bool
+    {
+        $file = $this->dir . '/' . $key;
+        file_put_contents($file, $this->serializer->serialize($value));
+        return true;
+    }
+
+    public function has(string $key): bool
+    {
+        return file_exists($this->dir . '/' . $key);
+    }
+
+    public function delete(string $key): bool
+    {
+        return unlink($this->dir . '/' . $key);
+    }
+
+    public function clear(): bool
+    {
+        return rmdir($this->dir);
+    }
+}
+
+---
+
+================================================================================
+  NEP: Compose multiple dependency services (PHP)
+================================================================================
+CONTEXT FILES: ['Mailer.php', 'TemplateEngine.php', 'UserRepository.php']
+ORIGINAL:
+<?php
+
+namespace App\Notifications;
+
+use App\Mail\Mailer;
+
+class NotificationService
+{
+    private Mailer $mailer;
+
+    public function __construct(Mailer $mailer)
+    {
+        $this->mailer = $mailer;
+    }
+
+    public function notifyUser(int $userId, string $message): bool
+    {
+        return $this->mailer->send("user@example.com", "Notification", $message);
+    }
+}
+
+CURRENT:
+<?php
+
+namespace App\Notifications;
+
+use App\Mail\Mailer;
+use App\Templating\TemplateEngine;
+use App\Repositories\UserRepository;
+
+class NotificationService
+{
+    private Mailer $mailer;
+    private TemplateEngine $templates;
+    private UserRepository $users;
+
+    public function __construct(Mailer $mailer, TemplateEngine $templates, UserRepository $users)
+    {
+        $this->mailer = $mailer;
+        $this->templates = $templates;
+        $this->users = $users;
+    }
+
+    public function notifyUser(int $userId, string $message): bool
+    {
+        return $this->mailer->send("user@example.com", "Notification", $message);
+    }
+}
+
+--- Predicted updated file (1.33s) ---
+
+<?php
+
+namespace App\Notifications;
+
+use App\Mail\Mailer;
+use App\Templating\TemplateEngine;
+use App\Repositories\UserRepository;
+
+class NotificationService
+{
+    private Mailer $mailer;
+    private TemplateEngine $templates;
+    private UserRepository $users;
+
+    public function __construct(Mailer $mailer, TemplateEngine $templates, UserRepository $users)
+    {
+        $this->mailer = $mailer;
+        $this->templates = $templates;
+        $this->users = $users;
+    }
+
+    public function notifyUser(int $userId, string $message): bool
+    {
+        $user = $this->users->find($userId);
+        if ($user === null) {
+            return false;
+        }
+        $template = $this->templates->render('user-notification', $user);
+        return $this->mailer->send($user['email'], "Notification", $template);
+    }
+}
+
+---
+
+================================================================================
+  All tests completed
+================================================================================

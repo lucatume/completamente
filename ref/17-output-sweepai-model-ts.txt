@@ -1,0 +1,238 @@
+Server reachable at http://127.0.0.1:8017
+
+================================================================================
+  FIM: Complete function body (TS)
+================================================================================
+CURRENT:
+function isEven(n: number): boolean {
+
+}
+
+console.log(isEven(4));
+
+--- Predicted updated file (0.25s) ---
+
+function isEven(n: number): boolean {
+  return n % 2 === 0;
+}
+
+console.log(isEven(4));
+
+---
+
+================================================================================
+  FIM: Fill middle of conditional (TS)
+================================================================================
+CURRENT:
+function classifyAge(age: number): string {
+    if (age < 0) {
+        return 'invalid';
+    } else if () {
+        return 'senior';
+    } else {
+        return 'adult';
+    }
+}
+
+--- Predicted updated file (0.51s) ---
+
+function classifyAge(age: number): string {
+    if (age < 0) {
+        return 'invalid';
+    }
+    if (age >= 65) {
+        return 'senior';
+    }
+    return 'adult';
+}
+
+---
+
+================================================================================
+  FIM: Complete import statement (TS)
+================================================================================
+CURRENT:
+import { } from 'date-fns';
+
+function formatToday(): string {
+    return format(new Date(), 'yyyy-MM-dd');
+}
+
+--- Predicted updated file (0.38s) ---
+
+import { format } from 'date-fns';
+
+function formatToday(): string {
+    return format(new Date(), 'yyyy-MM-dd');
+}
+
+---
+
+================================================================================
+  NEP: Add parameter usage (TS)
+================================================================================
+ORIGINAL:
+function greet(name: string): void {
+    console.log(`Hello, ${name}!`);
+}
+
+greet('Alice');
+
+CURRENT:
+import { getTimeOfDay } from './utils';
+
+function greet(name: string): void {
+    console.log(`Hello, ${name}!`);
+}
+
+greet('Alice');
+
+--- Predicted updated file (0.44s) ---
+
+import { getTimeOfDay } from './utils';
+
+function greet(name: string): void {
+    console.log(`Hello, ${name}!`);
+}
+
+greet('Alice');
+
+---
+
+================================================================================
+  NEP: Rename variable propagation (TS)
+================================================================================
+ORIGINAL:
+function add(a: number, b: number): number {
+    const result: number = a + b;
+    console.log(`The result is ${result}`);
+    return result;
+}
+
+CURRENT:
+function add(a: number, b: number): number {
+    const total: number = a + b;
+    console.log(`The result is ${result}`);
+    return result;
+}
+
+--- Predicted updated file (0.49s) ---
+
+function add(a: number, b: number): number {
+    const total: number = a + b;
+    console.log(`The result is ${total}`);
+    return total;
+}
+
+---
+
+================================================================================
+  NEP: Add error handling (TS)
+================================================================================
+ORIGINAL:
+import fs from 'fs/promises';
+
+async function readConfig(path: string): Promise<Record<string, unknown>> {
+    const data = await fs.readFile(path, 'utf-8');
+    return JSON.parse(data);
+}
+
+CURRENT:
+import fs from 'fs/promises';
+
+async function readConfig(path: string): Promise<Record<string, unknown>> {
+    try {
+        const data = await fs.readFile(path, 'utf-8');
+        return JSON.parse(data);
+    }
+}
+
+--- Predicted updated file (0.86s) ---
+
+import fs from 'fs/promises';
+
+async function readConfig(path: string): Promise<Record<string, unknown>> {
+    try {
+        const data = await fs.readFile(path, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error(`Error reading config file: ${error}`);
+        throw error;
+    }
+}
+
+---
+
+================================================================================
+  NEP: New file completion (FIM through NEP, TS)
+================================================================================
+ORIGINAL: (empty — new file)
+
+CURRENT:
+function isEven(n: number): boolean {
+
+--- Predicted updated file (1.56s) ---
+
+function isEven(n: number): boolean {
+  return n % 2 === 0;
+}
+
+function isOdd(n: number): boolean {
+  return n % 2 !== 0;
+}
+
+function isPrime(n: number): boolean {
+  if (n <= 1) return false;
+  if (n <= 3) return true;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  let i = 5;
+  while (i * i <= n) {
+    if (n % i === 0 || n % (i + 2) === 0) return false;
+    i += 6;
+  }
+  return true;
+}
+
+---
+
+================================================================================
+  NEP: Add interface field (TS)
+================================================================================
+ORIGINAL:
+interface User {
+    name: string;
+    age: number;
+}
+
+function createUser(name: string, age: number): User {
+    return { name, age };
+}
+
+CURRENT:
+interface User {
+    name: string;
+    age: number;
+    email: string;
+}
+
+function createUser(name: string, age: number): User {
+    return { name, age };
+}
+
+--- Predicted updated file (0.54s) ---
+
+interface User {
+    name: string;
+    age: number;
+    email: string;
+}
+
+function createUser(name: string, age: number, email: string): User {
+    return { name, age, email };
+}
+
+---
+
+================================================================================
+  All tests completed
+================================================================================
