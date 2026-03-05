@@ -5,11 +5,11 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 plugins {
     id("java") // Java support
     alias(libs.plugins.kotlin) // Kotlin support
-    alias(libs.plugins.kotlinSerialization) // Kotlin serialization support
     alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
     alias(libs.plugins.qodana) // Gradle Qodana Plugin
     alias(libs.plugins.kover) // Gradle Kover Plugin
+    alias(libs.plugins.kotlinSerialization) // Kotlin Serialization
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -23,6 +23,7 @@ kotlin {
 // Configure project's dependencies
 repositories {
     mavenCentral()
+    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 
     // IntelliJ Platform Gradle Plugin Repositories Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
     intellijPlatform {
@@ -34,6 +35,13 @@ repositories {
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)
+
+    implementation(libs.kotlinx.serialization.core) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }
+    implementation(libs.kotlinx.serialization.json) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }
 
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
@@ -47,30 +55,6 @@ dependencies {
 
         // Module Dependencies. Uses `platformBundledModules` property from the gradle.properties file for bundled IntelliJ Platform modules.
         bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
-
-        // Exclude from each the coroutine module to use the bundled one.
-        implementation(libs.ktor.client.core) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.ktor.client.cio) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.ktor.client.content.negotiation) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.ktor.serialization.json) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
-
-        implementation(libs.kotlinx.serialization.core)
-        implementation(libs.kotlinx.serialization.json)
-
-        testImplementation(libs.ktor.client.mock) {
-            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-        }
 
         testFramework(TestFrameworkType.Platform)
     }
@@ -161,23 +145,3 @@ tasks {
     }
 }
 
-intellijPlatformTesting {
-    runIde {
-        register("runIdeForUiTests") {
-            task {
-                jvmArgumentProviders += CommandLineArgumentProvider {
-                    listOf(
-                        "-Drobot-server.port=8082",
-                        "-Dide.mac.message.dialogs.as.sheets=false",
-                        "-Djb.privacy.policy.text=<!--999.999-->",
-                        "-Djb.consents.confirmation.enabled=false",
-                    )
-                }
-            }
-
-            plugins {
-                robotServerPlugin()
-            }
-        }
-    }
-}

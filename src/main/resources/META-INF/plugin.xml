@@ -7,12 +7,28 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <inline.completion.provider implementation="com.github.lucatume.completamente.services.Completion"/>
         <postStartupActivity implementation="com.github.lucatume.completamente.startup.CompletamenteStartupActivity"/>
         <applicationConfigurable
             parentId="tools"
             instance="com.github.lucatume.completamente.settings.SettingsConfigurable"
             id="com.github.lucatume.completamente.settings.SettingsConfigurable"
             displayName="completamente"/>
+        <projectService serviceImplementation="com.github.lucatume.completamente.fim.FimSuggestionManager"/>
+        <projectService serviceImplementation="com.github.lucatume.completamente.services.DiffTracker"/>
+        <applicationService serviceImplementation="com.github.lucatume.completamente.services.ServerManager"/>
+        <notificationGroup id="completamente" displayType="STICKY_BALLOON"/>
+        <inline.completion.provider
+            id="com.github.lucatume.completamente.NoOpInlineCompletionProvider"
+            order="first"
+            implementation="com.github.lucatume.completamente.fim.NoOpInlineCompletionProvider"/>
     </extensions>
+
+    <actions>
+        <action id="com.github.lucatume.completamente.fim.RequestFimAction"
+                class="com.github.lucatume.completamente.fim.RequestFimAction"
+                text="Request FIM Completion"
+                description="Manually request a FIM completion suggestion">
+            <keyboard-shortcut keymap="$default" first-keystroke="alt BACK_SLASH"/>
+        </action>
+    </actions>
 </idea-plugin>

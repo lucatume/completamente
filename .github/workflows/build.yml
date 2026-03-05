@@ -17,8 +17,28 @@ on:
   # Trigger the workflow on pushes to only the 'main' branch (this avoids duplicate checks being run e.g., for dependabot pull requests)
   push:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - '*.gradle.kts'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'qodana.yml'
+      - 'codecov.yml'
+      - '.github/workflows/build.yml'
   # Trigger the workflow on any pull request
   pull_request:
+    paths:
+      - 'src/**'
+      - '*.gradle.kts'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'qodana.yml'
+      - 'codecov.yml'
+      - '.github/workflows/build.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -41,7 +61,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Set up the Java environment for the next steps
       - name: Setup Java
@@ -71,7 +91,7 @@ jobs:
 
       # Store an already-built plugin as an artifact for downloading
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.artifact.outputs.filename }}
           path: ./build/distributions/content/*/*
@@ -92,7 +112,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Set up the Java environment for the next steps
       - name: Setup Java
@@ -114,7 +134,7 @@ jobs:
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
@@ -146,7 +166,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0  # a full history is required for pull request analysis
@@ -160,7 +180,7 @@ jobs:
 
       # Run Qodana inspections
       - name: Qodana - Code Inspection
-        uses: JetBrains/qodana-action@v2025.1.1
+        uses: JetBrains/qodana-action@v2025.3.1
         with:
           cache-default-branch-only: true
 
@@ -180,7 +200,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Set up the Java environment for the next steps
       - name: Setup Java
@@ -202,7 +222,7 @@ jobs:
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
