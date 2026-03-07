@@ -20,8 +20,10 @@ import com.intellij.ui.JBColor
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
+import com.intellij.openapi.util.Disposer
 import java.util.concurrent.CancellationException
 import javax.swing.KeyStroke
+import javax.swing.Timer
 
 class Order89Action : AnAction() {
 
@@ -64,7 +66,9 @@ class Order89Action : AnAction() {
             workingDirectory = project.basePath ?: "."
         )
 
-        val inlay = addExecutingInlay(editor, editor.document.getLineStartOffset(targetLine))
+        val caretOffset = editor.caretModel.offset
+        val indentX = editor.offsetToXY(caretOffset).x
+        val inlay = addExecutingInlay(editor, editor.document.getLineStartOffset(targetLine), indentX)
 
         val (process, future) = Order89Executor.execute(request)
 
@@ -116,18 +120,31 @@ class Order89Action : AnAction() {
         e.presentation.isEnabledAndVisible = e.getData(CommonDataKeys.EDITOR) != null
     }
 
-    private fun addExecutingInlay(editor: Editor, offset: Int): Inlay<*>? {
+    private fun addExecutingInlay(editor: Editor, offset: Int, indentX: Int): Inlay<*>? {
+        val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
+        var symbolIndex = 0
+
         val renderer = object : EditorCustomElementRenderer {
             override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
 
             override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
                 g.color = JBColor.GRAY
                 g.font = editor.colorsScheme.getFont(EditorFontType.ITALIC)
-                g.drawString("\u27F3 Executing Order 89...", targetRegion.x, targetRegion.y + editor.ascent)
+                g.drawString("${symbols[symbolIndex]} Executing Order 89", indentX, targetRegion.y + editor.ascent)
             }
 
             override fun calcHeightInPixels(inlay: Inlay<*>): Int = editor.lineHeight
         }
-        return editor.inlayModel.addBlockElement(offset, true, true, 0, renderer)
+        val inlay = editor.inlayModel.addBlockElement(offset, true, true, 0, renderer) ?: return null
+
+        val timer = Timer(250) {
+            symbolIndex = (symbolIndex + 1) % symbols.size
+            inlay.repaint()
+        }
+        timer.start()
+
+        Disposer.register(inlay) { timer.stop() }
+
+        return inlay
     }
 }
