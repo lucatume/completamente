@@ -30,5 +30,13 @@
                 description="Manually request a FIM completion suggestion">
             <keyboard-shortcut keymap="$default" first-keystroke="alt BACK_SLASH"/>
         </action>
+        <action id="com.github.lucatume.completamente.order89.Order89Action"
+                class="com.github.lucatume.completamente.order89.Order89Action"
+                text="Order 89"
+                description="Transform selected text using a configured shell command">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift 8"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta shift 8"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift 8"/>
+        </action>
     </actions>
 </idea-plugin>

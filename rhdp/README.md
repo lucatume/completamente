@@ -60,3 +60,7 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 08 | 08-design-server-management.md | design | Design for managed completion server lifecycle |
 | 09 | 09-research-intellij-file-level-symbol-references.md | research | IntelliJ API for collecting project files referenced by symbols in a file |
 | 10 | 10-design-prompt-composition.md | design | Prompt composition: token budgeting, asymmetric window, header+window symbol resolution, surface extraction |
+| 11 | 11-harness-order89-prompt-structures.sh | harness | Test prompt structures for Order 89 claude -p command to find cleanest code-only output |
+| 12 | 12-output-order89-prompt-structures.txt | output | Results from harness 11: prompt structure test outputs |
+| 13 | 13-design-order89.md | design | Design for the Order 89 feature: modal-driven shell command text transformation |
+| 14 | 14-plan-order89.md | plan | Step-by-step implementation plan for Order 89 (10 steps) |

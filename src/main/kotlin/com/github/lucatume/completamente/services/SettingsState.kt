@@ -28,6 +28,8 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     // Server Management
     var serverCommand: String = "llama-server --host {{host}} --port {{port}} -hf sweepai/sweep-next-edit-1.5B --ctx-size 8192 --parallel 1 --cache-prompt --temp 0.0"
 
+    var order89Command: String = "printf 'Output ONLY code, no explanations, no markdown fences. Do not include any text before or after the code.\\n\\nReplace the following %s code according to this instruction: %s\\n\\n%s' {{language}} {{prompt}} {{selected_text}} | claude --print --output-format text"
+
     override fun getState(): SettingsState = this
 
     override fun loadState(state: SettingsState) {
@@ -41,7 +43,8 @@ class SettingsState : PersistentStateComponent<SettingsState> {
         maxQueuedChunks = maxQueuedChunks,
         autoSuggestions = autoSuggestions,
         maxRecentDiffs = maxRecentDiffs,
-        serverCommand = serverCommand
+        serverCommand = serverCommand,
+        order89Command = order89Command
     )
 
     companion object {

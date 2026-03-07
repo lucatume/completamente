@@ -1,0 +1,149 @@
+Order 89 Prompt Structure Harness
+=================================
+Date: Sat Mar  7 13:37:38 CET 2026
+
+Selected text:
+fun greet(name: String): String {
+    return "Hello, " + name
+}
+
+User instruction: Use string interpolation instead of concatenation
+
+
+================================================================
+TEST: Simple direct
+================================================================
+PROMPT SENT:
+Output ONLY code, no explanations, no markdown fences. Do not include any text before or after the code.
+
+Replace the following kotlin code according to this instruction: Use string interpolation instead of concatenation
+
+fun greet(name: String): String {
+    return "Hello, " + name
+}
+----------------------------------------------------------------
+RESPONSE:
+fun greet(name: String): String {
+    return "Hello, $name"
+}
+----------------------------------------------------------------
+VERDICT: CLEAN (no fences)
+
+
+================================================================
+TEST: Delimited with role
+================================================================
+PROMPT SENT:
+You are a code transformation tool. You receive code and an instruction. You output ONLY the transformed code. No markdown, no explanations, no backticks, no commentary. Output the raw code only.
+
+<instruction>Use string interpolation instead of concatenation</instruction>
+<code language="kotlin" file="src/main/kotlin/Example.kt">
+fun greet(name: String): String {
+    return "Hello, " + name
+}
+</code>
+
+Output the transformed code and nothing else:
+----------------------------------------------------------------
+RESPONSE:
+fun greet(name: String): String {
+    return "Hello, $name"
+}
+----------------------------------------------------------------
+VERDICT: CLEAN (no fences)
+
+
+================================================================
+TEST: FIM-style prefix/suffix
+================================================================
+PROMPT SENT:
+You are a code-only output tool. Never use markdown. Never explain. Output only raw code.
+
+The user selected this code in src/main/kotlin/Example.kt (kotlin):
+
+fun greet(name: String): String {
+    return "Hello, " + name
+}
+
+The user wants: Use string interpolation instead of concatenation
+
+Replacement code (raw, no fences):
+----------------------------------------------------------------
+RESPONSE:
+fun greet(name: String): String {
+    return "Hello, $name"
+}
+----------------------------------------------------------------
+VERDICT: CLEAN (no fences)
+
+
+================================================================
+TEST: With --json-schema (if supported)
+================================================================
+PROMPT SENT:
+Transform this kotlin code: Use string interpolation instead of concatenation
+
+fun greet(name: String): String {
+    return "Hello, " + name
+}
+
+Return only the replacement code. No markdown fences. No explanation.
+----------------------------------------------------------------
+RESPONSE:
+fun greet(name: String): String {
+    return "Hello, $name"
+}
+----------------------------------------------------------------
+VERDICT: CLEAN (no fences)
+
+
+================================================================
+TEST: Ultra-minimal
+================================================================
+PROMPT SENT:
+Use string interpolation instead of concatenation:
+
+fun greet(name: String): String {
+    return "Hello, " + name
+}
+----------------------------------------------------------------
+RESPONSE:
+The `greet` function doesn't exist in this codebase — the example in your message appears to be illustrative. Could you point me to the file or function you'd like me to update?
+----------------------------------------------------------------
+VERDICT: CLEAN (no fences)
+WARNING: 1 lines look like prose
+
+
+================================================================
+TEST: Negative constraints
+================================================================
+PROMPT SENT:
+Rules:
+- Output ONLY the replacement code
+- Do NOT wrap in markdown code fences
+- Do NOT add any explanation before or after
+- Do NOT add comments that weren't in the original
+- Do NOT change anything beyond what the instruction asks
+
+Language: kotlin
+File: src/main/kotlin/Example.kt
+Instruction: Use string interpolation instead of concatenation
+
+Code to transform:
+fun greet(name: String): String {
+    return "Hello, " + name
+}
+----------------------------------------------------------------
+RESPONSE:
+fun greet(name: String): String {
+    return "Hello, $name"
+}
+----------------------------------------------------------------
+VERDICT: CLEAN (no fences)
+
+
+================================================================
+SUMMARY
+================================================================
+Review the results above to determine which prompt structure
+produces the cleanest code-only output.
