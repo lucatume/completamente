@@ -64,3 +64,9 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 12 | 12-output-order89-prompt-structures.txt | output | Results from harness 11: prompt structure test outputs |
 | 13 | 13-design-order89.md | design | Design for the Order 89 feature: modal-driven shell command text transformation |
 | 14 | 14-plan-order89.md | plan | Step-by-step implementation plan for Order 89 (10 steps) |
+| 15 | 15-research-99-neovim-claude-code.md | research | How ThePrimeagen's 99 Neovim plugin invokes Claude Code and comparison with Order 89 |
+| 16 | 16-plan-order89-v2-tmpfile-prompt.md | plan | Plan for Order 89 v2: temp file prompt with `<Order89UserSelection>` tags, `--dangerously-skip-permissions` |
+| 17 | 17-plan-order89-multiline-inlay-multi-session.md | plan | Plan for Order 89 multiline inlay hints and multi-session support |
+| 18 | 18-research-order89-comment-stripping.md | research | How 99 constrains output and approaches for stripping non-code prose from Order 89 model responses |
+| 19 | 19-design-order89-prompt-and-output-cleaning.md | design | Prompt v3 template with `<Order89Rules>` and layered output cleaning pipeline (extractCodeBlock → stripLeadingProse → stripTrailingProse) |
+| 20 | 20-plan-order89-prompt-v3-output-cleaning.md | plan | 7-step implementation plan for prompt v3 and output cleaning pipeline in Order89Executor |

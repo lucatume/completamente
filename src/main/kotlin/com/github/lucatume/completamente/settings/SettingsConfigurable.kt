@@ -137,7 +137,7 @@ class SettingsConfigurable : Configurable {
                     )
                     cell(scrollPane)
                         .align(AlignX.FILL)
-                        .comment("Placeholders: {{prompt}}, {{selected_text}}, {{file_path}}, {{file_content}}, {{language}}, {{referenced_files}}.")
+                        .comment("Placeholders: {{prompt_file}}.")
                 }
                 row {
                     val resetBtn = JButton("Reset")
