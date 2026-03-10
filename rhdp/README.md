@@ -70,3 +70,5 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 18 | 18-research-order89-comment-stripping.md | research | How 99 constrains output and approaches for stripping non-code prose from Order 89 model responses |
 | 19 | 19-design-order89-prompt-and-output-cleaning.md | design | Prompt v3 template with `<Order89Rules>` and layered output cleaning pipeline (extractCodeBlock → stripLeadingProse → stripTrailingProse) |
 | 20 | 20-plan-order89-prompt-v3-output-cleaning.md | plan | 7-step implementation plan for prompt v3 and output cleaning pipeline in Order89Executor |
+| 21 | 21-research-intellij-text-color-effects.md | research | Text color effects in IntelliJ: gradients, animated colors, and per-character styling via Graphics2D |
+| 22 | 22-plan-enhanced-text-effects.md | plan | 9-step plan for gradient FIM/NEP ghost text and pulsing Order 89 status effects |

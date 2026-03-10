@@ -13,14 +13,30 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.LinearGradientPaint
 import java.awt.Rectangle
+import java.awt.RenderingHints
 
 private val GHOST_COLOR = Color(150, 150, 150)
+private val GRADIENT_START = Color(255, 16, 240)  // Neon pink.
+private val GRADIENT_END = Color(0, 255, 255)     // Electric cyan.
 private val JUMP_NEW_FG = Color.WHITE
 private val JUMP_NEW_BG = Color(0, 191, 0)
 private val JUMP_OLD_FG = Color.WHITE
 private val JUMP_OLD_BG = Color(218, 54, 51)
 private const val BG_PAD = 3
+
+private fun drawGradientString(g: Graphics, text: String, x: Int, y: Int, width: Int) {
+    val g2d = g as? Graphics2D ?: run { g.color = GRADIENT_START; g.drawString(text, x, y); return }
+    g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+    if (width <= 0) { g2d.color = GRADIENT_START; g2d.drawString(text, x, y); return }
+    g2d.paint = LinearGradientPaint(
+        x.toFloat(), 0f, (x + width).toFloat(), 0f,
+        floatArrayOf(0f, 1f), arrayOf(GRADIENT_START, GRADIENT_END)
+    )
+    g2d.drawString(text, x, y)
+}
 
 private class InlineGhostRenderer(
     private val text: String,
@@ -41,9 +57,13 @@ private class InlineGhostRenderer(
             g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height)
         }
         g.font = ghostFont(editor)
-        g.color = color
         val textX = if (bgColor != null) targetRegion.x + BG_PAD else targetRegion.x
-        g.drawString(text, textX, targetRegion.y + editor.ascent)
+        if (bgColor == null) {
+            drawGradientString(g, text, textX, targetRegion.y + editor.ascent, targetRegion.width)
+        } else {
+            g.color = color
+            g.drawString(text, textX, targetRegion.y + editor.ascent)
+        }
     }
 }
 
@@ -71,10 +91,16 @@ private class BlockGhostRenderer(
             g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height)
         }
         g.font = ghostFont(editor)
-        g.color = color
         val textX = if (bgColor != null) targetRegion.x + BG_PAD else targetRegion.x
         for ((i, line) in lines.withIndex()) {
-            g.drawString(line, textX, targetRegion.y + editor.ascent + (i * lineHeight))
+            val y = targetRegion.y + editor.ascent + (i * lineHeight)
+            if (bgColor == null) {
+                val fm = g.fontMetrics
+                drawGradientString(g, line, textX, y, fm.stringWidth(line))
+            } else {
+                g.color = color
+                g.drawString(line, textX, y)
+            }
         }
     }
 }

@@ -17,9 +17,12 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
-import com.intellij.ui.JBColor
+import java.awt.Color
 import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.LinearGradientPaint
 import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.event.KeyEvent
 import com.intellij.openapi.util.Disposer
 import java.util.ArrayDeque
@@ -27,6 +30,18 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import javax.swing.KeyStroke
 import javax.swing.Timer
+
+private val ORDER89_NEON_PINK = Color(255, 16, 240)
+private val ORDER89_CYAN = Color(0, 255, 255)
+
+private fun lerpColor(a: Color, b: Color, t: Double): Color {
+    val ct = t.coerceIn(0.0, 1.0)
+    return Color(
+        (a.red + (b.red - a.red) * ct).toInt(),
+        (a.green + (b.green - a.green) * ct).toInt(),
+        (a.blue + (b.blue - a.blue) * ct).toInt()
+    )
+}
 
 internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
     val collapsed = prompt.replace('\n', ' ').replace('\r', ' ').trim()
@@ -170,27 +185,71 @@ class Order89Action : AnAction() {
     private fun addExecutingInlay(editor: Editor, offset: Int, indentX: Int, prompt: String): Inlay<*>? {
         val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
         var symbolIndex = 0
+        var frameCount = 0
         val truncated = truncatePrompt(prompt)
 
         val renderer = object : EditorCustomElementRenderer {
             override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
 
             override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
+                val g2d = g as? Graphics2D
+                g2d?.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+
                 val lineHeight = editor.lineHeight
-                g.color = JBColor.GRAY
                 g.font = editor.colorsScheme.getFont(EditorFontType.ITALIC)
-                val statusPrefix = "${symbols[symbolIndex]} "
-                g.drawString("${statusPrefix}Executing Order 89", indentX, targetRegion.y + editor.ascent)
-                val promptX = indentX + g.fontMetrics.stringWidth(statusPrefix)
-                g.drawString(truncated, promptX, targetRegion.y + editor.ascent + lineHeight)
+
+                val t = (Math.sin(frameCount * 0.5) + 1.0) / 2.0
+                val pulseColor = lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t)
+
+                val statusText = "${symbols[symbolIndex]} Executing Order 89"
+                if (g2d != null) {
+                    val fm = g2d.fontMetrics
+                    val textWidth = fm.stringWidth(statusText)
+                    if (textWidth > 0) {
+                        val gradient = LinearGradientPaint(
+                            indentX.toFloat(), 0f,
+                            (indentX + textWidth).toFloat(), 0f,
+                            floatArrayOf(0f, 1f),
+                            arrayOf(pulseColor, lerpColor(ORDER89_CYAN, ORDER89_NEON_PINK, t))
+                        )
+                        g2d.paint = gradient
+                    } else {
+                        g2d.color = pulseColor
+                    }
+                    g2d.drawString(statusText, indentX, targetRegion.y + editor.ascent)
+                } else {
+                    g.color = pulseColor
+                    g.drawString(statusText, indentX, targetRegion.y + editor.ascent)
+                }
+
+                val promptX = indentX + g.fontMetrics.stringWidth("${symbols[symbolIndex]} ")
+                val promptColor = lerpColor(ORDER89_CYAN, ORDER89_NEON_PINK, t)
+                if (g2d != null) {
+                    val promptWidth = g2d.fontMetrics.stringWidth(truncated)
+                    if (promptWidth > 0) {
+                        g2d.paint = LinearGradientPaint(
+                            promptX.toFloat(), 0f,
+                            (promptX + promptWidth).toFloat(), 0f,
+                            floatArrayOf(0f, 1f),
+                            arrayOf(promptColor, lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t))
+                        )
+                    } else {
+                        g2d.color = promptColor
+                    }
+                    g2d.drawString(truncated, promptX, targetRegion.y + editor.ascent + lineHeight)
+                } else {
+                    g.color = promptColor
+                    g.drawString(truncated, promptX, targetRegion.y + editor.ascent + lineHeight)
+                }
             }
 
             override fun calcHeightInPixels(inlay: Inlay<*>): Int = editor.lineHeight * 2
         }
         val inlay = editor.inlayModel.addBlockElement(offset, true, true, 0, renderer) ?: return null
 
-        val timer = Timer(250) {
-            symbolIndex = (symbolIndex + 1) % symbols.size
+        val timer = Timer(100) {
+            frameCount++
+            if (frameCount % 3 == 0) symbolIndex = (symbolIndex + 1) % symbols.size
             inlay.repaint()
         }
         timer.start()
