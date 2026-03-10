@@ -72,3 +72,4 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 20 | 20-plan-order89-prompt-v3-output-cleaning.md | plan | 7-step implementation plan for prompt v3 and output cleaning pipeline in Order89Executor |
 | 21 | 21-research-intellij-text-color-effects.md | research | Text color effects in IntelliJ: gradients, animated colors, and per-character styling via Graphics2D |
 | 22 | 22-plan-enhanced-text-effects.md | plan | 9-step plan for gradient FIM/NEP ghost text and pulsing Order 89 status effects |
+| 23 | 23-research-inline-completion-suppression.md | research | How InlineCompletionProvider works and how completamente suppresses Full Line and cloud completions |
