@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URI
+import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.APP)
 class ServerManager : Disposable {
@@ -32,6 +33,7 @@ class ServerManager : Disposable {
     var userDeclinedServerStart: Boolean = false
 
     private var managedProcess: Process? = null
+    private var adoptedPid: Long? = null
     private var outputReaderThread: Thread? = null
     private val recentOutput = java.util.concurrent.LinkedBlockingDeque<String>(10)
     private val serverLock = Any()
@@ -202,21 +204,127 @@ class ServerManager : Disposable {
     }
 
     /**
+     * Adopt an externally-started llama.cpp server already listening on the configured host:port.
+     * Uses lsof/ps to discover the PID and log file. Must be called from a background thread.
+     */
+    fun adoptExternalServer() {
+        synchronized(serverLock) {
+            if (ownershipState == OwnershipState.MANAGED || serverState == ServerState.STARTING) return
+        }
+
+        if (probeServerHealth() != ServerState.RUNNING) return
+
+        val settings = SettingsState.getInstance()
+        val serverUrl = settings.serverUrl
+
+        if (!isLocalUrl(serverUrl)) return
+
+        val (_, port) = extractHostPort(serverUrl)
+
+        val pid: Long
+        try {
+            val lsofProcess = ProcessBuilder("lsof", "-ti", "tcp:$port")
+                .redirectErrorStream(true)
+                .start()
+            if (!lsofProcess.waitFor(5, TimeUnit.SECONDS)) {
+                lsofProcess.destroyForcibly()
+                logger.warn("lsof timed out for port $port")
+                return
+            }
+            val lsofOutput = lsofProcess.inputStream.bufferedReader().readText().trim()
+            if (lsofProcess.exitValue() != 0 || lsofOutput.isBlank()) {
+                logger.warn("lsof did not find a process on port $port")
+                return
+            }
+            // lsof may return multiple PIDs (one per line); take the first
+            pid = lsofOutput.lines().first().trim().toLong()
+        } catch (e: Exception) {
+            logger.warn("Failed to run lsof for port $port: ${e.message}")
+            return
+        }
+
+        var logFile: File? = null
+        try {
+            val psProcess = ProcessBuilder("ps", "-p", pid.toString(), "-o", "args=")
+                .redirectErrorStream(true)
+                .start()
+            if (!psProcess.waitFor(5, TimeUnit.SECONDS)) {
+                psProcess.destroyForcibly()
+                logger.warn("ps timed out for PID $pid")
+            } else {
+                val cmdLine = psProcess.inputStream.bufferedReader().readText().trim()
+                if (psProcess.exitValue() == 0 && cmdLine.isNotBlank()) {
+                    logFile = parseLogFileFromArgs(cmdLine)
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to run ps for PID $pid: ${e.message}")
+            // Continue — log file is best-effort
+        }
+
+        synchronized(serverLock) {
+            // Re-check guard: another thread may have started a managed server while we were running lsof/ps
+            if (ownershipState == OwnershipState.MANAGED || serverState == ServerState.STARTING) return
+            adoptedPid = pid
+            ownershipState = OwnershipState.MANAGED
+            serverState = ServerState.RUNNING
+            if (logFile != null) serverLogFile = logFile
+        }
+
+        logger.info("Adopted external server (PID $pid, port $port, logFile=${logFile?.absolutePath ?: "none"})")
+    }
+
+    /**
      * Stop the managed server process if we own it.
      * Uses destroyForcibly() (SIGKILL) which is immediate, so no waiting is needed.
      */
     private fun stopServerLocked() {
-        val process = managedProcess ?: return
         if (ownershipState != OwnershipState.MANAGED) return
 
-        logger.info("Stopping managed server")
-        process.destroyForcibly()
-        outputReaderThread?.interrupt()
-        outputReaderThread = null
+        val process = managedProcess
+        if (process != null) {
+            logger.info("Stopping managed server")
+            process.destroyForcibly()
+            outputReaderThread?.interrupt()
+            outputReaderThread = null
+            managedProcess = null
+            ownershipState = OwnershipState.UNMANAGED
+            serverState = ServerState.STOPPED
+            serverLogFile = null
+            return
+        }
 
-        managedProcess = null
-        ownershipState = OwnershipState.UNMANAGED
-        serverState = ServerState.STOPPED
+        val pid = adoptedPid
+        if (pid != null) {
+            logger.info("Stopping adopted server (PID $pid)")
+            try {
+                val killProcess = ProcessBuilder("kill", pid.toString())
+                    .redirectErrorStream(true)
+                    .start()
+                if (!killProcess.waitFor(5, TimeUnit.SECONDS)) {
+                    killProcess.destroyForcibly()
+                }
+                // Give the process a moment to terminate before checking
+                Thread.sleep(1_000)
+                // Escalate to SIGKILL if the process is still alive
+                val checkProcess = ProcessBuilder("kill", "-0", pid.toString())
+                    .redirectErrorStream(true)
+                    .start()
+                if (checkProcess.waitFor(2, TimeUnit.SECONDS) && checkProcess.exitValue() == 0) {
+                    logger.info("Adopted server PID $pid did not respond to SIGTERM, sending SIGKILL")
+                    ProcessBuilder("kill", "-9", pid.toString())
+                        .redirectErrorStream(true)
+                        .start()
+                        .waitFor(2, TimeUnit.SECONDS)
+                }
+            } catch (e: Exception) {
+                logger.warn("Failed to kill adopted server PID $pid: ${e.message}")
+            }
+            adoptedPid = null
+            ownershipState = OwnershipState.UNMANAGED
+            serverState = ServerState.STOPPED
+            serverLogFile = null
+        }
     }
 
     fun stopServer() {
@@ -241,7 +349,7 @@ class ServerManager : Disposable {
             return try {
                 val uri = URI(serverUrl)
                 val host = uri.host?.lowercase() ?: return false
-                host == "localhost" || host.startsWith("127.") || host == "::1"
+                host == "localhost" || host.startsWith("127.") || host == "[::1]"
             } catch (_: Exception) {
                 false
             }
@@ -255,6 +363,15 @@ class ServerManager : Disposable {
                 tokens.add(match.groupValues[1].ifEmpty { match.value })
             }
             return tokens
+        }
+
+        /** Parse --log-file value from a command line string. Returns null if not found. */
+        fun parseLogFileFromArgs(cmdLine: String): File? {
+            // Match --log-file=<path> or --log-file <path>, with optional quoting
+            val regex = Regex("""--log-file=(?:"([^"]+)"|'([^']+)'|(\S+))|--log-file\s+(?:"([^"]+)"|'([^']+)'|(\S+))""")
+            val match = regex.find(cmdLine) ?: return null
+            val path = match.groupValues.drop(1).firstOrNull { it.isNotEmpty() } ?: return null
+            return File(path)
         }
 
         /** Extract host and port from a server URL. Defaults to 127.0.0.1:8017 to match the plugin's default server URL. */
