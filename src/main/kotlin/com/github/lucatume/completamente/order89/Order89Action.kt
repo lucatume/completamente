@@ -10,24 +10,22 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorCustomElementRenderer
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.Key
 import java.awt.Color
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.LinearGradientPaint
-import java.awt.Rectangle
-import java.awt.RenderingHints
+import java.awt.Font
 import java.awt.event.KeyEvent
-import com.intellij.openapi.util.Disposer
 import java.util.ArrayDeque
 import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
@@ -53,17 +51,23 @@ internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
     return collapsed.substring(0, maxLength) + "..."
 }
 
+data class Order89StatusDisplay(
+    val range: RangeMarker,
+    val highlighters: List<RangeHighlighter>,
+    val timer: Timer
+)
+
 data class Order89Session(
     val process: Process,
     val future: Future<Order89Result>,
-    val inlay: Inlay<*>?,
+    val statusDisplay: Order89StatusDisplay?,
     val range: RangeMarker
 )
 
 class Order89Action : AnAction() {
 
     companion object {
-        private val SESSIONS_KEY = Key.create<ArrayDeque<Order89Session>>("order89.sessions")
+        internal val SESSIONS_KEY = Key.create<ArrayDeque<Order89Session>>("order89.sessions")
         private val ESC_ACTION_KEY = Key.create<AnAction>("order89.escAction")
     }
 
@@ -91,6 +95,7 @@ class Order89Action : AnAction() {
 
         val filePath = psiFile.virtualFile?.path ?: ""
 
+        // Capture file content BEFORE inserting status lines.
         val request = Order89Request(
             commandTemplate = order89Command,
             prompt = dialog.promptText,
@@ -102,15 +107,17 @@ class Order89Action : AnAction() {
             workingDirectory = project.basePath ?: "."
         )
 
-        val caretOffset = editor.caretModel.offset
-        val indentX = editor.offsetToXY(caretOffset).x
-        val inlay = addExecutingInlay(editor, editor.document.getLineStartOffset(targetLine), indentX, dialog.promptText)
+        // Create selection range marker BEFORE inserting status lines.
+        val rangeMarker = editor.document.createRangeMarker(selectionStart, selectionEnd)
+        rangeMarker.isGreedyToRight = true
+
+        // Insert status lines as real document text above the selection.
+        val insertionOffset = editor.document.getLineStartOffset(targetLine)
+        val statusDisplay = insertStatusLines(editor, insertionOffset, dialog.promptText)
 
         val (process, future) = Order89Executor.execute(request)
 
-        val rangeMarker = editor.document.createRangeMarker(selectionStart, selectionEnd)
-        rangeMarker.isGreedyToRight = true
-        val session = Order89Session(process, future, inlay, rangeMarker)
+        val session = Order89Session(process, future, statusDisplay, rangeMarker)
         val sessions = editor.getUserData(SESSIONS_KEY) ?: ArrayDeque<Order89Session>().also {
             editor.putUserData(SESSIONS_KEY, it)
         }
@@ -118,34 +125,7 @@ class Order89Action : AnAction() {
         sessions.push(session)
 
         if (wasEmpty) {
-            val escAction = object : AnAction() {
-                override fun actionPerformed(e: AnActionEvent) {
-                    val deque = editor.getUserData(SESSIONS_KEY) ?: return
-                    val doc = editor.document
-                    val caretLine = editor.caretModel.logicalPosition.line
-
-                    val match = deque.firstOrNull { s ->
-                        s.range.isValid &&
-                            caretLine >= doc.getLineNumber(s.range.startOffset) &&
-                            caretLine <= doc.getLineNumber(s.range.endOffset)
-                    }
-
-                    if (match != null) {
-                        deque.remove(match)
-                        match.process.destroyForcibly()
-                        match.future.cancel(true)
-                        match.inlay?.dispose()
-                        match.range.dispose()
-                        if (deque.isEmpty()) {
-                            unregisterEsc(editor)
-                        }
-                    } else {
-                        val originalEsc = ActionManager.getInstance()
-                            .getAction(IdeActions.ACTION_EDITOR_ESCAPE)
-                        originalEsc?.actionPerformed(e)
-                    }
-                }
-            }
+            val escAction = Order89EscAction(editor, this)
             escAction.registerCustomShortcutSet(
                 CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)),
                 editor.component
@@ -157,17 +137,20 @@ class Order89Action : AnAction() {
             try {
                 val result = future.get()
                 ApplicationManager.getApplication().invokeLater {
+                    if (editor.isDisposed) return@invokeLater
                     if (result.success) {
-                        WriteCommandAction.runWriteCommandAction(project) {
-                            // A disposed RangeMarker returns isValid=false, so ESC cancellation prevents stale writes here.
+                        // 1. Delete status lines undo-transparently → selection range shifts back to original offsets.
+                        removeStatusDisplay(editor, session.statusDisplay)
+                        // 2. Replace selection (undoable) → greedy range expands to new text length.
+                        WriteCommandAction.runWriteCommandAction(project, "Order 89", null, {
                             if (!session.range.isValid) return@runWriteCommandAction
                             editor.document.replaceString(session.range.startOffset, session.range.endOffset, result.output)
                             PsiDocumentManager.getInstance(project).commitDocument(editor.document)
                             val committedPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-                            if (committedPsiFile != null) {
+                            if (committedPsiFile != null && session.range.isValid) {
                                 CodeStyleManager.getInstance(project).reformatText(committedPsiFile, session.range.startOffset, session.range.endOffset)
                             }
-                        }
+                        })
                     } else {
                         NotificationGroupManager.getInstance()
                             .getNotificationGroup("completamente")
@@ -178,7 +161,9 @@ class Order89Action : AnAction() {
             } catch (_: CancellationException) {
                 // Cancelled by user via ESC.
             } catch (ex: Exception) {
+                // Covers process I/O errors, unexpected executor failures, etc.
                 ApplicationManager.getApplication().invokeLater {
+                    if (editor.isDisposed) return@invokeLater
                     NotificationGroupManager.getInstance()
                         .getNotificationGroup("completamente")
                         .createNotification(ex.message ?: "Unknown error", NotificationType.ERROR)
@@ -186,9 +171,10 @@ class Order89Action : AnAction() {
                 }
             } finally {
                 ApplicationManager.getApplication().invokeLater {
+                    if (editor.isDisposed) return@invokeLater
                     val deque = editor.getUserData(SESSIONS_KEY)
                     if (deque?.remove(session) == true) {
-                        session.inlay?.dispose()
+                        removeStatusDisplay(editor, session.statusDisplay)
                         session.range.dispose()
                     }
                     if (deque?.isEmpty() == true) {
@@ -203,85 +189,135 @@ class Order89Action : AnAction() {
         e.presentation.isEnabledAndVisible = e.getData(CommonDataKeys.EDITOR) != null
     }
 
-    private fun unregisterEsc(editor: Editor) {
+    internal fun unregisterEsc(editor: Editor) {
         editor.getUserData(ESC_ACTION_KEY)?.unregisterCustomShortcutSet(editor.component)
         editor.putUserData(ESC_ACTION_KEY, null)
     }
 
-    private fun addExecutingInlay(editor: Editor, offset: Int, indentX: Int, prompt: String): Inlay<*>? {
-        val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
-        var symbolIndex = 0
-        var frameCount = 0
-        val truncated = truncatePrompt(prompt)
-
-        val renderer = object : EditorCustomElementRenderer {
-            override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
-
-            override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
-                val g2d = g as? Graphics2D
-                g2d?.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
-
-                val lineHeight = editor.lineHeight
-                g.font = editor.colorsScheme.getFont(EditorFontType.ITALIC)
-
-                val t = (sin(frameCount * 0.5) + 1.0) / 2.0
-                val pulseColor = lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t)
-
-                val statusText = "${symbols[symbolIndex]} Executing Order 89"
-                if (g2d != null) {
-                    val fm = g2d.fontMetrics
-                    val textWidth = fm.stringWidth(statusText)
-                    if (textWidth > 0) {
-                        val gradient = LinearGradientPaint(
-                            indentX.toFloat(), 0f,
-                            (indentX + textWidth).toFloat(), 0f,
-                            floatArrayOf(0f, 1f),
-                            arrayOf(pulseColor, lerpColor(ORDER89_CYAN, ORDER89_NEON_PINK, t))
-                        )
-                        g2d.paint = gradient
-                    } else {
-                        g2d.color = pulseColor
+    /**
+     * Stops the timer, removes highlighters, deletes status text from the document (undo-transparently),
+     * and disposes the status range. Safe to call when the display has already been cleaned up (idempotent):
+     * the timer stop and highlighter removal are no-ops if already done, and the range validity check
+     * guards the document deletion.
+     */
+    internal fun removeStatusDisplay(editor: Editor, display: Order89StatusDisplay?) {
+        if (display == null) return
+        display.timer.stop()
+        display.highlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
+        if (display.range.isValid) {
+            ApplicationManager.getApplication().runWriteAction {
+                CommandProcessor.getInstance().runUndoTransparentAction {
+                    if (display.range.isValid) {
+                        editor.document.deleteString(display.range.startOffset, display.range.endOffset)
                     }
-                    g2d.drawString(statusText, indentX, targetRegion.y + editor.ascent)
-                } else {
-                    g.color = pulseColor
-                    g.drawString(statusText, indentX, targetRegion.y + editor.ascent)
-                }
-
-                val promptX = indentX + g.fontMetrics.stringWidth("${symbols[symbolIndex]} ")
-                val promptColor = lerpColor(ORDER89_CYAN, ORDER89_NEON_PINK, t)
-                if (g2d != null) {
-                    val promptWidth = g2d.fontMetrics.stringWidth(truncated)
-                    if (promptWidth > 0) {
-                        g2d.paint = LinearGradientPaint(
-                            promptX.toFloat(), 0f,
-                            (promptX + promptWidth).toFloat(), 0f,
-                            floatArrayOf(0f, 1f),
-                            arrayOf(promptColor, lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t))
-                        )
-                    } else {
-                        g2d.color = promptColor
-                    }
-                    g2d.drawString(truncated, promptX, targetRegion.y + editor.ascent + lineHeight)
-                } else {
-                    g.color = promptColor
-                    g.drawString(truncated, promptX, targetRegion.y + editor.ascent + lineHeight)
                 }
             }
-
-            override fun calcHeightInPixels(inlay: Inlay<*>): Int = editor.lineHeight * 2
         }
-        val inlay = editor.inlayModel.addBlockElement(offset, true, true, 0, renderer) ?: return null
+        display.range.dispose()
+    }
 
+    private fun insertStatusLines(editor: Editor, offset: Int, prompt: String): Order89StatusDisplay? {
+        val truncated = truncatePrompt(prompt)
+        val lineEnd = editor.document.getLineEndOffset(editor.document.getLineNumber(offset))
+        val lineText = editor.document.getText(TextRange(offset, lineEnd))
+        val indent = lineText.takeWhile { it == ' ' || it == '\t' }
+        val statusLine1 = "$indent\u2726 Executing Order 89"
+        val statusLine2 = "$indent  $truncated"
+        val statusText = "$statusLine1\n$statusLine2\n"
+
+        ApplicationManager.getApplication().runWriteAction {
+            CommandProcessor.getInstance().runUndoTransparentAction {
+                editor.document.insertString(offset, statusText)
+            }
+        }
+
+        // Range covers the full inserted text including trailing newline, so deletion removes all of it.
+        val statusRange = editor.document.createRangeMarker(offset, offset + statusText.length)
+
+        val markup = editor.markupModel
+        val attrs1 = TextAttributes().apply {
+            foregroundColor = ORDER89_NEON_PINK
+            fontType = Font.ITALIC
+        }
+        val attrs2 = TextAttributes().apply {
+            foregroundColor = ORDER89_NEON_PINK
+            fontType = Font.ITALIC
+        }
+
+        val line1End = offset + statusLine1.length
+        // +1 skips the newline between lines.
+        val line2Start = line1End + 1
+        val line2End = line2Start + statusLine2.length
+
+        // LAST ensures status text styling takes priority over editor default colors.
+        val h1 = markup.addRangeHighlighter(
+            offset, line1End,
+            HighlighterLayer.LAST,
+            attrs1,
+            HighlighterTargetArea.EXACT_RANGE
+        )
+        val h2 = markup.addRangeHighlighter(
+            line2Start, line2End,
+            HighlighterLayer.LAST,
+            attrs2,
+            HighlighterTargetArea.EXACT_RANGE
+        )
+        val highlighters = listOf(h1, h2)
+        val attrsList = listOf(attrs1, attrs2)
+
+        var frameCount = 0
         val timer = Timer(100) {
-            frameCount++
-            if (frameCount % 3 == 0) symbolIndex = (symbolIndex + 1) % symbols.size
-            inlay.repaint()
+            // Wraps at 1000 to prevent unbounded growth; at 100ms intervals this cycles every ~100s.
+            frameCount = (frameCount + 1) % 1000
+            val t = (sin(frameCount * 0.5) + 1.0) / 2.0
+            val color = lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t)
+            attrsList.forEach { it.foregroundColor = color }
+            if (!editor.isDisposed) editor.contentComponent.repaint()
         }
         timer.start()
 
-        Disposer.register(inlay) { timer.stop() }
+        return Order89StatusDisplay(statusRange, highlighters, timer)
+    }
+}
 
-        return inlay
+/** Cursor-aware ESC handler that cancels the Order 89 session matching the caret position. */
+private class Order89EscAction(
+    private val editor: Editor,
+    private val parent: Order89Action
+) : AnAction() {
+
+    override fun actionPerformed(e: AnActionEvent) {
+        if (editor.isDisposed) return
+        val deque = editor.getUserData(Order89Action.SESSIONS_KEY) ?: return
+        val doc = editor.document
+        val caretLine = editor.caretModel.logicalPosition.line
+
+        // Match if the caret is on the selection lines OR on the status display lines.
+        val match = deque.firstOrNull { s ->
+            if (!s.range.isValid) return@firstOrNull false
+            val onSelection = caretLine >= doc.getLineNumber(s.range.startOffset) &&
+                caretLine <= doc.getLineNumber(s.range.endOffset)
+            val onStatus = s.statusDisplay?.range?.let { r ->
+                r.isValid &&
+                    caretLine >= doc.getLineNumber(r.startOffset) &&
+                    caretLine <= doc.getLineNumber(r.endOffset)
+            } ?: false
+            onSelection || onStatus
+        }
+
+        if (match != null) {
+            deque.remove(match)
+            match.process.destroyForcibly()
+            match.future.cancel(true)
+            parent.removeStatusDisplay(editor, match.statusDisplay)
+            match.range.dispose()
+            if (deque.isEmpty()) {
+                parent.unregisterEsc(editor)
+            }
+        } else {
+            val originalEsc = ActionManager.getInstance()
+                .getAction(IdeActions.ACTION_EDITOR_ESCAPE)
+            originalEsc?.actionPerformed(e)
+        }
     }
 }
