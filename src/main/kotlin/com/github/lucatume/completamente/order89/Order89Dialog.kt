@@ -1,5 +1,6 @@
 package com.github.lucatume.completamente.order89
 
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
@@ -23,10 +24,10 @@ import javax.swing.border.TitledBorder
 class Order89Dialog(parentComponent: Component) :
     JDialog(SwingUtilities.getWindowAncestor(parentComponent) as? Frame, true) {
 
-    private val neonPink = Color(255, 16, 240)
+    private val neonPink = desaturate(Color(255, 16, 240), 0.25)
     private val borderColor = desaturate(neonPink, 0.25)
-    private val darkBg = Color(20, 10, 30)
-    private val cyan = Color(0, 255, 255)
+    private val editorBg = EditorColorsManager.getInstance().globalScheme.defaultBackground
+    private val cyan = desaturate(Color(0, 255, 255), 0.25)
 
     private val textArea = JTextArea()
     private var submitted = false
@@ -52,13 +53,13 @@ class Order89Dialog(parentComponent: Component) :
         )
         val inner = BorderFactory.createEmptyBorder(4, 8, 8, 8)
         (contentPane as JComponent).border = BorderFactory.createCompoundBorder(titledBorder, inner)
-        contentPane.background = darkBg
+        contentPane.background = editorBg
 
         textArea.apply {
             lineWrap = true
             wrapStyleWord = true
             font = Font(Font.MONOSPACED, Font.PLAIN, 14)
-            background = darkBg
+            background = editorBg
             foreground = cyan
             caretColor = neonPink
             border = BorderFactory.createEmptyBorder()
@@ -88,7 +89,7 @@ class Order89Dialog(parentComponent: Component) :
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
         ).apply {
             border = BorderFactory.createEmptyBorder()
-            viewport.background = darkBg
+            viewport.background = editorBg
         }
 
         add(scrollPane, BorderLayout.CENTER)
