@@ -73,3 +73,6 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 21 | 21-research-intellij-text-color-effects.md | research | Text color effects in IntelliJ: gradients, animated colors, and per-character styling via Graphics2D |
 | 22 | 22-plan-enhanced-text-effects.md | plan | 9-step plan for gradient FIM/NEP ghost text and pulsing Order 89 status effects |
 | 23 | 23-research-inline-completion-suppression.md | research | How InlineCompletionProvider works and how completamente suppresses Full Line and cloud completions |
+| 24 | 24-research-order89-cursor-based-cancellation.md | research | Current ESC cancellation behavior, RangeMarker API, and cursor-position-based session matching |
+| 25 | 25-design-order89-cursor-based-cancellation.md | design | Cursor-aware ESC cancellation using RangeMarker per session with ESC passthrough |
+| 26 | 26-plan-order89-cursor-based-cancellation.md | plan | 5-step implementation plan: add RangeMarker to session, rewrite ESC handler, dispose on completion |

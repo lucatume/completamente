@@ -3,10 +3,12 @@ package com.github.lucatume.completamente.order89
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
@@ -14,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
@@ -30,6 +33,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import javax.swing.KeyStroke
 import javax.swing.Timer
+import kotlin.math.sin
 
 private val ORDER89_NEON_PINK = Color(255, 16, 240)
 private val ORDER89_CYAN = Color(0, 255, 255)
@@ -52,7 +56,8 @@ internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
 data class Order89Session(
     val process: Process,
     val future: Future<Order89Result>,
-    val inlay: Inlay<*>?
+    val inlay: Inlay<*>?,
+    val range: RangeMarker
 )
 
 class Order89Action : AnAction() {
@@ -103,7 +108,9 @@ class Order89Action : AnAction() {
 
         val (process, future) = Order89Executor.execute(request)
 
-        val session = Order89Session(process, future, inlay)
+        val rangeMarker = editor.document.createRangeMarker(selectionStart, selectionEnd)
+        rangeMarker.isGreedyToRight = true
+        val session = Order89Session(process, future, inlay, rangeMarker)
         val sessions = editor.getUserData(SESSIONS_KEY) ?: ArrayDeque<Order89Session>().also {
             editor.putUserData(SESSIONS_KEY, it)
         }
@@ -114,12 +121,28 @@ class Order89Action : AnAction() {
             val escAction = object : AnAction() {
                 override fun actionPerformed(e: AnActionEvent) {
                     val deque = editor.getUserData(SESSIONS_KEY) ?: return
-                    val top = deque.pollFirst() ?: return
-                    top.process.destroyForcibly()
-                    top.future.cancel(true)
-                    top.inlay?.dispose()
-                    if (deque.isEmpty()) {
-                        unregisterEsc(editor)
+                    val doc = editor.document
+                    val caretLine = editor.caretModel.logicalPosition.line
+
+                    val match = deque.firstOrNull { s ->
+                        s.range.isValid &&
+                            caretLine >= doc.getLineNumber(s.range.startOffset) &&
+                            caretLine <= doc.getLineNumber(s.range.endOffset)
+                    }
+
+                    if (match != null) {
+                        deque.remove(match)
+                        match.process.destroyForcibly()
+                        match.future.cancel(true)
+                        match.inlay?.dispose()
+                        match.range.dispose()
+                        if (deque.isEmpty()) {
+                            unregisterEsc(editor)
+                        }
+                    } else {
+                        val originalEsc = ActionManager.getInstance()
+                            .getAction(IdeActions.ACTION_EDITOR_ESCAPE)
+                        originalEsc?.actionPerformed(e)
                     }
                 }
             }
@@ -136,12 +159,13 @@ class Order89Action : AnAction() {
                 ApplicationManager.getApplication().invokeLater {
                     if (result.success) {
                         WriteCommandAction.runWriteCommandAction(project) {
-                            editor.document.replaceString(selectionStart, selectionEnd, result.output)
-                            val endOffset = selectionStart + result.output.length
+                            // A disposed RangeMarker returns isValid=false, so ESC cancellation prevents stale writes here.
+                            if (!session.range.isValid) return@runWriteCommandAction
+                            editor.document.replaceString(session.range.startOffset, session.range.endOffset, result.output)
                             PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-                            val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-                            if (psiFile != null) {
-                                CodeStyleManager.getInstance(project).reformatText(psiFile, selectionStart, endOffset)
+                            val committedPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+                            if (committedPsiFile != null) {
+                                CodeStyleManager.getInstance(project).reformatText(committedPsiFile, session.range.startOffset, session.range.endOffset)
                             }
                         }
                     } else {
@@ -153,18 +177,20 @@ class Order89Action : AnAction() {
                 }
             } catch (_: CancellationException) {
                 // Cancelled by user via ESC.
-            } catch (e: Exception) {
+            } catch (ex: Exception) {
                 ApplicationManager.getApplication().invokeLater {
                     NotificationGroupManager.getInstance()
                         .getNotificationGroup("completamente")
-                        .createNotification(e.message ?: "Unknown error", NotificationType.ERROR)
+                        .createNotification(ex.message ?: "Unknown error", NotificationType.ERROR)
                         .notify(project)
                 }
             } finally {
                 ApplicationManager.getApplication().invokeLater {
-                    session.inlay?.dispose()
                     val deque = editor.getUserData(SESSIONS_KEY)
-                    deque?.remove(session)
+                    if (deque?.remove(session) == true) {
+                        session.inlay?.dispose()
+                        session.range.dispose()
+                    }
                     if (deque?.isEmpty() == true) {
                         unregisterEsc(editor)
                     }
@@ -198,7 +224,7 @@ class Order89Action : AnAction() {
                 val lineHeight = editor.lineHeight
                 g.font = editor.colorsScheme.getFont(EditorFontType.ITALIC)
 
-                val t = (Math.sin(frameCount * 0.5) + 1.0) / 2.0
+                val t = (sin(frameCount * 0.5) + 1.0) / 2.0
                 val pulseColor = lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t)
 
                 val statusText = "${symbols[symbolIndex]} Executing Order 89"
