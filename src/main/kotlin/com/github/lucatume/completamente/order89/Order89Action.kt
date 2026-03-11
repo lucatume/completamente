@@ -36,7 +36,7 @@ import kotlin.math.sin
 private val ORDER89_NEON_PINK = Color(255, 16, 240)
 private val ORDER89_CYAN = Color(0, 255, 255)
 
-private fun lerpColor(a: Color, b: Color, t: Double): Color {
+internal fun lerpColor(a: Color, b: Color, t: Double): Color {
     val ct = t.coerceIn(0.0, 1.0)
     return Color(
         (a.red + (b.red - a.red) * ct).toInt(),
@@ -53,6 +53,7 @@ internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
 
 data class Order89StatusDisplay(
     val range: RangeMarker,
+    val symbolRange: RangeMarker,
     val highlighters: List<RangeHighlighter>,
     val timer: Timer
 )
@@ -81,8 +82,7 @@ class Order89Action : AnAction() {
         val targetLine = editor.document.getLineNumber(selectionStart)
 
         val dialog = Order89Dialog(editor.component)
-        dialog.show()
-        if (dialog.exitCode != com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE || dialog.promptText.isBlank()) return
+        if (!dialog.showAndWait() || dialog.promptText.isBlank()) return
 
         val order89Command = SettingsState.getInstance().order89Command
         if (order89Command.isBlank()) {
@@ -204,6 +204,7 @@ class Order89Action : AnAction() {
         if (display == null) return
         display.timer.stop()
         display.highlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
+        display.symbolRange.dispose()
         if (display.range.isValid) {
             ApplicationManager.getApplication().runWriteAction {
                 CommandProcessor.getInstance().runUndoTransparentAction {
@@ -221,7 +222,7 @@ class Order89Action : AnAction() {
         val lineEnd = editor.document.getLineEndOffset(editor.document.getLineNumber(offset))
         val lineText = editor.document.getText(TextRange(offset, lineEnd))
         val indent = lineText.takeWhile { it == ' ' || it == '\t' }
-        val statusLine1 = "$indent\u2726 Executing Order 89"
+        val statusLine1 = "$indent\u2726 Executing..."
         val statusLine2 = "$indent  $truncated"
         val statusText = "$statusLine1\n$statusLine2\n"
 
@@ -233,6 +234,10 @@ class Order89Action : AnAction() {
 
         // Range covers the full inserted text including trailing newline, so deletion removes all of it.
         val statusRange = editor.document.createRangeMarker(offset, offset + statusText.length)
+        val symbolRange = editor.document.createRangeMarker(offset + indent.length, offset + indent.length + 1)
+
+        val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
+        var symbolIndex = 0
 
         val markup = editor.markupModel
         val attrs1 = TextAttributes().apply {
@@ -272,11 +277,25 @@ class Order89Action : AnAction() {
             val t = (sin(frameCount * 0.5) + 1.0) / 2.0
             val color = lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t)
             attrsList.forEach { it.foregroundColor = color }
+            // Rotate star symbol every 3rd frame (~300ms).
+            if (frameCount % 3 == 0 && symbolRange.isValid) {
+                symbolIndex = (symbolIndex + 1) % symbols.size
+                ApplicationManager.getApplication().runWriteAction {
+                    CommandProcessor.getInstance().runUndoTransparentAction {
+                        if (symbolRange.isValid) {
+                            editor.document.replaceString(
+                                symbolRange.startOffset, symbolRange.endOffset,
+                                symbols[symbolIndex].toString()
+                            )
+                        }
+                    }
+                }
+            }
             if (!editor.isDisposed) editor.contentComponent.repaint()
         }
         timer.start()
 
-        return Order89StatusDisplay(statusRange, highlighters, timer)
+        return Order89StatusDisplay(statusRange, symbolRange, highlighters, timer)
     }
 }
 
