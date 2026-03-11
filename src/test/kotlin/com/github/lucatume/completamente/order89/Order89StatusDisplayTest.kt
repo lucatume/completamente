@@ -7,6 +7,9 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.TextRange
 import java.awt.Color
 import java.awt.Font
@@ -16,42 +19,122 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
 
     // -- insertStatusLines behavior (tested via Order89Action) --
 
-    private fun insertStatusText(content: String, prompt: String, offset: Int = 0): Pair<String, String> {
+    private fun insertStatusLines(content: String, prompt: String, offset: Int = 0): List<String> {
         myFixture.configureByText("test.kt", content)
         val doc = myFixture.editor.document
         val lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset))
         val lineText = doc.getText(TextRange(offset, lineEnd))
         val indent = lineText.takeWhile { it == ' ' || it == '\t' }
-        val truncated = truncatePrompt(prompt)
+        val promptLines = formatPromptLines(prompt)
         val statusLine1 = "$indent\u2726 Executing..."
-        val statusLine2 = "$indent  $truncated"
-        return statusLine1 to statusLine2
+        val promptPrefix = "$indent \u23BF "
+        val continuationPrefix = "$indent   "
+        val lines = mutableListOf(statusLine1)
+        promptLines.forEachIndexed { i, line ->
+            val prefix = if (i == 0) promptPrefix else continuationPrefix
+            lines.add("$prefix$line")
+        }
+        return lines
     }
 
-    fun testStatusLineContainsStarSymbol() {
-        val (line1, _) = insertStatusText("fun main() {}", "do something")
-        assertTrue("Status line should start with star symbol", line1.contains("\u2726"))
+    fun testStatusLineStartsWithStarAndExecuting() {
+        val lines = insertStatusLines("fun main() {}", "do something")
+        assertEquals("\u2726 Executing...", lines[0])
     }
 
-    fun testStatusLineContainsExecutingEllipsis() {
-        val (line1, _) = insertStatusText("fun main() {}", "do something")
-        assertTrue("Should contain 'Executing...'", line1.contains("Executing..."))
-    }
-
-    fun testStatusLineContainsTruncatedPrompt() {
-        val (_, line2) = insertStatusText("fun main() {}", "make it print hello world")
-        assertTrue("Should contain prompt text", line2.contains("make it print hello world"))
+    fun testStatusLineFirstPromptLineUsesContSymbol() {
+        val lines = insertStatusLines("fun main() {}", "make it print hello world")
+        assertEquals(" \u23BF make it print hello world", lines[1])
     }
 
     fun testStatusLinePreservesIndent() {
-        val (line1, line2) = insertStatusText("    fun main() {}", "do something", 0)
-        assertTrue("Line 1 should have indent", line1.startsWith("    "))
-        assertTrue("Line 2 should have indent", line2.startsWith("    "))
+        val lines = insertStatusLines("    fun main() {}", "do something", 0)
+        assertEquals("    \u2726 Executing...", lines[0])
+        assertEquals("     \u23BF do something", lines[1])
     }
 
     fun testStatusLineNoIndentWhenNone() {
-        val (line1, _) = insertStatusText("fun main() {}", "do something", 0)
-        assertTrue("Line 1 should start with star", line1.startsWith("\u2726"))
+        val lines = insertStatusLines("fun main() {}", "do something", 0)
+        assertEquals("\u2726 Executing...", lines[0])
+        assertEquals(" \u23BF do something", lines[1])
+    }
+
+    fun testMultiLineWrappingWithIndent() {
+        val longPrompt = ("abcdefghij ".repeat(20)).trim()
+        val promptLines = formatPromptLines(longPrompt)
+        val lines = insertStatusLines("    fun main() {}", longPrompt, 0)
+        assertEquals("Line count = 1 header + prompt lines", 1 + promptLines.size, lines.size)
+        assertEquals("    \u2726 Executing...", lines[0])
+        assertEquals("     \u23BF ${promptLines[0]}", lines[1])
+        for (i in 1 until promptLines.size) {
+            assertEquals("       ${promptLines[i]}", lines[i + 1])
+        }
+    }
+
+    fun testShortPromptFitsOnOneLine() {
+        val lines = insertStatusLines("fun main() {}", "short prompt")
+        assertEquals("Should have 2 lines (header + 1 prompt line)", 2, lines.size)
+        assertEquals(" \u23BF short prompt", lines[1])
+    }
+
+    fun testLongPromptWrapsAcrossMultipleLines() {
+        // 7 words x 10 chars + spaces = 76 chars first line, then wraps.
+        val longPrompt = ("abcdefghij ".repeat(20)).trim()
+        val promptLines = formatPromptLines(longPrompt)
+        val lines = insertStatusLines("fun main() {}", longPrompt)
+        assertEquals("Line count = 1 header + prompt lines", 1 + promptLines.size, lines.size)
+        assertEquals(" \u23BF ${promptLines[0]}", lines[1])
+        for (i in 1 until promptLines.size) {
+            assertEquals("   ${promptLines[i]}", lines[i + 1])
+        }
+    }
+
+    fun testContinuationLinesUseSpacePrefixNotSymbol() {
+        val longPrompt = ("abcdefghij ".repeat(20)).trim()
+        val promptLines = formatPromptLines(longPrompt)
+        val lines = insertStatusLines("fun main() {}", longPrompt)
+        assertEquals("Line count = 1 header + prompt lines", 1 + promptLines.size, lines.size)
+        for (i in 1 until promptLines.size) {
+            assertEquals("   ${promptLines[i]}", lines[i + 1])
+        }
+    }
+
+    fun testEmptyPromptProducesTwoLines() {
+        val lines = insertStatusLines("fun main() {}", "")
+        assertEquals("Should have 2 lines (header + 1 empty prompt line)", 2, lines.size)
+        assertEquals("\u2726 Executing...", lines[0])
+        assertEquals(" \u23BF ", lines[1])
+    }
+
+    // -- formatPromptLines tests --
+
+    fun testFormatPromptLinesSingleShortLine() {
+        val result = formatPromptLines("hello world")
+        assertEquals(listOf("hello world"), result)
+    }
+
+    fun testFormatPromptLinesWrapsAtMaxWidth() {
+        // "aaaaaaaaaa bbbbbbbbbb" = 21 chars, adding " cccccccccc" = 32 > 25 → wraps.
+        val result = formatPromptLines("aaaaaaaaaa bbbbbbbbbb cccccccccc dddddddddd", maxWidth = 25)
+        assertEquals(listOf("aaaaaaaaaa bbbbbbbbbb", "cccccccccc dddddddddd"), result)
+    }
+
+    fun testFormatPromptLinesEmptyInput() {
+        assertEquals(listOf(""), formatPromptLines(""))
+        assertEquals(listOf(""), formatPromptLines("   "))
+        assertEquals(listOf(""), formatPromptLines("\n\n"))
+    }
+
+    fun testFormatPromptLinesCollapsesWhitespace() {
+        val result = formatPromptLines("hello   world\nfoo   bar")
+        assertEquals(listOf("hello world foo bar"), result)
+    }
+
+    fun testFormatPromptLinesSingleLongWord() {
+        val longWord = "a".repeat(100)
+        val result = formatPromptLines(longWord, maxWidth = 80)
+        assertEquals("Single word should be on one line even if over maxWidth", 1, result.size)
+        assertEquals(longWord, result[0])
     }
 
     // -- Symbol rotation mechanics --
@@ -262,5 +345,59 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val b = Color(200, 200, 200)
         val result = lerpColor(a, b, -1.0)
         assertEquals(a, result)
+    }
+
+    // -- Undo after successful Order 89 should restore original text, not status lines --
+
+    fun testUndoAfterSuccessRestoresOriginalTextNotStatusLines() {
+        myFixture.configureByText("test.kt", "fun main() {}")
+        val editor = myFixture.editor
+        val doc = editor.document
+        val originalText = doc.text
+
+        // Open the file in an editor so UndoManager can find a FileEditor.
+        val vFile = FileDocumentManager.getInstance().getFile(doc)!!
+        FileEditorManager.getInstance(project).openFile(vFile, true)
+        val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(vFile)!!
+
+        // 1. Insert status text undo-transparently (mimics insertStatusLines).
+        val statusText = "\u2726 Executing...\n  do something\n"
+        ApplicationManager.getApplication().runWriteAction {
+            CommandProcessor.getInstance().runUndoTransparentAction {
+                doc.insertString(0, statusText)
+            }
+        }
+        assertTrue(doc.text.contains("Executing..."))
+
+        val statusRange = doc.createRangeMarker(0, statusText.length)
+        val symbolRange = doc.createRangeMarker(0, 1)
+        val timer = Timer(100) {}
+        val display = Order89StatusDisplay(statusRange, symbolRange, emptyList(), timer)
+
+        // Create a range marker for the "selection" (original text shifted by status insertion).
+        val selectionRange = doc.createRangeMarker(statusText.length, statusText.length + originalText.length)
+        selectionRange.isGreedyToRight = true
+
+        val replacement = "fun main() { println(\"hello\") }"
+        val action = Order89Action()
+
+        // 2. Inside a single WriteCommandAction: remove status (undo-transparent) + replace selection (undoable).
+        WriteCommandAction.runWriteCommandAction(project, "Order 89", null, {
+            action.removeStatusDisplay(editor, display)
+            if (selectionRange.isValid) {
+                doc.replaceString(selectionRange.startOffset, selectionRange.endOffset, replacement)
+            }
+        })
+
+        assertEquals(replacement, doc.text)
+
+        // 3. Undo should restore the original text, NOT the status lines.
+        val undoManager = UndoManager.getInstance(project)
+        assertTrue("Undo should be available", undoManager.isUndoAvailable(fileEditor))
+        undoManager.undo(fileEditor)
+
+        assertEquals("Undo should restore original text without status lines", originalText, doc.text)
+
+        selectionRange.dispose()
     }
 }

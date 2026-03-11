@@ -51,6 +51,23 @@ internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
     return collapsed.substring(0, maxLength) + "..."
 }
 
+internal fun formatPromptLines(prompt: String, maxWidth: Int = 80): List<String> {
+    val words = prompt.trim().split(Regex("\\s+"))
+    if (words.isEmpty() || (words.size == 1 && words[0].isEmpty())) return listOf("")
+    val lines = mutableListOf<String>()
+    val current = StringBuilder(words[0])
+    for (i in 1 until words.size) {
+        if (current.length + 1 + words[i].length > maxWidth) {
+            lines.add(current.toString())
+            current.clear().append(words[i])
+        } else {
+            current.append(' ').append(words[i])
+        }
+    }
+    lines.add(current.toString())
+    return lines
+}
+
 data class Order89StatusDisplay(
     val range: RangeMarker,
     val symbolRange: RangeMarker,
@@ -139,10 +156,10 @@ class Order89Action : AnAction() {
                 ApplicationManager.getApplication().invokeLater {
                     if (editor.isDisposed) return@invokeLater
                     if (result.success) {
-                        // 1. Delete status lines undo-transparently → selection range shifts back to original offsets.
-                        removeStatusDisplay(editor, session.statusDisplay)
-                        // 2. Replace selection (undoable) → greedy range expands to new text length.
                         WriteCommandAction.runWriteCommandAction(project, "Order 89", null, {
+                            // Remove status lines undo-transparently *inside* the command so undo
+                            // only reverts the model insertion, not the status-line removal.
+                            removeStatusDisplay(editor, session.statusDisplay)
                             if (!session.range.isValid) return@runWriteCommandAction
                             editor.document.replaceString(session.range.startOffset, session.range.endOffset, result.output)
                             PsiDocumentManager.getInstance(project).commitDocument(editor.document)
@@ -218,13 +235,20 @@ class Order89Action : AnAction() {
     }
 
     private fun insertStatusLines(editor: Editor, offset: Int, prompt: String): Order89StatusDisplay? {
-        val truncated = truncatePrompt(prompt)
+        val promptLines = formatPromptLines(prompt)
         val lineEnd = editor.document.getLineEndOffset(editor.document.getLineNumber(offset))
         val lineText = editor.document.getText(TextRange(offset, lineEnd))
         val indent = lineText.takeWhile { it == ' ' || it == '\t' }
         val statusLine1 = "$indent\u2726 Executing..."
-        val statusLine2 = "$indent  $truncated"
-        val statusText = "$statusLine1\n$statusLine2\n"
+        val promptPrefix = "$indent \u23BF "
+        val continuationPrefix = "$indent   "
+        val statusText = buildString {
+            append(statusLine1).append('\n')
+            promptLines.forEachIndexed { i, line ->
+                val prefix = if (i == 0) promptPrefix else continuationPrefix
+                append(prefix).append(line).append('\n')
+            }
+        }
 
         ApplicationManager.getApplication().runWriteAction {
             CommandProcessor.getInstance().runUndoTransparentAction {
@@ -240,35 +264,30 @@ class Order89Action : AnAction() {
         var symbolIndex = 0
 
         val markup = editor.markupModel
-        val attrs1 = TextAttributes().apply {
-            foregroundColor = ORDER89_NEON_PINK
-            fontType = Font.ITALIC
+        // Build one highlighter per line with shared TextAttributes for color animation.
+        val attrsList = mutableListOf<TextAttributes>()
+        val highlighters = mutableListOf<RangeHighlighter>()
+        var pos = offset
+        val lines = statusText.split('\n').dropLast(1) // drop trailing empty from final '\n'
+        for (line in lines) {
+            val lineStart = pos
+            val lineEndOffset = pos + line.length
+            val attrs = TextAttributes().apply {
+                foregroundColor = ORDER89_NEON_PINK
+                fontType = Font.ITALIC
+            }
+            attrsList.add(attrs)
+            // LAST ensures status text styling takes priority over editor default colors.
+            highlighters.add(
+                markup.addRangeHighlighter(
+                    lineStart, lineEndOffset,
+                    HighlighterLayer.LAST,
+                    attrs,
+                    HighlighterTargetArea.EXACT_RANGE
+                )
+            )
+            pos = lineEndOffset + 1 // +1 skips the newline
         }
-        val attrs2 = TextAttributes().apply {
-            foregroundColor = ORDER89_NEON_PINK
-            fontType = Font.ITALIC
-        }
-
-        val line1End = offset + statusLine1.length
-        // +1 skips the newline between lines.
-        val line2Start = line1End + 1
-        val line2End = line2Start + statusLine2.length
-
-        // LAST ensures status text styling takes priority over editor default colors.
-        val h1 = markup.addRangeHighlighter(
-            offset, line1End,
-            HighlighterLayer.LAST,
-            attrs1,
-            HighlighterTargetArea.EXACT_RANGE
-        )
-        val h2 = markup.addRangeHighlighter(
-            line2Start, line2End,
-            HighlighterLayer.LAST,
-            attrs2,
-            HighlighterTargetArea.EXACT_RANGE
-        )
-        val highlighters = listOf(h1, h2)
-        val attrsList = listOf(attrs1, attrs2)
 
         var frameCount = 0
         val timer = Timer(100) {
