@@ -162,4 +162,36 @@ class ServerManagerTest : BaseCompletionTest() {
         assertEquals("127.0.0.1", host)
         assertEquals(8017, port)
     }
+
+    fun testTokenizeCommandSingleQuotesNotHandled() {
+        // tokenizeCommand only handles double-quoted segments; single quotes are treated as part of tokens
+        val tokens = ServerManager.tokenizeCommand("llama-server --model '/path' --port 8080")
+        assertEquals(listOf("llama-server", "--model", "'/path'", "--port", "8080"), tokens)
+    }
+
+    fun testTokenizeCommandConsecutiveSpaces() {
+        val tokens = ServerManager.tokenizeCommand("llama-server   --port   8080")
+        assertEquals(listOf("llama-server", "--port", "8080"), tokens)
+    }
+
+    fun testTokenizeCommandWhitespaceOnly() {
+        val tokens = ServerManager.tokenizeCommand("   ")
+        assertEquals(emptyList<String>(), tokens)
+    }
+
+    fun testExtractHostPortEmptyString() {
+        val (host, port) = ServerManager.extractHostPort("")
+        assertEquals("127.0.0.1", host)
+        assertEquals(8017, port)
+    }
+
+    fun testParseLogFileFromArgsDanglingEquals() {
+        val result = ServerManager.parseLogFileFromArgs("llama-server --log-file= --port 8080")
+        assertNull(result)
+    }
+
+    fun testParseLogFileFromArgsFlagAtEndNoValue() {
+        val result = ServerManager.parseLogFileFromArgs("llama-server --log-file")
+        assertNull(result)
+    }
 }

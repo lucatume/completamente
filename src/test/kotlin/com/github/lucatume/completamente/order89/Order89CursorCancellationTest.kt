@@ -37,8 +37,6 @@ class Order89CursorCancellationTest : BaseCompletionTest() {
         }
     }
 
-    // RangeMarker basics.
-
     fun testRangeMarkerOffsetsMapToExpectedLines() {
         myFixture.configureByText(
             "test.kt",
@@ -220,12 +218,7 @@ class Order89CursorCancellationTest : BaseCompletionTest() {
         assertNull(findSessionAtCaret(doc, 0, ArrayDeque()))
     }
 
-    // Zero-width range marker.
-
     fun testZeroWidthRangeMarkerMatchesCursorOnSameLine() {
-        // Create a range marker where start == end (caret position, no selection).
-        // Verify cursor on that line matches.
-        // Verify cursor on adjacent line does not match.
         myFixture.configureByText(
             "test.kt",
             "line0\nline1\nline2\n"
@@ -244,14 +237,7 @@ class Order89CursorCancellationTest : BaseCompletionTest() {
         marker.dispose()
     }
 
-    // Deleting entire range content collapses marker.
-
     fun testDeleteEntireRangeContentCollapsesMarker() {
-        // Create a range marker spanning some text.
-        // Delete all text within the range via WriteCommandAction.
-        // The marker should still be valid but with startOffset == endOffset.
-        // Verify the isValid guard pattern: the marker is valid but zero-width,
-        // so cursor matching still works (only matches the collapse line).
         myFixture.configureByText(
             "test.kt",
             "line0\nline1\nline2\nline3\n"

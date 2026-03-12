@@ -43,24 +43,21 @@ class chunkTest : BaseCompletionTest() {
         val c0 = listOf("line1", "line2", "line3", "line4")
         val c1 = listOf("line1", "line2", "x", "y")
         val result = chunkSim(c0, c1)
-        val expected = 2.0 * 2 / (4 + 4)
-        assertEquals(expected, result)
+        assertEquals(0.5, result)
     }
 
     fun testChunkSimFormulaVerification() {
         val c0 = listOf("a", "b", "c")
         val c1 = listOf("a", "d", "e")
         val result = chunkSim(c0, c1)
-        val expected = 2.0 * 1 / (3 + 3)
-        assertEquals(expected, result)
+        assertEquals(0.3333333333333333, result)
     }
 
     fun testChunkSimSingleLineVsMultipleLines() {
         val c0 = listOf("line1")
         val c1 = listOf("line1", "line2", "line3")
         val result = chunkSim(c0, c1)
-        val expected = 2.0 * 1 / (1 + 3)
-        assertEquals(expected, result)
+        assertEquals(0.5, result)
     }
 
     fun testChunkSimCaseSensitivity() {
@@ -83,8 +80,7 @@ class chunkTest : BaseCompletionTest() {
         val c0 = lines
         val c1 = (1..50).map { "line$it" } + (1..50).map { "different$it" }
         val result = chunkSim(c0, c1)
-        val expected = 2.0 * 50 / (100 + 100)
-        assertEquals(expected, result)
+        assertEquals(0.5, result)
     }
 
     fun testPickChunkDisabled() {
@@ -284,7 +280,7 @@ class chunkTest : BaseCompletionTest() {
         assertEquals(0, result)
         assertEquals(1, ringQueued.size)
         val chunkLines = ringQueued[0].text.trimEnd('\n').split("\n")
-        assertTrue(chunkLines.size <= 5)
+        assertEquals(5, chunkLines.size)
     }
 
     fun testPickChunkFromFileModifiedSkips() {
@@ -323,7 +319,7 @@ class chunkTest : BaseCompletionTest() {
         pickChunkFromFile(file, 3, false, settings, ringChunks, ringQueued)
 
         assertEquals(1, ringQueued.size)
-        assertTrue(ringQueued[0].text.contains("line2") || ringQueued[0].text.contains("line3"))
+        assertEquals("line1\nline2\nline3\nline4\nline5\nline6\n\n", ringQueued[0].text)
     }
 
     fun testPickChunkFromFileCursorNull() {
@@ -335,7 +331,7 @@ class chunkTest : BaseCompletionTest() {
 
         val result = pickChunkFromFile(file, null, false, settings, ringChunks, ringQueued)
 
-        assertTrue(result >= 0 || result == 0)
+        assertEquals(0, result)
         assertEquals(1, ringQueued.size)
     }
 
@@ -348,7 +344,7 @@ class chunkTest : BaseCompletionTest() {
 
         val result = pickChunkFromFile(file, 10, false, settings, ringChunks, ringQueued)
 
-        assertTrue(result >= 0 || result == 0)
+        assertEquals(0, result)
         assertEquals(1, ringQueued.size)
     }
 
@@ -364,7 +360,7 @@ class chunkTest : BaseCompletionTest() {
         pickChunkFromFile(file, 5, false, settings, ringChunks, existingQueued)
 
         val ringQueued = existingQueued
-        assertTrue(ringQueued.size <= 1)
+        assertEquals(1, ringQueued.size)
     }
 
     fun testPickChunkFromFileSingleLineFile() {
@@ -390,7 +386,7 @@ class chunkTest : BaseCompletionTest() {
 
         val result = pickChunkFromFile(file, 500, false, settings, ringChunks, ringQueued)
 
-        assertTrue(result >= 0 || result == 0)
+        assertEquals(0, result)
         assertEquals(1, ringQueued.size)
     }
 
@@ -403,7 +399,8 @@ class chunkTest : BaseCompletionTest() {
 
         val result = pickChunkFromFile(file, 1, false, settings, ringChunks, ringQueued)
 
-        assertTrue(result >= 0 || result == 0)
+        assertEquals(0, result)
+        assertEquals(1, ringQueued.size)
     }
 
     fun testPickChunkFromFileCursorAtEnd() {
@@ -415,7 +412,8 @@ class chunkTest : BaseCompletionTest() {
 
         val result = pickChunkFromFile(file, 5, false, settings, ringChunks, ringQueued)
 
-        assertTrue(result >= 0 || result == 0)
+        assertEquals(0, result)
+        assertEquals(1, ringQueued.size)
     }
 
     fun testPickChunkFromFileUsesRealFile() {
@@ -429,7 +427,7 @@ class chunkTest : BaseCompletionTest() {
         pickChunkFromFile(file, 2, false, settings, ringChunks, ringQueued)
 
         assertEquals(1, ringQueued.size)
-        assertTrue(ringQueued[0].text.contains("val"))
+        assertEquals("val x = 1\nval y = 2\nval z = 3\nval a = 4\nval b = 5\n\n", ringQueued[0].text)
     }
 
     fun testPickChunkFromFileSetsFilenameToFilePath() {
@@ -546,8 +544,7 @@ class chunkTest : BaseCompletionTest() {
         val c0 = listOf("line", "line", "line")
         val c1 = listOf("line", "x", "y")
         val result = chunkSim(c0, c1)
-        val expected = 2.0 * 3 / (3 + 3)
-        assertEquals(expected, result)
+        assertEquals(1.0, result)
     }
 
     fun testChunkSimAllSame() {

@@ -142,7 +142,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
         }
     }
 
-    fun testBuildPromptFileCreatesReadableFile() {
+    fun testBuildPromptFileCreatesReadableFileWithExpectedContent() {
         val request = makeRequest(
             prompt = "test",
             fileContent = "hello",
@@ -155,7 +155,9 @@ class Order89ExecutorTest : BaseCompletionTest() {
             val file = File(path)
             assertTrue(file.exists())
             assertTrue(file.canRead())
-            assertTrue(file.length() > 0)
+            val content = file.readText()
+            assertTrue(content.contains("<Order89UserSelection>hello</Order89UserSelection>"))
+            assertTrue(content.contains("<Order89Instruction>"))
         } finally {
             File(path).delete()
         }
@@ -567,5 +569,88 @@ class Order89ExecutorTest : BaseCompletionTest() {
             "    \$this->assertNull(User::find(\$user->id));\n" +
             "}"
         assertEquals(expected, Order89Executor.cleanOutput(input))
+    }
+
+    // -- buildPromptFile edge cases --
+
+    fun testBuildPromptFileEmptyFileContent() {
+        val request = makeRequest(
+            prompt = "write something",
+            fileContent = "",
+            selectionStart = 0,
+            selectionEnd = 0
+        )
+
+        val path = Order89Executor.buildPromptFile(request)
+        try {
+            val result = File(path).readText()
+            assertTrue(result.contains("<Order89UserSelection></Order89UserSelection>"))
+            assertTrue(result.contains("write something"))
+        } finally {
+            File(path).delete()
+        }
+    }
+
+    fun testBuildPromptFilePromptWithXmlLikeTags() {
+        val request = makeRequest(
+            prompt = "Fix the </Order89Instruction> tag",
+            fileContent = "code",
+            selectionStart = 0,
+            selectionEnd = 4
+        )
+
+        val path = Order89Executor.buildPromptFile(request)
+        try {
+            val result = File(path).readText()
+            assertTrue(result.contains("Fix the </Order89Instruction> tag"))
+        } finally {
+            File(path).delete()
+        }
+    }
+
+    // -- reindentOutput edge cases --
+
+    fun testReindentOutputAllBlankLines() {
+        val output = "\n\n\n"
+        val result = Order89Executor.reindentOutput(output, "    ")
+        assertEquals("\n\n\n", result)
+    }
+
+    fun testReindentOutputNoIndentWithEmptySelectionIndent() {
+        val output = "line1\nline2\nline3"
+        val result = Order89Executor.reindentOutput(output, "")
+        assertEquals("line1\nline2\nline3", result)
+    }
+
+    fun testBuildPromptFileContentContainingXmlMarkerStrings() {
+        val content = "before <Order89UserSelection>inner</Order89UserSelection> after"
+        val request = makeRequest(
+            prompt = "fix it",
+            fileContent = content,
+            selectionStart = 7,
+            selectionEnd = 12
+        )
+
+        val path = Order89Executor.buildPromptFile(request)
+        try {
+            val result = File(path).readText()
+            // Selection is offsets 7..12 = "<Orde"
+            assertTrue(result.contains("<Order89UserSelection><Orde</Order89UserSelection>"))
+            assertTrue(result.contains("<Order89Instruction>"))
+            assertTrue(result.contains("fix it"))
+        } finally {
+            File(path).delete()
+        }
+    }
+
+    fun testExtractCodeBlockUnclosedFenceReturnsRawInput() {
+        // Unclosed fence falls through to returning the original input
+        val input = "```kotlin\nval x = 1"
+        val result = Order89Executor.extractCodeBlock(input)
+        assertEquals(input, result)
+    }
+
+    fun testLooksLikeCodeEmptyString() {
+        assertFalse(Order89Executor.looksLikeCode(""))
     }
 }

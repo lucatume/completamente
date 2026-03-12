@@ -1,6 +1,7 @@
 package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.BaseCompletionTest
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import java.awt.Color
 import java.awt.Font
 import javax.swing.JComponent
@@ -26,16 +27,14 @@ class Order89DialogTest : BaseCompletionTest() {
         dialog.dispose()
     }
 
-    fun testDialogSizeIsCorrectFractionOfParentWindow() {
+    fun testDialogSizeIsCorrectFractionOfFallbackWidth() {
         myFixture.configureByText("test.txt", "")
         val editor = myFixture.editor
-        // The editor component's window may be null in test, so dialog falls back to 640.
         val dialog = Order89Dialog(editor.component)
-        val parentWindow = javax.swing.SwingUtilities.getWindowAncestor(editor.component)
-        val expectedWidth = (parentWindow?.width ?: 640) * 5 / 8
-        val expectedHeight = expectedWidth * 3 / 8
-        assertEquals("Width should be 5/8 of parent", expectedWidth, dialog.preferredSize.width)
-        assertEquals("Height should be 3/8 of width", expectedHeight, dialog.preferredSize.height)
+        // In test, parentWindow is typically null, so fallback width is 640.
+        // Width = 640 * 5 / 8 = 400, Height = 400 * 3 / 8 = 150.
+        assertEquals("Width should be 400 (5/8 of 640 fallback)", 400, dialog.preferredSize.width)
+        assertEquals("Height should be 150 (3/8 of 400)", 150, dialog.preferredSize.height)
         dialog.dispose()
     }
 
@@ -49,18 +48,19 @@ class Order89DialogTest : BaseCompletionTest() {
         val titledBorder = compoundBorder.outsideBorder as TitledBorder
         assertEquals("Order 89", titledBorder.title)
         assertEquals(TitledBorder.CENTER, titledBorder.titleJustification)
-        assertEquals(Font.BOLD, titledBorder.titleFont.style)
+        assertEquals(Font.PLAIN, titledBorder.titleFont.style)
         dialog.dispose()
     }
 
-    fun testDialogTextAreaHasSynthwaveColors() {
+    fun testDialogTextAreaUsesEditorColors() {
         myFixture.configureByText("test.txt", "")
         val dialog = Order89Dialog(myFixture.editor.component)
         val textArea = findComponent(dialog.contentPane, JTextArea::class.java)
         assertNotNull("Dialog should contain a JTextArea", textArea)
-        assertEquals(Color(20, 10, 30), textArea!!.background)
-        assertEquals(Color(0, 255, 255), textArea.foreground)
-        assertEquals(Color(255, 16, 240), textArea.caretColor)
+        val editorScheme = EditorColorsManager.getInstance().globalScheme
+        assertEquals(editorScheme.defaultBackground, textArea!!.background)
+        assertEquals(editorScheme.defaultForeground, textArea.foreground)
+        assertEquals(editorScheme.defaultForeground, textArea.caretColor)
         assertTrue("Font should be monospaced", textArea.font.family.lowercase().contains("mono"))
         dialog.dispose()
     }
@@ -75,30 +75,23 @@ class Order89DialogTest : BaseCompletionTest() {
         dialog.dispose()
     }
 
-    fun testDesaturateReducesSaturation() {
-        // Use reflection to test the companion desaturate method.
+    fun testDarkenAndDesaturateProducesExpectedColor() {
         val method = Order89Dialog.Companion::class.java.getDeclaredMethod(
-            "desaturate", Color::class.java, Double::class.java
+            "darkenAndDesaturate", Color::class.java, Double::class.java
         )
         method.isAccessible = true
 
         val neonPink = Color(255, 16, 240)
         val result = method.invoke(Order89Dialog.Companion, neonPink, 0.25) as Color
 
-        // Verify the result has lower saturation than the original.
-        val originalHsb = Color.RGBtoHSB(neonPink.red, neonPink.green, neonPink.blue, null)
-        val resultHsb = Color.RGBtoHSB(result.red, result.green, result.blue, null)
-        assertTrue(
-            "Saturation should decrease: original=${originalHsb[1]}, result=${resultHsb[1]}",
-            resultHsb[1] < originalHsb[1]
-        )
-        // Saturation should be exactly 75% of original (desaturated by 25%).
-        assertEquals(originalHsb[1] * 0.75, resultHsb[1].toDouble(), 0.01)
+        assertEquals(191, result.red)
+        assertEquals(57, result.green)
+        assertEquals(183, result.blue)
     }
 
-    fun testDesaturateWithZeroAmountPreservesColor() {
+    fun testDarkenAndDesaturateWithZeroAmountPreservesColor() {
         val method = Order89Dialog.Companion::class.java.getDeclaredMethod(
-            "desaturate", Color::class.java, Double::class.java
+            "darkenAndDesaturate", Color::class.java, Double::class.java
         )
         method.isAccessible = true
 
@@ -109,30 +102,66 @@ class Order89DialogTest : BaseCompletionTest() {
         assertEquals(color.blue, result.blue)
     }
 
-    fun testDesaturateWithFullAmountRemovesSaturation() {
+    fun testDarkenAndDesaturateWithFullAmountRemovesSaturationAndBrightness() {
         val method = Order89Dialog.Companion::class.java.getDeclaredMethod(
-            "desaturate", Color::class.java, Double::class.java
+            "darkenAndDesaturate", Color::class.java, Double::class.java
         )
         method.isAccessible = true
 
         val color = Color(255, 0, 0)
         val result = method.invoke(Order89Dialog.Companion, color, 1.0) as Color
         val resultHsb = Color.RGBtoHSB(result.red, result.green, result.blue, null)
-        assertEquals("Full desaturation should result in zero saturation", 0f, resultHsb[1], 0.01f)
+        assertEquals("Full amount should result in zero saturation", 0f, resultHsb[1], 0.01f)
+        assertEquals("Full amount should result in zero brightness", 0f, resultHsb[2], 0.01f)
     }
 
-    fun testBorderColorIsDesaturatedNeonPink() {
+    fun testDarkenAndDesaturateBlackStaysBlack() {
+        val method = Order89Dialog.Companion::class.java.getDeclaredMethod(
+            "darkenAndDesaturate", Color::class.java, Double::class.java
+        )
+        method.isAccessible = true
+
+        val result = method.invoke(Order89Dialog.Companion, Color(0, 0, 0), 0.25) as Color
+        assertEquals(0, result.red)
+        assertEquals(0, result.green)
+        assertEquals(0, result.blue)
+    }
+
+    fun testDarkenAndDesaturateWhiteDarkensEvenly() {
+        val method = Order89Dialog.Companion::class.java.getDeclaredMethod(
+            "darkenAndDesaturate", Color::class.java, Double::class.java
+        )
+        method.isAccessible = true
+
+        val result = method.invoke(Order89Dialog.Companion, Color(255, 255, 255), 0.25) as Color
+        assertEquals(191, result.red)
+        assertEquals(191, result.green)
+        assertEquals(191, result.blue)
+    }
+
+    fun testDarkenAndDesaturateGrayDarkensEvenly() {
+        val method = Order89Dialog.Companion::class.java.getDeclaredMethod(
+            "darkenAndDesaturate", Color::class.java, Double::class.java
+        )
+        method.isAccessible = true
+
+        val result = method.invoke(Order89Dialog.Companion, Color(128, 128, 128), 0.25) as Color
+        assertEquals(96, result.red)
+        assertEquals(96, result.green)
+        assertEquals(96, result.blue)
+    }
+
+    fun testBorderColorIsDarkenedNeonPink() {
         myFixture.configureByText("test.txt", "")
         val dialog = Order89Dialog(myFixture.editor.component)
         val border = (dialog.contentPane as JComponent).border as CompoundBorder
         val titledBorder = border.outsideBorder as TitledBorder
-        // The title color is set to borderColor, which is desaturated neon pink.
         val borderColor = titledBorder.titleColor
         val neonPink = Color(255, 16, 240)
         val neonHsb = Color.RGBtoHSB(neonPink.red, neonPink.green, neonPink.blue, null)
         val borderHsb = Color.RGBtoHSB(borderColor.red, borderColor.green, borderColor.blue, null)
         assertTrue(
-            "Border color saturation should be less than neon pink",
+            "Border color saturation should be less than raw neon pink",
             borderHsb[1] < neonHsb[1]
         )
         dialog.dispose()

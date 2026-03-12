@@ -17,95 +17,6 @@ import javax.swing.Timer
 
 class Order89StatusDisplayTest : BaseCompletionTest() {
 
-    // -- insertStatusLines behavior (tested via Order89Action) --
-
-    private fun insertStatusLines(content: String, prompt: String, offset: Int = 0): List<String> {
-        myFixture.configureByText("test.kt", content)
-        val doc = myFixture.editor.document
-        val lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset))
-        val lineText = doc.getText(TextRange(offset, lineEnd))
-        val indent = lineText.takeWhile { it == ' ' || it == '\t' }
-        val promptLines = formatPromptLines(prompt)
-        val statusLine1 = "$indent\u2726 Executing..."
-        val promptPrefix = "$indent \u23BF "
-        val continuationPrefix = "$indent   "
-        val lines = mutableListOf(statusLine1)
-        promptLines.forEachIndexed { i, line ->
-            val prefix = if (i == 0) promptPrefix else continuationPrefix
-            lines.add("$prefix$line")
-        }
-        return lines
-    }
-
-    fun testStatusLineStartsWithStarAndExecuting() {
-        val lines = insertStatusLines("fun main() {}", "do something")
-        assertEquals("\u2726 Executing...", lines[0])
-    }
-
-    fun testStatusLineFirstPromptLineUsesContSymbol() {
-        val lines = insertStatusLines("fun main() {}", "make it print hello world")
-        assertEquals(" \u23BF make it print hello world", lines[1])
-    }
-
-    fun testStatusLinePreservesIndent() {
-        val lines = insertStatusLines("    fun main() {}", "do something", 0)
-        assertEquals("    \u2726 Executing...", lines[0])
-        assertEquals("     \u23BF do something", lines[1])
-    }
-
-    fun testStatusLineNoIndentWhenNone() {
-        val lines = insertStatusLines("fun main() {}", "do something", 0)
-        assertEquals("\u2726 Executing...", lines[0])
-        assertEquals(" \u23BF do something", lines[1])
-    }
-
-    fun testMultiLineWrappingWithIndent() {
-        val longPrompt = ("abcdefghij ".repeat(20)).trim()
-        val promptLines = formatPromptLines(longPrompt)
-        val lines = insertStatusLines("    fun main() {}", longPrompt, 0)
-        assertEquals("Line count = 1 header + prompt lines", 1 + promptLines.size, lines.size)
-        assertEquals("    \u2726 Executing...", lines[0])
-        assertEquals("     \u23BF ${promptLines[0]}", lines[1])
-        for (i in 1 until promptLines.size) {
-            assertEquals("       ${promptLines[i]}", lines[i + 1])
-        }
-    }
-
-    fun testShortPromptFitsOnOneLine() {
-        val lines = insertStatusLines("fun main() {}", "short prompt")
-        assertEquals("Should have 2 lines (header + 1 prompt line)", 2, lines.size)
-        assertEquals(" \u23BF short prompt", lines[1])
-    }
-
-    fun testLongPromptWrapsAcrossMultipleLines() {
-        // 7 words x 10 chars + spaces = 76 chars first line, then wraps.
-        val longPrompt = ("abcdefghij ".repeat(20)).trim()
-        val promptLines = formatPromptLines(longPrompt)
-        val lines = insertStatusLines("fun main() {}", longPrompt)
-        assertEquals("Line count = 1 header + prompt lines", 1 + promptLines.size, lines.size)
-        assertEquals(" \u23BF ${promptLines[0]}", lines[1])
-        for (i in 1 until promptLines.size) {
-            assertEquals("   ${promptLines[i]}", lines[i + 1])
-        }
-    }
-
-    fun testContinuationLinesUseSpacePrefixNotSymbol() {
-        val longPrompt = ("abcdefghij ".repeat(20)).trim()
-        val promptLines = formatPromptLines(longPrompt)
-        val lines = insertStatusLines("fun main() {}", longPrompt)
-        assertEquals("Line count = 1 header + prompt lines", 1 + promptLines.size, lines.size)
-        for (i in 1 until promptLines.size) {
-            assertEquals("   ${promptLines[i]}", lines[i + 1])
-        }
-    }
-
-    fun testEmptyPromptProducesTwoLines() {
-        val lines = insertStatusLines("fun main() {}", "")
-        assertEquals("Should have 2 lines (header + 1 empty prompt line)", 2, lines.size)
-        assertEquals("\u2726 Executing...", lines[0])
-        assertEquals(" \u23BF ", lines[1])
-    }
-
     // -- formatPromptLines tests --
 
     fun testFormatPromptLinesSingleShortLine() {
@@ -185,14 +96,6 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         symbolRange.dispose()
     }
 
-    fun testAllSixSymbolsAreSingleCharacter() {
-        val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
-        assertEquals(6, symbols.size)
-        for (symbol in symbols) {
-            assertEquals("Each symbol should be 1 character", 1, symbol.toString().length)
-        }
-    }
-
     // -- Order89StatusDisplay data class --
 
     fun testStatusDisplayDataClassHoldsAllFields() {
@@ -260,6 +163,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         myFixture.configureByText("test.kt", "fun main() {}")
         val editor = myFixture.editor
         val doc = editor.document
+        val originalText = doc.text
 
         val statusText = "\u2726 Executing...\n  prompt\n"
         WriteCommandAction.runWriteCommandAction(project) {
@@ -273,15 +177,18 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val action = Order89Action()
 
         action.removeStatusDisplay(editor, display)
-        // Second call should not throw.
+        assertEquals("Document should be restored after first removal", originalText, doc.text)
+        // Second call should not throw and should leave document unchanged.
         action.removeStatusDisplay(editor, display)
+        assertEquals("Document should remain unchanged after second removal", originalText, doc.text)
     }
 
-    fun testRemoveStatusDisplayWithNullIsNoop() {
+    fun testRemoveStatusDisplayWithNullLeavesDocumentUnchanged() {
         myFixture.configureByText("test.kt", "fun main() {}")
+        val originalText = myFixture.editor.document.text
         val action = Order89Action()
-        // Should not throw.
         action.removeStatusDisplay(myFixture.editor, null)
+        assertEquals("Document should be unchanged after null removal", originalText, myFixture.editor.document.text)
     }
 
     // -- Symbol rotation with indented code --

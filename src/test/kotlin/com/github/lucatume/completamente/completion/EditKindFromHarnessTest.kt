@@ -4,10 +4,6 @@ import com.github.lucatume.completamente.BaseCompletionTest
 import kotlinx.serialization.json.*
 import java.io.File
 
-/**
- * Data-driven tests that parse the harness output file (edit-types-harness-output.jsonp)
- * and verify that [extractEdit] produces the correct [EditKind] for each entry.
- */
 class EditKindFromHarnessTest : BaseCompletionTest() {
 
     private data class HarnessEntry(

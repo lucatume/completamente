@@ -73,6 +73,16 @@ class DiffTrackerTest : BaseCompletionTest() {
         assertTrue(shouldCoalesce(pending, 25, COALESCE_LINE_SPAN))
     }
 
+    fun testShouldCoalesceEditOnExactStartLine() {
+        val pending = pendingEdit(startLine = 10, endLine = 12)
+        assertTrue(shouldCoalesce(pending, 10, COALESCE_LINE_SPAN))
+    }
+
+    fun testShouldCoalesceEditOnExactEndLine() {
+        val pending = pendingEdit(startLine = 10, endLine = 12)
+        assertTrue(shouldCoalesce(pending, 12, COALESCE_LINE_SPAN))
+    }
+
     // --- computeDiffEntries tests ---
 
     fun testComputeDiffEntriesSingleLineChange() {
@@ -410,18 +420,23 @@ class DiffTrackerTest : BaseCompletionTest() {
 
     // --- DocumentListener integration tests ---
 
-    fun testTypingCreatesNoPendingEditForUntrackedDocument() {
+    fun testEditingUntrackedDocumentProducesNoDiffs() {
         // configureByText creates a file backed by a LightVirtualFile which
-        // FileDocumentManager.getFile() will return, but its path won't
-        // resolve via LocalFileSystem. This tests that DiffTracker handles
-        // documents gracefully.
+        // won't resolve via LocalFileSystem. Edits to such documents should
+        // not produce diffs or crash.
         myFixture.configureByText("test.txt", "hello world")
-        val editor = myFixture.editor
         val diffTracker = project.getService(DiffTracker::class.java)
-        assertNotNull(diffTracker)
-        // DiffTracker should not crash when typing in a light virtual file
-        val diffs = diffTracker.getRecentDiffs()
-        assertNotNull(diffs)
+        val doc = myFixture.editor.document
+
+        val diffsBefore = diffTracker.getRecentDiffs().size
+
+        // Perform a real document edit
+        com.intellij.openapi.application.ApplicationManager.getApplication().runWriteAction {
+            doc.setText("hello changed")
+        }
+
+        val diffsAfter = diffTracker.getRecentDiffs().size
+        assertEquals(diffsBefore, diffsAfter)
     }
 
 }
