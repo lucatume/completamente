@@ -24,10 +24,12 @@ import javax.swing.border.TitledBorder
 class Order89Dialog(parentComponent: Component) :
     JDialog(SwingUtilities.getWindowAncestor(parentComponent) as? Frame, true) {
 
-    private val neonPink = desaturate(Color(255, 16, 240), 0.25)
-    private val borderColor = desaturate(neonPink, 0.25)
-    private val editorBg = EditorColorsManager.getInstance().globalScheme.defaultBackground
-    private val cyan = desaturate(Color(0, 255, 255), 0.25)
+    private val neonPink = darkenAndDesaturate(Color(255, 16, 240), 0.05)
+    private val borderColor = darkenAndDesaturate(neonPink, 0.05)
+    private val editorScheme = EditorColorsManager.getInstance().globalScheme
+    private val editorBg = editorScheme.defaultBackground
+    private val editorFontSize = editorScheme.editorFontSize
+    private val cyan = darkenAndDesaturate(Color(0, 255, 255), 0.15)
 
     private val textArea = JTextArea()
     private var submitted = false
@@ -44,11 +46,11 @@ class Order89Dialog(parentComponent: Component) :
         val dialogHeight = dialogWidth * 3 / 8
 
         val titledBorder = BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(borderColor, 2),
+            BorderFactory.createLineBorder(borderColor, 1),
             "Order 89",
             TitledBorder.CENTER,
             TitledBorder.TOP,
-            Font(Font.MONOSPACED, Font.BOLD, 14),
+            Font(Font.MONOSPACED, Font.PLAIN, editorFontSize),
             borderColor
         )
         val inner = BorderFactory.createEmptyBorder(4, 8, 8, 8)
@@ -58,10 +60,10 @@ class Order89Dialog(parentComponent: Component) :
         textArea.apply {
             lineWrap = true
             wrapStyleWord = true
-            font = Font(Font.MONOSPACED, Font.PLAIN, 14)
+            font = Font(Font.MONOSPACED, Font.PLAIN, editorFontSize)
             background = editorBg
-            foreground = cyan
-            caretColor = neonPink
+            foreground = editorScheme.defaultForeground
+            caretColor = editorScheme.defaultForeground
             border = BorderFactory.createEmptyBorder()
         }
 
@@ -110,9 +112,10 @@ class Order89Dialog(parentComponent: Component) :
     }
 
     companion object {
-        private fun desaturate(c: Color, amount: Double): Color {
+        private fun darkenAndDesaturate(c: Color, amount: Double): Color {
             val hsb = Color.RGBtoHSB(c.red, c.green, c.blue, null)
             hsb[1] = (hsb[1] * (1.0 - amount)).toFloat().coerceIn(0f, 1f)
+            hsb[2] = (hsb[2] * (1.0 - amount)).toFloat().coerceIn(0f, 1f)
             return Color(Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]))
         }
     }
