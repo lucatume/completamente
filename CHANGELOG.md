@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.0.3] (unreleased)
+## [0.0.3] - 2026-03-12
 
 ### Added
 - Order 89: an in-editor command dialog inspired by [ThePrimeagen/99](https://github.com/ThePrimeagen/99).
