@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.0.3] (unreleased)
+
+### Added
+- Order 89: an in-editor command dialog inspired by [ThePrimeagen/99](https://github.com/ThePrimeagen/99).
+  Pipe selected text through a configurable shell command without leaving the editor.
+- Prompt dialog themed to match the editor's colors and font size.
+- Animated status display with rotating symbol and soft-wrapped prompt preview
+  inserted directly into the document text (undo-transparent).
+- Multi-session support: run multiple Order 89 commands concurrently.
+- ESC cancellation via cursor movement away from the active session.
+- Keyboard shortcut: `Ctrl+Shift+8` (`Cmd+Shift+8` on macOS).
+
+### Changed
+- Status display evolved from inlay hints to document-text lines for better readability.
+
 ## [0.0.2]
 
 ### Added
