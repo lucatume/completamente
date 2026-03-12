@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -299,16 +300,18 @@ class Order89Action : AnAction() {
             // Rotate star symbol every 3rd frame (~300ms).
             if (frameCount % 3 == 0 && symbolRange.isValid) {
                 symbolIndex = (symbolIndex + 1) % symbols.size
-                ApplicationManager.getApplication().runWriteAction {
-                    CommandProcessor.getInstance().runUndoTransparentAction {
-                        if (symbolRange.isValid) {
-                            editor.document.replaceString(
-                                symbolRange.startOffset, symbolRange.endOffset,
-                                symbols[symbolIndex].toString()
-                            )
+                ApplicationManager.getApplication().invokeLater({
+                    ApplicationManager.getApplication().runWriteAction {
+                        CommandProcessor.getInstance().runUndoTransparentAction {
+                            if (symbolRange.isValid) {
+                                editor.document.replaceString(
+                                    symbolRange.startOffset, symbolRange.endOffset,
+                                    symbols[symbolIndex].toString()
+                                )
+                            }
                         }
                     }
-                }
+                }, ModalityState.defaultModalityState())
             }
             if (!editor.isDisposed) editor.contentComponent.repaint()
         }
