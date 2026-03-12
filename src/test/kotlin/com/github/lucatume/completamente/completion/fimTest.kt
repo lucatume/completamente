@@ -274,11 +274,6 @@ class fimTest : BaseCompletionTest() {
 
     // --- extractEdit tests ---
 
-    /**
-     * Applies an EditRegion to the given content and returns the result.
-     * This is the ground-truth check: applying the edit to the original content
-     * must produce the expected updated content.
-     */
     private fun applyEdit(content: String, edit: EditRegion): String {
         return content.substring(0, edit.startOffset) + edit.newText + content.substring(edit.endOffset)
     }
@@ -799,9 +794,11 @@ class PluginsDirectory {
     fun testBuildFimRequestPopulatesWindowFields() {
         val content = (0..99).joinToString("\n") { "line$it" }
         val request = buildFimRequest("test.kt", content, 50)
-        assertTrue(request.windowedContent.isNotEmpty())
-        assertTrue(request.windowStartLine >= 0)
-        assertTrue(request.windowedContent.lines().size <= MAX_FILE_CHUNK_LINES)
+        val windowLines = request.windowedContent.lines()
+        assertEquals(MAX_FILE_CHUNK_LINES, windowLines.size)
+        assertEquals(5, request.windowStartLine)
+        assertEquals("line5", windowLines.first())
+        assertEquals("line64", windowLines.last())
     }
 
     fun testBuildFimRequestSmallFile() {
@@ -916,12 +913,10 @@ class PluginsDirectory {
         assertTrue("Diffs should appear before original", diffIndex < originalIndex)
     }
 
-    // --- buildFimPrompt diff truncation tests ---
+    // --- buildFimPrompt with pre-truncated diffs ---
 
-    fun testBuildFimPromptTruncatesLongDiffOriginal() {
-        val longOriginal = "x".repeat(MAX_DIFF_CHARS + 500)
-        val truncatedOriginal = truncateDiffText(longOriginal)
-        val diffs = listOf(DiffEntry("file.kt", truncatedOriginal, "short"))
+    fun testBuildFimPromptIncludesPreTruncatedDiffOriginal() {
+        val diffs = listOf(DiffEntry("file.kt", "some text...[truncated]", "short"))
         val request = FimRequest(
             filePath = "test.kt",
             currentContent = "content",
@@ -932,14 +927,12 @@ class PluginsDirectory {
             recentDiffs = diffs
         )
         val prompt = buildFimPrompt(request)
-        assertTrue(prompt.contains("...[truncated]"))
-        assertFalse(prompt.contains(longOriginal))
+        assertTrue(prompt.contains("original:\nsome text...[truncated]"))
+        assertTrue(prompt.contains("updated:\nshort"))
     }
 
-    fun testBuildFimPromptTruncatesLongDiffUpdated() {
-        val longUpdated = "y".repeat(MAX_DIFF_CHARS + 500)
-        val truncatedUpdated = truncateDiffText(longUpdated)
-        val diffs = listOf(DiffEntry("file.kt", "short", truncatedUpdated))
+    fun testBuildFimPromptIncludesPreTruncatedDiffUpdated() {
+        val diffs = listOf(DiffEntry("file.kt", "short", "new text...[truncated]"))
         val request = FimRequest(
             filePath = "test.kt",
             currentContent = "content",
@@ -950,8 +943,8 @@ class PluginsDirectory {
             recentDiffs = diffs
         )
         val prompt = buildFimPrompt(request)
-        assertTrue(prompt.contains("...[truncated]"))
-        assertFalse(prompt.contains(longUpdated))
+        assertTrue(prompt.contains("original:\nshort"))
+        assertTrue(prompt.contains("updated:\nnew text...[truncated]"))
     }
 
     // --- Structure files in prompt tests ---
@@ -1164,5 +1157,87 @@ class PluginsDirectory {
         assertTrue("Prompt should still contain original section", prompt.contains("<|file_sep|>original/test.kt"))
         assertTrue("Prompt should still contain current section", prompt.contains("<|file_sep|>current/test.kt"))
         assertTrue("Prompt should still contain updated section", prompt.contains("<|file_sep|>updated/test.kt"))
+    }
+
+    // --- isFileTooLarge tests ---
+
+    fun testIsFileTooLargeSmallFile() {
+        assertFalse(isFileTooLarge("hello\nworld"))
+    }
+
+    fun testIsFileTooLargeExceedsCharacterLimit() {
+        val largeText = "a".repeat(MAX_FILE_CHARACTERS + 1)
+        assertTrue(isFileTooLarge(largeText))
+    }
+
+    fun testIsFileTooLargeShortFileUnderAllLimits() {
+        // 100 lines of 10 chars each — well under all limits
+        val text = (1..100).joinToString("\n") { "a".repeat(10) }
+        assertFalse(isFileTooLarge(text))
+    }
+
+    fun testIsFileTooLargeExceedsLineLimit() {
+        val text = (1..MAX_FILE_LINES + 1).joinToString("\n") { "line$it" }
+        assertTrue(isFileTooLarge(text))
+    }
+
+    fun testIsFileTooLargeAtLineLimit() {
+        val text = (1..MAX_FILE_LINES).joinToString("\n") { "x" }
+        assertFalse(isFileTooLarge(text))
+    }
+
+    fun testIsFileTooLargeHighAvgLineLength() {
+        // A single line exceeding MAX_AVG_LINE_LENGTH triggers the check
+        val longLine = "a".repeat(MAX_AVG_LINE_LENGTH.toInt() + 1)
+        assertTrue(isFileTooLarge(longLine))
+    }
+
+    fun testIsFileTooLargeAvgLineLengthBelowLimit() {
+        // Avg line length just below the limit should not trigger
+        val line = "a".repeat(MAX_AVG_LINE_LENGTH.toInt() - 1)
+        val text = line + "\n" + line
+        assertFalse(isFileTooLarge(text))
+    }
+
+    fun testIsFileTooLargeEmptyString() {
+        assertFalse(isFileTooLarge(""))
+    }
+
+    // --- estimateTokens tests ---
+
+    fun testEstimateTokensEmptyString() {
+        assertEquals(0, estimateTokens(""))
+    }
+
+    fun testEstimateTokensShortString() {
+        assertEquals(1, estimateTokens("ab"))
+    }
+
+    fun testEstimateTokensThreeChars() {
+        assertEquals(1, estimateTokens("abc"))
+    }
+
+    fun testEstimateTokensSixChars() {
+        assertEquals(2, estimateTokens("abcdef"))
+    }
+
+    fun testEstimateTokensLongerString() {
+        assertEquals(4, estimateTokens("hello world"))
+    }
+
+    // --- extractEdit edge cases ---
+
+    fun testExtractEditCursorLineNegativeDoesNotCrash() {
+        val current = "line0\nline1\nline2"
+        val updated = "line0\nmodified\nline2"
+        val result = extractEdit(current, updated, -1)
+        assertEditProduces(current, updated, result)
+    }
+
+    fun testExtractEditCursorLineBeyondContentDoesNotCrash() {
+        val current = "line0\nline1\nline2"
+        val updated = "line0\nmodified\nline2"
+        val result = extractEdit(current, updated, 100)
+        assertEditProduces(current, updated, result)
     }
 }

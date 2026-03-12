@@ -138,3 +138,12 @@ fun resolveStructureFiles(
     }
     return Pair(chunks, headerPaths)
 }
+
+fun collectReferencedFilePaths(
+    project: Project,
+    psiFile: PsiFile,
+    currentFilePath: String
+): List<String> {
+    return collectReferencedFilesFromHeader(project, psiFile, currentFilePath)
+        .mapNotNull { it.virtualFile?.path }
+}

@@ -60,3 +60,19 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 08 | 08-design-server-management.md | design | Design for managed completion server lifecycle |
 | 09 | 09-research-intellij-file-level-symbol-references.md | research | IntelliJ API for collecting project files referenced by symbols in a file |
 | 10 | 10-design-prompt-composition.md | design | Prompt composition: token budgeting, asymmetric window, header+window symbol resolution, surface extraction |
+| 11 | 11-harness-order89-prompt-structures.sh | harness | Test prompt structures for Order 89 claude -p command to find cleanest code-only output |
+| 12 | 12-output-order89-prompt-structures.txt | output | Results from harness 11: prompt structure test outputs |
+| 13 | 13-design-order89.md | design | Design for the Order 89 feature: modal-driven shell command text transformation |
+| 14 | 14-plan-order89.md | plan | Step-by-step implementation plan for Order 89 (10 steps) |
+| 15 | 15-research-99-neovim-claude-code.md | research | How ThePrimeagen's 99 Neovim plugin invokes Claude Code and comparison with Order 89 |
+| 16 | 16-plan-order89-v2-tmpfile-prompt.md | plan | Plan for Order 89 v2: temp file prompt with `<Order89UserSelection>` tags, `--dangerously-skip-permissions` |
+| 17 | 17-plan-order89-multiline-inlay-multi-session.md | plan | Plan for Order 89 multiline inlay hints and multi-session support |
+| 18 | 18-research-order89-comment-stripping.md | research | How 99 constrains output and approaches for stripping non-code prose from Order 89 model responses |
+| 19 | 19-design-order89-prompt-and-output-cleaning.md | design | Prompt v3 template with `<Order89Rules>` and layered output cleaning pipeline (extractCodeBlock → stripLeadingProse → stripTrailingProse) |
+| 20 | 20-plan-order89-prompt-v3-output-cleaning.md | plan | 7-step implementation plan for prompt v3 and output cleaning pipeline in Order89Executor |
+| 21 | 21-research-intellij-text-color-effects.md | research | Text color effects in IntelliJ: gradients, animated colors, and per-character styling via Graphics2D |
+| 22 | 22-plan-enhanced-text-effects.md | plan | 9-step plan for gradient FIM/NEP ghost text and pulsing Order 89 status effects |
+| 23 | 23-research-inline-completion-suppression.md | research | How InlineCompletionProvider works and how completamente suppresses Full Line and cloud completions |
+| 24 | 24-research-order89-cursor-based-cancellation.md | research | Current ESC cancellation behavior, RangeMarker API, and cursor-position-based session matching |
+| 25 | 25-design-order89-cursor-based-cancellation.md | design | Cursor-aware ESC cancellation using RangeMarker per session with ESC passthrough |
+| 26 | 26-plan-order89-cursor-based-cancellation.md | plan | 5-step implementation plan: add RangeMarker to session, rewrite ESC handler, dispose on completion |

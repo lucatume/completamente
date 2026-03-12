@@ -72,6 +72,24 @@ The plugin sends a prompt to the server containing:
 
 A token budget (8192 tokens total, 512 reserved for output) ensures the prompt fits within the model's context window. Definition chunks and ring buffer chunks are included only if space remains after the mandatory sections.
 
+### Order 89
+
+Inspired by [ThePrimeagen/99](https://github.com/ThePrimeagen/99). Select text, hit `Ctrl+Shift+8` (`Cmd+Shift+8` on macOS), type a prompt, and the selection is piped through a shell command and replaced with the output.
+
+The default command is:
+
+```
+cat {{prompt_file}} | claude --dangerously-skip-permissions --print --output-format text
+```
+
+`{{prompt_file}}` is replaced at runtime with a temp file containing the selected text and your prompt.
+
+**Caveat emptor:** the default command runs Claude Code with `--dangerously-skip-permissions`, which means it will execute without asking for confirmation. Consider running inside a sandbox (Docker, a VM, macOS Sandbox, Flatpak, etc.) or replacing the command with something more constrained. The command is fully configurable in settings.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Order 89 command | (see above) | Shell command to execute. `{{prompt_file}}` is the only placeholder |
+
 ## Support
 
 None.

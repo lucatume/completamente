@@ -5,6 +5,7 @@ import com.github.lucatume.completamente.fim.FimTypingListener
 import com.github.lucatume.completamente.services.ClipboardCopyService
 import com.github.lucatume.completamente.services.FileOpenCloseService
 import com.github.lucatume.completamente.services.FileSaveService
+import com.github.lucatume.completamente.services.ServerManager
 import com.github.lucatume.completamente.services.Settings
 import com.github.lucatume.completamente.services.SettingsState
 import com.github.lucatume.completamente.services.ChunksRingBuffer
@@ -17,6 +18,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.github.lucatume.completamente.completion.pickChunkFromFile
 import com.github.lucatume.completamente.completion.pickChunkFromText
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -111,6 +113,11 @@ class CompletamenteStartupActivity : ProjectActivity {
         // Start FIM typing listener for auto-suggestions
         val typingListener = FimTypingListener(project)
         typingListener.register()
+
+        // Adopt an externally-started llama.cpp server if one is already running
+        ApplicationManager.getApplication().executeOnPooledThread {
+            ServerManager.getInstance().adoptExternalServer()
+        }
     }
 
 }

@@ -32,9 +32,11 @@ class SettingsConfigurable : Configurable {
     private var autoSuggestions = true
     private var maxRecentDiffs = ""
     private var serverCommand = ""
+    private var order89Command = ""
 
     // Server management UI components
     private var serverCommandArea: JBTextArea? = null
+    private var order89CommandArea: JBTextArea? = null
     private var serverUrlField: JTextField? = null
     private var statusLabel: JBLabel? = null
     private var serverButton: JButton? = null
@@ -119,6 +121,30 @@ class SettingsConfigurable : Configurable {
                     textField()
                         .bindText(::maxQueuedChunks)
                         .comment("Maximum number of chunks in the queue")
+                }
+            }
+            group("Order 89") {
+                row("Command template:") {
+                    val area = JBTextArea(3, 40)
+                    area.lineWrap = true
+                    area.wrapStyleWord = true
+                    area.text = order89Command
+                    order89CommandArea = area
+                    val scrollPane = JBScrollPane(
+                        area,
+                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+                    )
+                    cell(scrollPane)
+                        .align(AlignX.FILL)
+                        .comment("Placeholders: {{prompt_file}}.")
+                }
+                row {
+                    val resetBtn = JButton("Reset")
+                    resetBtn.addActionListener {
+                        order89CommandArea?.text = SettingsState().order89Command
+                    }
+                    cell(resetBtn)
                 }
             }
         }
@@ -247,17 +273,20 @@ class SettingsConfigurable : Configurable {
         autoSuggestions = state.autoSuggestions
         maxRecentDiffs = state.maxRecentDiffs.toString()
         serverCommand = state.serverCommand
+        order89Command = state.order89Command
     }
 
     override fun isModified(): Boolean {
         val panelModified = dialogPanel?.isModified() ?: false
         val commandModified = (serverCommandArea?.text ?: "") != state.serverCommand
-        return panelModified || commandModified
+        val order89Modified = (order89CommandArea?.text ?: "") != state.order89Command
+        return panelModified || commandModified || order89Modified
     }
 
     override fun apply() {
         dialogPanel?.apply()
         serverCommand = serverCommandArea?.text ?: ""
+        order89Command = order89CommandArea?.text ?: ""
         applyToState()
     }
 
@@ -269,11 +298,13 @@ class SettingsConfigurable : Configurable {
         state.autoSuggestions = autoSuggestions
         state.maxRecentDiffs = maxRecentDiffs.toIntOrNull() ?: 10
         state.serverCommand = serverCommand
+        state.order89Command = order89Command
     }
 
     override fun reset() {
         loadFromState()
         serverCommandArea?.text = serverCommand
+        order89CommandArea?.text = order89Command
         dialogPanel?.reset()
     }
 }
