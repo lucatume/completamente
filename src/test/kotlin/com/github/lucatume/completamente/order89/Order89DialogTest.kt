@@ -12,6 +12,7 @@ import javax.swing.border.TitledBorder
 class Order89DialogTest : BaseCompletionTest() {
 
     fun testPromptTextIsEmptyByDefault() {
+        if (java.awt.GraphicsEnvironment.isHeadless()) return
         myFixture.configureByText("test.txt", "")
         val editor = myFixture.editor
         val dialog = Order89Dialog(editor.component)
@@ -20,6 +21,7 @@ class Order89DialogTest : BaseCompletionTest() {
     }
 
     fun testDialogIsUndecoratedAndModal() {
+        if (java.awt.GraphicsEnvironment.isHeadless()) return
         myFixture.configureByText("test.txt", "")
         val dialog = Order89Dialog(myFixture.editor.component)
         assertTrue("Dialog should be undecorated", dialog.isUndecorated)
@@ -28,6 +30,7 @@ class Order89DialogTest : BaseCompletionTest() {
     }
 
     fun testDialogSizeIsCorrectFractionOfFallbackWidth() {
+        if (java.awt.GraphicsEnvironment.isHeadless()) return
         myFixture.configureByText("test.txt", "")
         val editor = myFixture.editor
         val dialog = Order89Dialog(editor.component)
@@ -39,6 +42,7 @@ class Order89DialogTest : BaseCompletionTest() {
     }
 
     fun testDialogContainsTitledBorder() {
+        if (java.awt.GraphicsEnvironment.isHeadless()) return
         myFixture.configureByText("test.txt", "")
         val dialog = Order89Dialog(myFixture.editor.component)
         val border = (dialog.contentPane as JComponent).border
@@ -53,6 +57,7 @@ class Order89DialogTest : BaseCompletionTest() {
     }
 
     fun testDialogTextAreaUsesEditorColors() {
+        if (java.awt.GraphicsEnvironment.isHeadless()) return
         myFixture.configureByText("test.txt", "")
         val dialog = Order89Dialog(myFixture.editor.component)
         val textArea = findComponent(dialog.contentPane, JTextArea::class.java)
@@ -66,6 +71,7 @@ class Order89DialogTest : BaseCompletionTest() {
     }
 
     fun testDialogTextAreaHasLineWrap() {
+        if (java.awt.GraphicsEnvironment.isHeadless()) return
         myFixture.configureByText("test.txt", "")
         val dialog = Order89Dialog(myFixture.editor.component)
         val textArea = findComponent(dialog.contentPane, JTextArea::class.java)
@@ -152,6 +158,7 @@ class Order89DialogTest : BaseCompletionTest() {
     }
 
     fun testBorderColorIsDarkenedNeonPink() {
+        if (java.awt.GraphicsEnvironment.isHeadless()) return
         myFixture.configureByText("test.txt", "")
         val dialog = Order89Dialog(myFixture.editor.component)
         val border = (dialog.contentPane as JComponent).border as CompoundBorder
