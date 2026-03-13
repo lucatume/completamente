@@ -19,8 +19,8 @@ import java.awt.Rectangle
 import java.awt.RenderingHints
 
 private val GHOST_COLOR = Color(150, 150, 150)
-private val GRADIENT_START = Color(255, 16, 240)  // Neon pink.
-private val GRADIENT_END = Color(0, 255, 255)     // Electric cyan.
+private val GRADIENT_START = Color(240, 0, 220)   // Neon pink.
+private val GRADIENT_END = Color(170, 70, 255)    // Violet.
 private val JUMP_NEW_FG = Color.WHITE
 private val JUMP_NEW_BG = Color(0, 191, 0)
 private val JUMP_OLD_FG = Color.WHITE
