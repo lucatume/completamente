@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- FIM ghost text gradient updated from neon pink→electric cyan to neon pink→violet.
+
+### Fixed
+- FIM suggestions now only appear in main editor windows (no popups, diffs, or tool windows).
+
 ## [0.0.3] - 2026-03-12
 
 ### Added
