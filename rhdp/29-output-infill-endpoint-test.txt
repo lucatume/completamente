@@ -1,0 +1,603 @@
+llama.cpp /infill endpoint test results
+Server: http://localhost:8012
+Date: 2026-03-14T09:33:52Z
+
+=== Test 1: Basic infill (prefix + suffix) ===
+Request:
+{
+  "input_prefix": "def fibonacci(n):\n    if n <= 1:\n        return n\n    ",
+  "input_suffix": "\n\ndef main():\n    print(fibonacci(10))\n",
+  "n_predict": 128,
+  "temperature": 0.0,
+  "stream": false,
+  "cache_prompt": true
+}
+Response:
+{
+  "index": 0,
+  "content": "else:\n        return fibonacci(n-1) + fibonacci(n-2)\n",
+  "tokens": [],
+  "id_slot": 3,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 16,
+  "tokens_evaluated": 39,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [],
+    "max_tokens": 128,
+    "n_predict": 128,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|repo_name|>myproject\n<|file_sep|>filename\n<|fim_prefix|>def fibonacci(n):\n    if n <= 1:\n        return n\n    <|fim_suffix|>\n\ndef main():\n    print(fibonacci(10))\n<|fim_middle|>",
+  "has_new_line": true,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 54,
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 39,
+    "prompt_ms": 230.506,
+    "prompt_per_token_ms": 5.910410256410256,
+    "prompt_per_second": 169.19299280712866,
+    "predicted_n": 16,
+    "predicted_ms": 215.417,
+    "predicted_per_token_ms": 13.4635625,
+    "predicted_per_second": 74.27454657710395
+  }
+}
+
+=== Test 2: Infill with input_extra (cross-file context) ===
+Request:
+{
+  "input_prefix": "from utils import calculate_area\n\ndef draw_circle(radius):\n    area = ",
+  "input_suffix": "\n    print(f'Circle area: {area}')\n",
+  "input_extra": [
+    {
+      "filename": "utils.py",
+      "text": "import math\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n\ndef calculate_perimeter(radius):\n    return 2 * math.pi * radius\n"
+    }
+  ],
+  "n_predict": 64,
+  "temperature": 0.0,
+  "stream": false,
+  "cache_prompt": true
+}
+Response:
+{
+  "index": 0,
+  "content": "calculate_area(radius)",
+  "tokens": [],
+  "id_slot": 2,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 5,
+  "tokens_evaluated": 74,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [],
+    "max_tokens": 64,
+    "n_predict": 64,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|repo_name|>myproject\n<|file_sep|>utils.py\nimport math\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n\ndef calculate_perimeter(radius):\n    return 2 * math.pi * radius\n<|file_sep|>filename\n<|fim_prefix|>from utils import calculate_area\n\ndef draw_circle(radius):\n    area = <|fim_suffix|>\n    print(f'Circle area: {area}')\n<|fim_middle|>",
+  "has_new_line": false,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 78,
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 74,
+    "prompt_ms": 158.965,
+    "prompt_per_token_ms": 2.1481756756756756,
+    "prompt_per_second": 465.51127606705876,
+    "predicted_n": 5,
+    "predicted_ms": 59.02,
+    "predicted_per_token_ms": 11.804,
+    "predicted_per_second": 84.71704506946796
+  }
+}
+
+=== Test 3: Response field filtering ===
+Request:
+{
+  "input_prefix": "fun greet(name: String): String {\n    return ",
+  "input_suffix": "\n}\n",
+  "n_predict": 32,
+  "temperature": 0.0,
+  "stream": false,
+  "cache_prompt": true,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_second",
+    "tokens_cached",
+    "truncated"
+  ]
+}
+Response:
+{
+  "content": "\"Hello, $name!\"",
+  "timings/prompt_n": 15,
+  "timings/prompt_ms": 88.21,
+  "timings/prompt_per_second": 170.0487473075615,
+  "timings/predicted_n": 7,
+  "timings/predicted_ms": 87.839,
+  "timings/predicted_per_second": 79.69125331572536,
+  "tokens_cached": 29,
+  "truncated": false
+}
+
+=== Test 4: Cache warming (n_predict=0) ===
+Request:
+{
+  "input_prefix": "",
+  "input_suffix": "",
+  "input_extra": [
+    {
+      "filename": "config.py",
+      "text": "DATABASE_URL = 'sqlite:///app.db'\nDEBUG = True\nSECRET_KEY = 'dev-key'\n"
+    },
+    {
+      "filename": "models.py",
+      "text": "from dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n    email: str\n"
+    }
+  ],
+  "n_predict": 0,
+  "temperature": 0.0,
+  "samplers": [],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_predict_ms": 1
+}
+Response:
+{
+  "index": 0,
+  "content": "this",
+  "tokens": [],
+  "id_slot": 1,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 1,
+  "tokens_evaluated": 67,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [],
+    "max_tokens": 0,
+    "n_predict": 0,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|repo_name|>myproject\n<|file_sep|>config.py\nDATABASE_URL = 'sqlite:///app.db'\nDEBUG = True\nSECRET_KEY = 'dev-key'\n<|file_sep|>models.py\nfrom dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n    email: str\n<|file_sep|>filename\n<|fim_prefix|><|fim_suffix|><|fim_middle|>",
+  "has_new_line": false,
+  "truncated": false,
+  "stop_type": "limit",
+  "stopping_word": "",
+  "tokens_cached": 67,
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 67,
+    "prompt_ms": 142.077,
+    "prompt_per_token_ms": 2.12055223880597,
+    "prompt_per_second": 471.5752725634691,
+    "predicted_n": 1,
+    "predicted_ms": 0.001,
+    "predicted_per_token_ms": 0.001,
+    "predicted_per_second": 1000000.0
+  }
+}
+
+=== Test 5: /infill vs /completion comparison ===
+5a. /infill request:
+{
+  "input_prefix": "class Calculator:\n    def add(self, a, b):\n        ",
+  "input_suffix": "\n    def subtract(self, a, b):\n        return a - b\n",
+  "n_predict": 32,
+  "temperature": 0.0,
+  "stream": false,
+  "cache_prompt": true
+}
+5a. /infill response:
+{
+  "index": 0,
+  "content": "return a + b\n```",
+  "tokens": [],
+  "id_slot": 3,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 7,
+  "tokens_evaluated": 39,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [],
+    "max_tokens": 32,
+    "n_predict": 32,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|repo_name|>myproject\n<|file_sep|>filename\n<|fim_prefix|>class Calculator:\n    def add(self, a, b):\n        <|fim_suffix|>\n    def subtract(self, a, b):\n        return a - b\n<|fim_middle|>",
+  "has_new_line": true,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 45,
+  "timings": {
+    "cache_n": 8,
+    "prompt_n": 31,
+    "prompt_ms": 151.329,
+    "prompt_per_token_ms": 4.88158064516129,
+    "prompt_per_second": 204.85168077500015,
+    "predicted_n": 7,
+    "predicted_ms": 88.136,
+    "predicted_per_token_ms": 12.590857142857143,
+    "predicted_per_second": 79.42271035672144
+  }
+}
+5b. /completion request:
+{
+  "prompt": "<|file_sep|>calculator.py\nclass Calculator:\n    def add(self, a, b):\n        <|fim_suffix|>\n    def subtract(self, a, b):\n        return a - b\n<|fim_middle|>",
+  "n_predict": 32,
+  "temperature": 0.0,
+  "stop": [
+    "<|file_sep|>",
+    "</s>"
+  ],
+  "stream": false,
+  "cache_prompt": true
+}
+5b. /completion response:
+{
+  "index": 0,
+  "content": "return a + b\n```",
+  "tokens": [],
+  "id_slot": 0,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 7,
+  "tokens_evaluated": 35,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [
+      "<|file_sep|>",
+      "</s>"
+    ],
+    "max_tokens": 32,
+    "n_predict": 32,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|file_sep|>calculator.py\nclass Calculator:\n    def add(self, a, b):\n        <|fim_suffix|>\n    def subtract(self, a, b):\n        return a - b\n<|fim_middle|>",
+  "has_new_line": true,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 41,
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 35,
+    "prompt_ms": 118.266,
+    "prompt_per_token_ms": 3.3790285714285715,
+    "prompt_per_second": 295.94304364737116,
+    "predicted_n": 7,
+    "predicted_ms": 86.892,
+    "predicted_per_token_ms": 12.413142857142857,
+    "predicted_per_second": 80.55977535331216
+  }
+}
+
+=== Summary ===
+Test results:
+  1. Basic infill       - Tests prefix/suffix with no extra context
+  2. Extra context      - Tests input_extra with cross-file references
+  3. Field filtering    - Tests response_fields for leaner responses
+  4. Cache warming      - Tests n_predict=0 for KV cache pre-loading
+  5. Infill vs Completion - Compares /infill (server-managed FIM) vs
+                           /completion (client-managed FIM tokens)

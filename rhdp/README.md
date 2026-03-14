@@ -76,3 +76,9 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 24 | 24-research-order89-cursor-based-cancellation.md | research | Current ESC cancellation behavior, RangeMarker API, and cursor-position-based session matching |
 | 25 | 25-design-order89-cursor-based-cancellation.md | design | Cursor-aware ESC cancellation using RangeMarker per session with ESC passthrough |
 | 26 | 26-plan-order89-cursor-based-cancellation.md | plan | 5-step implementation plan: add RangeMarker to session, rewrite ESC handler, dispose on completion |
+| 27 | 27-research-llamacpp-infill-endpoint.md | research | llama.cpp `/infill` endpoint API: request/response format, FIM token assembly, comparison with `/completion` |
+| 28 | 28-harness-infill-endpoint-test.sh | harness | Test script exercising `/infill` endpoint: basic infill, extra context, field filtering, cache warming, comparison with `/completion` |
+| 30 | 30-harness-fim-matrix-test.py | harness | FIM matrix test: 4 languages × 5 cursor positions × 3 file sizes × 4 complexity levels (240 cases) |
+| 32 | 32-research-llama-vim-infill-usage.md | research | How llama.vim uses `/infill`: request shape, context assembly, ring buffer, cache warming, speculative pre-fetch, typed-char cache reuse |
+| 33 | 33-harness-llama-vim-style-infill.sh | harness | Same 5 tests as harness 28 but using llama.vim request patterns: prompt field, id_slot, samplers, cache warming, speculative pre-fetch |
+| 34 | 34-output-llama-vim-style-infill.txt | output | Results from harness 33: side-by-side comparison of simple vs llama.vim-style /infill requests |

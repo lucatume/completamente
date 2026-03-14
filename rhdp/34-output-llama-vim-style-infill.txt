@@ -1,0 +1,762 @@
+llama.vim-style /infill endpoint test
+Server: http://localhost:8012
+Date: 2026-03-14T10:13:32Z
+
+=== Test 1: Basic infill — simple vs llama.vim split ===
+
+--- 1a. Simple style (harness 28) ---
+1a. Simple request:
+{
+  "input_prefix": "def fibonacci(n):\n    if n <= 1:\n        return n\n    ",
+  "input_suffix": "\n\ndef main():\n    print(fibonacci(10))\n",
+  "n_predict": 128,
+  "temperature": 0.0,
+  "stream": false,
+  "cache_prompt": true
+}
+1a. Simple response:
+{
+  "index": 0,
+  "content": "else:\n        return fibonacci(n-1) + fibonacci(n-2)\n",
+  "tokens": [],
+  "id_slot": 0,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 16,
+  "tokens_evaluated": 39,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [],
+    "max_tokens": 128,
+    "n_predict": 128,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|repo_name|>myproject\n<|file_sep|>filename\n<|fim_prefix|>def fibonacci(n):\n    if n <= 1:\n        return n\n    <|fim_suffix|>\n\ndef main():\n    print(fibonacci(10))\n<|fim_middle|>",
+  "has_new_line": true,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 54,
+  "timings": {
+    "cache_n": 8,
+    "prompt_n": 31,
+    "prompt_ms": 160.503,
+    "prompt_per_token_ms": 5.1775161290322576,
+    "prompt_per_second": 193.14280729955203,
+    "predicted_n": 16,
+    "predicted_ms": 219.47,
+    "predicted_per_token_ms": 13.716875,
+    "predicted_per_second": 72.90290244680367
+  }
+}
+
+--- 1b. llama.vim style (prefix/prompt/suffix split) ---
+1b. llama.vim request:
+{
+  "id_slot": 0,
+  "input_prefix": "def fibonacci(n):\n    if n <= 1:\n        return n\n",
+  "input_suffix": "\n\ndef main():\n    print(fibonacci(10))\n",
+  "prompt": "    ",
+  "n_predict": 128,
+  "n_indent": 4,
+  "top_k": 40,
+  "top_p": 0.90,
+  "samplers": [
+    "top_k",
+    "top_p",
+    "infill"
+  ],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 500,
+  "t_max_predict_ms": 250,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_token_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_token_ms",
+    "timings/predicted_per_second",
+    "truncated",
+    "tokens_cached"
+  ]
+}
+1b. llama.vim response:
+{
+  "content": "else:\n        return fibonacci(n-1) + fibonacci(n-2)\n",
+  "timings/prompt_n": 1,
+  "timings/prompt_ms": 15.373,
+  "timings/prompt_per_token_ms": 15.373,
+  "timings/prompt_per_second": 65.04911207962012,
+  "timings/predicted_n": 16,
+  "timings/predicted_ms": 218.58,
+  "timings/predicted_per_token_ms": 13.66125,
+  "timings/predicted_per_second": 73.1997438008967,
+  "truncated": false,
+  "tokens_cached": 54
+}
+
+=== Test 2: Infill with input_extra — two-phase (warm + infill) ===
+
+--- 2a. Simple style (harness 28) ---
+2a. Simple request:
+{
+  "input_prefix": "from utils import calculate_area\n\ndef draw_circle(radius):\n    area = ",
+  "input_suffix": "\n    print(f'Circle area: {area}')\n",
+  "input_extra": [
+    {
+      "filename": "utils.py",
+      "text": "import math\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n\ndef calculate_perimeter(radius):\n    return 2 * math.pi * radius\n"
+    }
+  ],
+  "n_predict": 64,
+  "temperature": 0.0,
+  "stream": false,
+  "cache_prompt": true
+}
+2a. Simple response:
+{
+  "index": 0,
+  "content": "calculate_area(radius)",
+  "tokens": [],
+  "id_slot": 3,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 5,
+  "tokens_evaluated": 74,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [],
+    "max_tokens": 64,
+    "n_predict": 64,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|repo_name|>myproject\n<|file_sep|>utils.py\nimport math\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n\ndef calculate_perimeter(radius):\n    return 2 * math.pi * radius\n<|file_sep|>filename\n<|fim_prefix|>from utils import calculate_area\n\ndef draw_circle(radius):\n    area = <|fim_suffix|>\n    print(f'Circle area: {area}')\n<|fim_middle|>",
+  "has_new_line": false,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 78,
+  "timings": {
+    "cache_n": 5,
+    "prompt_n": 69,
+    "prompt_ms": 155.011,
+    "prompt_per_token_ms": 2.246536231884058,
+    "prompt_per_second": 445.1297004728697,
+    "predicted_n": 5,
+    "predicted_ms": 60.393,
+    "predicted_per_token_ms": 12.0786,
+    "predicted_per_second": 82.791051943106
+  }
+}
+
+--- 2b. llama.vim cache-warming request (ring_update) ---
+2b-warm. Cache warming request:
+{
+  "id_slot": 0,
+  "input_prefix": "",
+  "input_suffix": "",
+  "input_extra": [
+    {
+      "filename": "utils.py",
+      "text": "import math\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n\ndef calculate_perimeter(radius):\n    return 2 * math.pi * radius\n"
+    }
+  ],
+  "prompt": "",
+  "n_predict": 0,
+  "temperature": 0.0,
+  "samplers": [],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 1,
+  "t_max_predict_ms": 1,
+  "response_fields": [
+    ""
+  ]
+}
+2b-warm. Cache warming response:
+{}
+
+--- 2c. llama.vim FIM request (after cache warm) ---
+2c. llama.vim (post-warm) request:
+{
+  "id_slot": 0,
+  "input_prefix": "from utils import calculate_area\n\ndef draw_circle(radius):\n",
+  "input_suffix": "\n    print(f'Circle area: {area}')\n",
+  "input_extra": [
+    {
+      "filename": "utils.py",
+      "text": "import math\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n\ndef calculate_perimeter(radius):\n    return 2 * math.pi * radius\n"
+    }
+  ],
+  "prompt": "    area = ",
+  "n_predict": 64,
+  "n_indent": 4,
+  "top_k": 40,
+  "top_p": 0.90,
+  "samplers": [
+    "top_k",
+    "top_p",
+    "infill"
+  ],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 500,
+  "t_max_predict_ms": 250,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_second",
+    "truncated",
+    "tokens_cached"
+  ]
+}
+2c. llama.vim (post-warm) response:
+{
+  "content": "calculate_area(radius)",
+  "timings/prompt_n": 28,
+  "timings/prompt_ms": 140.008,
+  "timings/prompt_per_second": 199.98857208159532,
+  "timings/predicted_n": 5,
+  "timings/predicted_ms": 61.371,
+  "timings/predicted_per_second": 81.47170487689624,
+  "truncated": false,
+  "tokens_cached": 78
+}
+
+=== Test 3: Response field filtering — full vs llama.vim fields ===
+
+--- 3a. Simple style — no field filtering ---
+3a. Full response request:
+{
+  "input_prefix": "fun greet(name: String): String {\n    return ",
+  "input_suffix": "\n}\n",
+  "n_predict": 32,
+  "temperature": 0.0,
+  "stream": false,
+  "cache_prompt": true
+}
+3a. Full response response:
+{
+  "index": 0,
+  "content": "\"Hello, $name!\"",
+  "tokens": [],
+  "id_slot": 1,
+  "stop": true,
+  "model": "ggml-org_Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF_qwen3-coder-30b-a3b-instruct-q8_0.gguf",
+  "tokens_predicted": 7,
+  "tokens_evaluated": 23,
+  "generation_settings": {
+    "seed": 4294967295,
+    "temperature": 0.0,
+    "dynatemp_range": 0.0,
+    "dynatemp_exponent": 1.0,
+    "top_k": 40,
+    "top_p": 0.949999988079071,
+    "min_p": 0.05000000074505806,
+    "top_n_sigma": -1.0,
+    "xtc_probability": 0.0,
+    "xtc_threshold": 0.10000000149011612,
+    "typical_p": 1.0,
+    "repeat_last_n": 64,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+    "dry_base": 1.75,
+    "dry_allowed_length": 2,
+    "dry_penalty_last_n": 262144,
+    "dry_sequence_breakers": [
+      "\n",
+      ":",
+      "\"",
+      "*"
+    ],
+    "mirostat": 0,
+    "mirostat_tau": 5.0,
+    "mirostat_eta": 0.10000000149011612,
+    "stop": [],
+    "max_tokens": 32,
+    "n_predict": 32,
+    "n_keep": 0,
+    "n_discard": 0,
+    "ignore_eos": false,
+    "stream": false,
+    "logit_bias": [],
+    "n_probs": 0,
+    "min_keep": 0,
+    "grammar": "",
+    "grammar_lazy": false,
+    "grammar_triggers": [],
+    "preserved_tokens": [],
+    "chat_format": "Content-only",
+    "reasoning_format": "deepseek",
+    "reasoning_in_content": false,
+    "thinking_forced_open": false,
+    "samplers": [
+      "penalties",
+      "dry",
+      "top_n_sigma",
+      "top_k",
+      "typ_p",
+      "top_p",
+      "min_p",
+      "xtc",
+      "temperature"
+    ],
+    "speculative.n_max": 16,
+    "speculative.n_min": 0,
+    "speculative.p_min": 0.75,
+    "speculative.type": "none",
+    "speculative.ngram_size_n": 1024,
+    "speculative.ngram_size_m": 1024,
+    "speculative.ngram_m_hits": 1024,
+    "timings_per_token": false,
+    "post_sampling_probs": false,
+    "backend_sampling": false,
+    "lora": []
+  },
+  "prompt": "<|repo_name|>myproject\n<|file_sep|>filename\n<|fim_prefix|>fun greet(name: String): String {\n    return <|fim_suffix|>\n}\n<|fim_middle|>",
+  "has_new_line": false,
+  "truncated": false,
+  "stop_type": "eos",
+  "stopping_word": "",
+  "tokens_cached": 29,
+  "timings": {
+    "cache_n": 8,
+    "prompt_n": 15,
+    "prompt_ms": 89.256,
+    "prompt_per_token_ms": 5.9504,
+    "prompt_per_second": 168.0559290131756,
+    "predicted_n": 7,
+    "predicted_ms": 88.568,
+    "predicted_per_token_ms": 12.652571428571429,
+    "predicted_per_second": 79.03531749616116
+  }
+}
+
+--- 3b. llama.vim style — filtered fields ---
+3b. Filtered request:
+{
+  "id_slot": 0,
+  "input_prefix": "fun greet(name: String): String {\n",
+  "input_suffix": "\n}\n",
+  "prompt": "    return ",
+  "n_predict": 32,
+  "n_indent": 4,
+  "top_k": 40,
+  "top_p": 0.90,
+  "samplers": [
+    "top_k",
+    "top_p",
+    "infill"
+  ],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 500,
+  "t_max_predict_ms": 250,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_token_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_token_ms",
+    "timings/predicted_per_second",
+    "truncated",
+    "tokens_cached"
+  ]
+}
+3b. Filtered response:
+{
+  "content": "\"Hello, $name!\"",
+  "timings/prompt_n": 18,
+  "timings/prompt_ms": 102.756,
+  "timings/prompt_per_token_ms": 5.708666666666667,
+  "timings/prompt_per_second": 175.17225271516992,
+  "timings/predicted_n": 7,
+  "timings/predicted_ms": 90.007,
+  "timings/predicted_per_token_ms": 12.858142857142857,
+  "timings/predicted_per_second": 77.77172886553268,
+  "truncated": false,
+  "tokens_cached": 29
+}
+
+=== Test 4: Cache warming — ring_update pattern ===
+
+--- 4a. Cache warming request (llama.vim ring_update) ---
+4a. Cache warm request:
+{
+  "id_slot": 0,
+  "input_prefix": "",
+  "input_suffix": "",
+  "input_extra": [
+    {
+      "filename": "config.py",
+      "text": "DATABASE_URL = 'sqlite:///app.db'\nDEBUG = True\nSECRET_KEY = 'dev-key'\n"
+    },
+    {
+      "filename": "models.py",
+      "text": "from dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n    email: str\n"
+    }
+  ],
+  "prompt": "",
+  "n_predict": 0,
+  "temperature": 0.0,
+  "samplers": [],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 1,
+  "t_max_predict_ms": 1,
+  "response_fields": [
+    ""
+  ]
+}
+4a. Cache warm response:
+{}
+
+--- 4b. FIM request after warming (same input_extra) ---
+4b. FIM post-warm request:
+{
+  "id_slot": 0,
+  "input_prefix": "from models import User\nfrom config import DATABASE_URL\n\ndef get_user(user_id: int) -> User:\n",
+  "input_suffix": "\n\ndef main():\n    user = get_user(1)\n    print(user)\n",
+  "input_extra": [
+    {
+      "filename": "config.py",
+      "text": "DATABASE_URL = 'sqlite:///app.db'\nDEBUG = True\nSECRET_KEY = 'dev-key'\n"
+    },
+    {
+      "filename": "models.py",
+      "text": "from dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n    email: str\n"
+    }
+  ],
+  "prompt": "    ",
+  "n_predict": 64,
+  "n_indent": 4,
+  "top_k": 40,
+  "top_p": 0.90,
+  "samplers": [
+    "top_k",
+    "top_p",
+    "infill"
+  ],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 500,
+  "t_max_predict_ms": 250,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_second",
+    "truncated",
+    "tokens_cached"
+  ]
+}
+4b. FIM post-warm response:
+{
+  "content": "# Simulate fetching from database\n    return User(id=user_id, name=\"John Doe\", email=\"john@example.com\")\n",
+  "timings/prompt_n": 41,
+  "timings/prompt_ms": 116.594,
+  "timings/prompt_per_second": 351.64759764653417,
+  "timings/predicted_n": 25,
+  "timings/predicted_ms": 347.944,
+  "timings/predicted_per_second": 71.8506426321477,
+  "truncated": false,
+  "tokens_cached": 130
+}
+
+--- 4c. Same FIM without prior warming (no cache benefit) ---
+4c. FIM no-warm (slot 1) request:
+{
+  "id_slot": 1,
+  "input_prefix": "from models import User\nfrom config import DATABASE_URL\n\ndef get_user(user_id: int) -> User:\n",
+  "input_suffix": "\n\ndef main():\n    user = get_user(1)\n    print(user)\n",
+  "input_extra": [
+    {
+      "filename": "config.py",
+      "text": "DATABASE_URL = 'sqlite:///app.db'\nDEBUG = True\nSECRET_KEY = 'dev-key'\n"
+    },
+    {
+      "filename": "models.py",
+      "text": "from dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n    email: str\n"
+    }
+  ],
+  "prompt": "    ",
+  "n_predict": 64,
+  "n_indent": 4,
+  "top_k": 40,
+  "top_p": 0.90,
+  "samplers": [
+    "top_k",
+    "top_p",
+    "infill"
+  ],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 500,
+  "t_max_predict_ms": 250,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_second",
+    "truncated",
+    "tokens_cached"
+  ]
+}
+4c. FIM no-warm (slot 1) response:
+{
+  "content": "# Simulate fetching user from database\n    return User(id=user_id, name=\"John Doe\", email=\"john@example.com\")\n",
+  "timings/prompt_n": 101,
+  "timings/prompt_ms": 164.236,
+  "timings/prompt_per_second": 614.9687035729073,
+  "timings/predicted_n": 26,
+  "timings/predicted_ms": 364.527,
+  "timings/predicted_per_second": 71.32530649307185,
+  "truncated": false,
+  "tokens_cached": 131
+}
+
+=== Test 5: Speculative pre-fetch — two-tier timing ===
+
+--- 5a. First request (250ms cap, user waiting) ---
+5a. First (250ms) request:
+{
+  "id_slot": 0,
+  "input_prefix": "class Calculator:\n    def add(self, a, b):\n",
+  "input_suffix": "\n    def subtract(self, a, b):\n        return a - b\n",
+  "prompt": "        ",
+  "n_predict": 32,
+  "n_indent": 8,
+  "top_k": 40,
+  "top_p": 0.90,
+  "samplers": [
+    "top_k",
+    "top_p",
+    "infill"
+  ],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 500,
+  "t_max_predict_ms": 250,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_second",
+    "truncated",
+    "tokens_cached"
+  ]
+}
+5a. First (250ms) response:
+{
+  "content": "return a + b\n",
+  "timings/prompt_n": 34,
+  "timings/prompt_ms": 120.548,
+  "timings/prompt_per_second": 282.0453263430335,
+  "timings/predicted_n": 7,
+  "timings/predicted_ms": 88.726,
+  "timings/predicted_per_second": 78.89457430741835,
+  "truncated": false,
+  "tokens_cached": 45
+}
+
+--- 5b. Speculative follow-up (1000ms, as if 5a accepted) ---
+Content from 5a: 'return a + b'
+5b. Speculative (1000ms) request:
+{
+  "id_slot": 0,
+  "input_prefix": "class Calculator:\\n    def add(self, a, b):\\n        return a + b",
+  "input_suffix": "\\n    def subtract(self, a, b):\\n        return a - b\\n",
+  "prompt": "",
+  "n_predict": 32,
+  "n_indent": 8,
+  "top_k": 40,
+  "top_p": 0.90,
+  "samplers": [
+    "top_k",
+    "top_p",
+    "infill"
+  ],
+  "stream": false,
+  "cache_prompt": true,
+  "t_max_prompt_ms": 500,
+  "t_max_predict_ms": 1000,
+  "response_fields": [
+    "content",
+    "timings/prompt_n",
+    "timings/prompt_ms",
+    "timings/prompt_per_second",
+    "timings/predicted_n",
+    "timings/predicted_ms",
+    "timings/predicted_per_second",
+    "truncated",
+    "tokens_cached"
+  ]
+}
+5b. Speculative (1000ms) response:
+{
+  "content": "\\n\\n    def multiply(self, a, b):\\n        return a * b\\n\\n    def divide(self, a, b):\\n        if b",
+  "timings/prompt_n": 36,
+  "timings/prompt_ms": 115.027,
+  "timings/prompt_per_second": 312.9699983482139,
+  "timings/predicted_n": 32,
+  "timings/predicted_ms": 458.63,
+  "timings/predicted_per_second": 69.77301964546585,
+  "truncated": false,
+  "tokens_cached": 77
+}
+
+=== Summary ===
+Test results:
+  1. Basic infill — simple vs llama.vim prefix/prompt/suffix split
+  2. Input_extra with cache warming — two-phase approach
+  3. Response field filtering — full response vs filtered
+  4. Cache warming ring_update pattern — warm vs cold
+  5. Speculative pre-fetch — two-tier timing
