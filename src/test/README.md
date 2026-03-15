@@ -13,16 +13,5 @@ Add complex fixture helpers to `BaseCompletionTestCase`.
 ## Test file creation
 
 - 15 or fewer lines: `myFixture.configureByText()`
-- More than 15 lines: `myFixture.configureByFile()` (file in `src/test/testData/completion`)
+- More than 15 lines: `myFixture.configureByFile()` (file in `src/test/testData/`)
 
-## Generating test data
-
-### `edit-types-harness-output.jsonp`
-
-Required by `EditKindFromHarnessTest.kt`. Generate it from the project root:
-
-```bash
-source .venv/bin/activate && python3 bin/harness-test-edit-types.py
-```
-
-The output file is written to `src/test/testData/completion/edit-types-harness-output.jsonp`.

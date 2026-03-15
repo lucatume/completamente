@@ -6,6 +6,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import kotlin.random.Random
 
 /**
+ * Rough token count estimate: ~3 characters per token.
+ */
+fun estimateTokens(text: String): Int = (text.length + 2) / 3
+
+/**
  * Compute how similar two chunks of text are.
  * Returns a value between 0.0 (no similarity) and 1.0 (high similarity).
  *

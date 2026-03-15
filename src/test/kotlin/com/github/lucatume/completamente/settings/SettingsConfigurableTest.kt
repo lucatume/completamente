@@ -16,39 +16,6 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         assertFalse(configurable.isModified)
     }
 
-    fun testResetRestoresStateValues() {
-        val configurable = SettingsConfigurable()
-        configurable.createComponent()
-        val state = SettingsState.getInstance()
-        val originalUrl = state.serverUrl
-
-        // Modify via the UI component to simulate a user change
-        val urlFieldRef = SettingsConfigurable::class.java.getDeclaredField("serverUrlField")
-        urlFieldRef.isAccessible = true
-        val urlField = urlFieldRef.get(configurable) as javax.swing.JTextField
-        urlField.text = "http://changed:9999"
-
-        configurable.reset()
-
-        assertEquals("URL field should be restored to state value", originalUrl, urlField.text)
-    }
-
-    fun testApplyPersistsChangedValues() {
-        val configurable = SettingsConfigurable()
-        configurable.createComponent()
-        val state = SettingsState.getInstance()
-
-        // Modify via the serverUrlField (the actual UI component)
-        val urlFieldRef = SettingsConfigurable::class.java.getDeclaredField("serverUrlField")
-        urlFieldRef.isAccessible = true
-        val urlField = urlFieldRef.get(configurable) as javax.swing.JTextField
-        urlField.text = "http://new-server:1234"
-
-        configurable.apply()
-
-        assertEquals("State should reflect the new URL", "http://new-server:1234", state.serverUrl)
-    }
-
     fun testApplyWithNonNumericRingNChunksUsesDefault() {
         val configurable = SettingsConfigurable()
         configurable.createComponent()

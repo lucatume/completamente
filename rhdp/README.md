@@ -82,3 +82,4 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 32 | 32-research-llama-vim-infill-usage.md | research | How llama.vim uses `/infill`: request shape, context assembly, ring buffer, cache warming, speculative pre-fetch, typed-char cache reuse |
 | 33 | 33-harness-llama-vim-style-infill.sh | harness | Same 5 tests as harness 28 but using llama.vim request patterns: prompt field, id_slot, samplers, cache warming, speculative pre-fetch |
 | 34 | 34-output-llama-vim-style-infill.txt | output | Results from harness 33: side-by-side comparison of simple vs llama.vim-style /infill requests |
+| 35 | 35-plan-remove-fim-nep.md | plan | Complete removal plan for FIM/NEP source and test files, preserving Order 89 and fragment collection |
