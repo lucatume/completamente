@@ -15,7 +15,9 @@
             displayName="completamente"/>
         <notificationGroup id="completamente" displayType="STICKY_BALLOON"/>
         <projectService serviceImplementation="com.github.lucatume.completamente.services.CacheWarmingService"/>
-        <inline.completion.provider implementation="com.github.lucatume.completamente.fim.FimInlineCompletionProvider"/>
+        <inline.completion.provider id="completamente.fim"
+                                     order="first"
+                                     implementation="com.github.lucatume.completamente.fim.FimInlineCompletionProvider"/>
     </extensions>
 
     <actions>
