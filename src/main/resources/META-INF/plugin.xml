@@ -14,6 +14,8 @@
             id="com.github.lucatume.completamente.settings.SettingsConfigurable"
             displayName="completamente"/>
         <notificationGroup id="completamente" displayType="STICKY_BALLOON"/>
+        <projectService serviceImplementation="com.github.lucatume.completamente.services.CacheWarmingService"/>
+        <inline.completion.provider implementation="com.github.lucatume.completamente.fim.FimInlineCompletionProvider"/>
     </extensions>
 
     <actions>

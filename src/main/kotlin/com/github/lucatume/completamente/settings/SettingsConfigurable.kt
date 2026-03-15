@@ -4,6 +4,7 @@ import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.components.JBScrollPane
@@ -17,6 +18,10 @@ class SettingsConfigurable : Configurable {
     private val state = SettingsState.getInstance()
 
     // Current field values — kept in sync with the UI via bind*() on apply/reset
+    private var serverUrl = ""
+    private var contextSize = ""
+    private var nPredict = ""
+    private var autoSuggestions = false
     private var ringNChunks = ""
     private var ringChunkSize = ""
     private var maxQueuedChunks = ""
@@ -31,6 +36,27 @@ class SettingsConfigurable : Configurable {
         loadFromState()
 
         dialogPanel = panel {
+            group("FIM Completions") {
+                row("Server URL:") {
+                    textField()
+                        .bindText(::serverUrl)
+                        .comment("llama.cpp server endpoint")
+                }
+                row("Context size:") {
+                    textField()
+                        .bindText(::contextSize)
+                        .comment("Context window size in tokens")
+                }
+                row("Max predicted tokens:") {
+                    textField()
+                        .bindText(::nPredict)
+                        .comment("Maximum number of tokens to predict")
+                }
+                row {
+                    checkBox("Enable auto-suggestions")
+                        .bindSelected(::autoSuggestions)
+                }
+            }
             group("Ring Buffer (Extra Context)") {
                 row("Number of chunks:") {
                     textField()
@@ -78,6 +104,10 @@ class SettingsConfigurable : Configurable {
     }
 
     private fun loadFromState() {
+        serverUrl = state.serverUrl
+        contextSize = state.contextSize.toString()
+        nPredict = state.nPredict.toString()
+        autoSuggestions = state.autoSuggestions
         ringNChunks = state.ringNChunks.toString()
         ringChunkSize = state.ringChunkSize.toString()
         maxQueuedChunks = state.maxQueuedChunks.toString()
@@ -97,9 +127,14 @@ class SettingsConfigurable : Configurable {
     }
 
     private fun applyToState() {
-        state.ringNChunks = ringNChunks.toIntOrNull() ?: 16
-        state.ringChunkSize = ringChunkSize.toIntOrNull() ?: 64
-        state.maxQueuedChunks = maxQueuedChunks.toIntOrNull() ?: 16
+        val defaults = SettingsState()
+        state.serverUrl = serverUrl
+        state.contextSize = contextSize.toIntOrNull() ?: defaults.contextSize
+        state.nPredict = nPredict.toIntOrNull() ?: defaults.nPredict
+        state.autoSuggestions = autoSuggestions
+        state.ringNChunks = ringNChunks.toIntOrNull() ?: defaults.ringNChunks
+        state.ringChunkSize = ringChunkSize.toIntOrNull() ?: defaults.ringChunkSize
+        state.maxQueuedChunks = maxQueuedChunks.toIntOrNull() ?: defaults.maxQueuedChunks
         state.order89Command = order89Command
     }
 

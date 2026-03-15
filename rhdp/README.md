@@ -83,3 +83,8 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 33 | 33-harness-llama-vim-style-infill.sh | harness | Same 5 tests as harness 28 but using llama.vim request patterns: prompt field, id_slot, samplers, cache warming, speculative pre-fetch |
 | 34 | 34-output-llama-vim-style-infill.txt | output | Results from harness 33: side-by-side comparison of simple vs llama.vim-style /infill requests |
 | 35 | 35-plan-remove-fim-nep.md | plan | Complete removal plan for FIM/NEP source and test files, preserving Order 89 and fragment collection |
+| 36 | 36-design-prompt-structure-v2.md | design | Prompt structure v2: llama.vim-style `/infill` with 32k context, iterative design via Q&A |
+| 37 | 37-harness-kv-cache-behavior.sh | harness | Tests KV cache: token order sensitivity, island caching, prefix growth, chunk reordering |
+| 38 | 38-output-kv-cache-behavior.txt | output | Results from harness 37 (pending execution) |
+| 39 | 39-research-kv-cache-behavior.md | research | How llama.cpp KV cache works: strictly prefix-based, order matters, no island caching |
+| 40 | 40-plan-fim-v2-implementation.md | plan | 11-step implementation plan for FIM v2: llama.vim-style `/infill`, 32k context, TDD with reviewer loop |

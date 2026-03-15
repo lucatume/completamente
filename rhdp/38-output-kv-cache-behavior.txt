@@ -1,0 +1,560 @@
+KV Cache Behavior Test
+Server: http://localhost:8012
+Date: 2026-03-15T10:53:56Z
+
+========================================================================
+TEST 1: BASELINE — Establish cache with prompt ABC
+
+Send prompt = A + B + C. This is the cold request that populates the KV
+cache. All tokens must be evaluated from scratch.
+========================================================================
+
+--- 1. Cold request: ABC (baseline) ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=370, tokens_cached=370, content='\n'
+
+========================================================================
+TEST 2: SAME PROMPT — Verify warm cache hit
+
+Send the exact same prompt ABC again. If caching works, prompt_n should
+be very small (only 1 new token for the generation seed).
+========================================================================
+
+--- 2. Warm request: ABC (identical repeat) ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=1, tokens_cached=370, content=''
+
+========================================================================
+TEST 3: Q1 — REORDERED COMPONENTS (BAC instead of ABC)
+
+The cache has ABC. Now send BAC (swap A and B in input_extra).
+If order matters: prompt_n ≈ total tokens (full re-evaluation).
+If order doesn't matter: prompt_n should be small.
+========================================================================
+
+--- 3a. Re-prime cache: ABC ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=1, tokens_cached=370, content='\n'
+
+--- 3b. Reordered: BAC (B is prefix, extra=[A, C]) ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "UserService.kt",
+            "text": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=364, tokens_cached=369, content='\n'
+
+========================================================================
+TEST 4: Q1 — REORDERED EXTRAS ONLY (ACB instead of ABC)
+
+The cache has BAC from test 3b. Now send ACB (same prefix A, but extras
+swapped: [C, B] instead of [B, C]).
+This tests whether reordering ONLY the input_extra chunks matters.
+========================================================================
+
+--- 4a. Re-prime cache: ABC ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=365, tokens_cached=370, content='\n'
+
+--- 4b. Swapped extras: ACB (same prefix A, extras=[C, B]) ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        },
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=365, tokens_cached=370, content='\n'
+
+========================================================================
+TEST 5: Q2 — PREFIX CHANGE, SUFFIX SAME (XBC instead of ABC)
+
+The cache has ACB from test 4b. Re-prime with ABC, then send XBC.
+X replaces A at the start. B and C are unchanged.
+If islands are cached: prompt_n ≈ tokens(X) only.
+If strictly prefix: prompt_n ≈ tokens(X + B + C) (full re-eval).
+========================================================================
+
+--- 5a. Re-prime cache: ABC ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=365, tokens_cached=370, content='\n'
+
+--- 5b. Changed prefix: XBC (X replaces A, extras=[B, C] unchanged) ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class NotificationService {\n    private val subscribers = mutableMapOf<String, MutableList<String>>()\n\n    fun subscribe(topic: String, email: String) {\n        subscribers.getOrPut(topic) { mutableListOf() }.add(email)\n    }\n\n    fun unsubscribe(topic: String, email: String) {\n        subscribers[topic]?.remove(email)\n    }\n\n    fun notify(topic: String, message: String): Int {\n        val emails = subscribers[topic] ?: return 0\n        emails.forEach { sendEmail(it, message) }\n        return emails.size\n    }\n\n    private fun sendEmail(to: String, body: String) { /* ... */ }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=132, tokens_cached=401, content='\n'
+
+========================================================================
+TEST 6: Q2 — MIDDLE CHANGE (AXC instead of ABC)
+
+Re-prime with ABC, then send AXC. Only the middle chunk changes.
+The prefix (A via extra) is identical. The suffix (C via extra) is same.
+If islands cached: prompt_n ≈ tokens(X) + FIM tokens.
+If strictly prefix: prompt_n ≈ tokens(X + C) + prefix/FIM overhead.
+========================================================================
+
+--- 6a. Re-prime cache: ABC ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=101, tokens_cached=370, content='\n'
+
+--- 6b. Middle swap: AXC (extras=[X, C], prefix=A) ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "NotificationService.kt",
+            "text": "class NotificationService {\n    private val subscribers = mutableMapOf<String, MutableList<String>>()\n\n    fun subscribe(topic: String, email: String) {\n        subscribers.getOrPut(topic) { mutableListOf() }.add(email)\n    }\n\n    fun unsubscribe(topic: String, email: String) {\n        subscribers[topic]?.remove(email)\n    }\n\n    fun notify(topic: String, message: String): Int {\n        val emails = subscribers[topic] ?: return 0\n        emails.forEach { sendEmail(it, message) }\n        return emails.size\n    }\n\n    private fun sendEmail(to: String, body: String) { /* ... */ }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=375, tokens_cached=380, content='\n'
+
+========================================================================
+TEST 7: APPENDING — ABC then ABCD (add new extra chunk)
+
+Start with ABC, then add a new chunk D at the end of extras.
+Since extras come BEFORE the prefix in token assembly, adding a new
+extra chunk shifts the prefix tokens. This tests whether appending
+to input_extra preserves the cache for the existing extras.
+========================================================================
+
+--- 7a. Re-prime cache: ABC ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=365, tokens_cached=370, content='\n'
+
+--- 7b. Appended: ABCD (extras=[B, C, X], prefix=A) ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n        users[id] = user\n        return user\n    }\n\n    fun deleteUser(id: Int): Boolean {\n        return users.remove(id) != null\n    }\n}\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        },
+        {
+            "filename": "InventoryService.kt",
+            "text": "class InventoryService {\n    private val stock = mutableMapOf<String, Int>()\n\n    fun addStock(itemCode: String, quantity: Int) {\n        stock[itemCode] = (stock[itemCode] ?: 0) + quantity\n    }\n\n    fun removeStock(itemCode: String, quantity: Int): Boolean {\n        val current = stock[itemCode] ?: return false\n        if (current < quantity) return false\n        stock[itemCode] = current - quantity\n        return true\n    }\n\n    fun getStock(itemCode: String): Int {\n        return stock[itemCode] ?: 0\n    }\n}\n"
+        },
+        {
+            "filename": "NotificationService.kt",
+            "text": "class NotificationService {\n    private val subscribers = mutableMapOf<String, MutableList<String>>()\n\n    fun subscribe(topic: String, email: String) {\n        subscribers.getOrPut(topic) { mutableListOf() }.add(email)\n    }\n\n    fun unsubscribe(topic: String, email: String) {\n        subscribers[topic]?.remove(email)\n    }\n\n    fun notify(topic: String, message: String): Int {\n        val emails = subscribers[topic] ?: return 0\n        emails.forEach { sendEmail(it, message) }\n        return emails.size\n    }\n\n    private fun sendEmail(to: String, body: String) { /* ... */ }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=242, tokens_cached=507, content='\n'
+
+========================================================================
+TEST 8: TYPING SIMULATION — prefix grows by one line
+
+Simulates the user typing: same extras, prefix grows by one line.
+This is the most common real-world pattern. The prefix is an append-
+only growth, so the common prefix should be maximal.
+========================================================================
+
+--- 8a. Typing baseline: short prefix + extras ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=60, tokens_cached=192, content='       '
+
+--- 8b. Typing +1 line: longer prefix, same extras ---
+Request: {
+    "id_slot": 0,
+    "input_prefix": "class UserService {\n    private val users = mutableMapOf<Int, User>()\n\n    fun getUser(id: Int): User? {\n        return users[id]\n    }\n\n    fun createUser(name: String, email: String): User {\n        val id = users.size + 1\n        val user = User(id, name, email)\n",
+    "input_suffix": "",
+    "input_extra": [
+        {
+            "filename": "OrderService.kt",
+            "text": "class OrderService {\n    private val orders = mutableListOf<Order>()\n\n    fun placeOrder(userId: Int, items: List<Item>): Order {\n        val total = items.sumOf { it.price * it.quantity }\n        val order = Order(orders.size + 1, userId, items, total)\n        orders.add(order)\n        return order\n    }\n\n    fun getOrdersByUser(userId: Int): List<Order> {\n        return orders.filter { it.userId == userId }\n    }\n\n    fun cancelOrder(orderId: Int): Boolean {\n        return orders.removeIf { it.id == orderId }\n    }\n}\n"
+        }
+    ],
+    "prompt": "",
+    "n_predict": 1,
+    "temperature": 0.0,
+    "samplers": [
+        "top_k",
+        "top_p",
+        "infill"
+    ],
+    "stream": false,
+    "cache_prompt": true,
+    "response_fields": [
+        "content",
+        "timings/prompt_n",
+        "tokens_cached",
+        "truncated"
+    ]
+}
+Response: prompt_n=13, tokens_cached=203, content='       '
+
+========================================================================
+SUMMARY
+========================================================================
+
+Expected results based on llama.cpp KV cache architecture:
+
+  Test 2 (identical repeat): prompt_n ≈ 1 (full cache hit)
+  Test 3 (BAC vs ABC):       prompt_n ≈ total (order matters, prefix breaks)
+  Test 4 (ACB vs ABC):       prompt_n ≈ tokens(C+B+prefix) (extras reordered, only repo header cached)
+  Test 5 (XBC vs ABC):       prompt_n ≈ total (first extra changed, prefix breaks at start)
+  Test 6 (AXC vs ABC):       prompt_n ≈ tokens(X+C+prefix) (middle extra changed, B's cache lost)
+  Test 7 (ABCD vs ABC):      prompt_n ≈ tokens(X+prefix) (B,C cached as prefix, X+A appended)
+  Test 8 (typing +1 line):   prompt_n ≈ tokens(new line) (prefix grows, near-perfect cache)
+
+KEY INSIGHT: KV cache is strictly prefix-based by default.
+  - Reordering components = cache miss
+  - Changing early components = everything after is re-evaluated
+  - Appending to the end = near-perfect cache hit
+  - Most stable content should come FIRST in the token sequence

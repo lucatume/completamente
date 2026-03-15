@@ -13,6 +13,12 @@ import com.intellij.util.xmlb.XmlSerializerUtil
     storages = [Storage("completamente.xml")]
 )
 class SettingsState : PersistentStateComponent<SettingsState> {
+    // FIM Completions
+    var serverUrl: String = "http://127.0.0.1:8012"
+    var contextSize: Int = 32768
+    var nPredict: Int = 128
+    var autoSuggestions: Boolean = true
+
     // Ring Buffer (Extra Context)
     var ringNChunks: Int = 16
     var ringChunkSize: Int = 64
@@ -27,6 +33,10 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     }
 
     fun toSettings(): Settings = Settings(
+        serverUrl = serverUrl,
+        contextSize = contextSize,
+        nPredict = nPredict,
+        autoSuggestions = autoSuggestions,
         ringNChunks = ringNChunks,
         ringChunkSize = ringChunkSize,
         maxQueuedChunks = maxQueuedChunks,
