@@ -2,12 +2,14 @@ package com.github.lucatume.completamente.fim
 
 import com.github.lucatume.completamente.completion.CompletionContext
 import com.github.lucatume.completamente.completion.InfillClient
+import com.github.lucatume.completamente.completion.InfillExtraChunk
 import com.github.lucatume.completamente.completion.buildStructureChunks
 import com.github.lucatume.completamente.completion.composeInfillRequest
 import com.github.lucatume.completamente.completion.estimateTokens
 import com.github.lucatume.completamente.completion.shouldDiscardSuggestion
 import com.github.lucatume.completamente.completion.shouldSuppressAutoTrigger
 import com.github.lucatume.completamente.services.CacheWarmingService
+import com.github.lucatume.completamente.services.Chunk
 import com.github.lucatume.completamente.services.ChunksRingBuffer
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
@@ -65,35 +67,58 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
         val project = psiFile.project
         val settings = SettingsState.getInstance().toSettings()
 
-        val offset = editor.caretModel.offset
-        val cursorLine = document.getLineNumber(offset)
-        val lineStart = document.getLineStartOffset(cursorLine)
-        val cursorColumn = offset - lineStart
-        val fileContent = document.text
-        val filePath = psiFile.virtualFile?.path ?: psiFile.name
+        // All editor/document/PSI access must happen inside a read action.
+        // Capture everything we need from the editor state in one read action.
+        data class EditorSnapshot(
+            val offset: Int,
+            val cursorLine: Int,
+            val cursorColumn: Int,
+            val lineStart: Int,
+            val fileContent: String,
+            val filePath: String,
+            val structureChunks: List<InfillExtraChunk>,
+            val ringChunks: List<Chunk>
+        )
 
-        // Build structure chunks (requires read action for PSI access).
-        // Use windowed mode for large files, matching compose.kt's maxFileTokens logic.
-        val maxFileTokens = settings.contextSize / 3
-        val wholeFile = estimateTokens(fileContent) <= maxFileTokens
-        val structureChunks = readAction {
-            buildStructureChunks(psiFile, wholeFile)
+        val snapshot = readAction {
+            val offset = editor.caretModel.offset
+            val cursorLine = document.getLineNumber(offset)
+            val lineStart = document.getLineStartOffset(cursorLine)
+            val cursorColumn = offset - lineStart
+            val fileContent = document.text
+            val filePath = psiFile.virtualFile?.path ?: psiFile.name
+
+            // Build structure chunks (requires read action for PSI access).
+            val maxFileTokens = settings.contextSize / 3
+            val wholeFile = estimateTokens(fileContent) <= maxFileTokens
+            val structureChunks = buildStructureChunks(psiFile, wholeFile)
+
+            // Get ring chunks from the project service.
+            val chunksRingBuffer = project.service<ChunksRingBuffer>()
+            val ringChunks = chunksRingBuffer.getRingChunks().toList()
+
+            EditorSnapshot(
+                offset = offset,
+                cursorLine = cursorLine,
+                cursorColumn = cursorColumn,
+                lineStart = lineStart,
+                fileContent = fileContent,
+                filePath = filePath,
+                structureChunks = structureChunks,
+                ringChunks = ringChunks
+            )
         }
 
         coroutineContext.ensureActive()
 
-        // Get ring chunks from the project service.
-        val chunksRingBuffer = project.service<ChunksRingBuffer>()
-        val ringChunks = chunksRingBuffer.getRingChunks().toList()
-
-        // Compose the infill request.
+        // Compose the infill request (pure function, no read action needed).
         val ctx = CompletionContext(
-            filePath = filePath,
-            fileContent = fileContent,
-            cursorLine = cursorLine,
-            cursorColumn = cursorColumn,
-            structureFiles = structureChunks,
-            ringChunks = ringChunks,
+            filePath = snapshot.filePath,
+            fileContent = snapshot.fileContent,
+            cursorLine = snapshot.cursorLine,
+            cursorColumn = snapshot.cursorColumn,
+            structureFiles = snapshot.structureChunks,
+            ringChunks = snapshot.ringChunks,
             settings = settings
         )
         val infillRequest = composeInfillRequest(ctx)
@@ -118,9 +143,9 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
             return InlineCompletionSingleSuggestion.build {}
         }
 
-        // Apply quality filters.
-        val suffixText = document.getText(com.intellij.openapi.util.TextRange(offset, document.textLength))
-        val prefixLastLine = document.getText(com.intellij.openapi.util.TextRange(lineStart, offset))
+        // Apply quality filters — use snapshot values captured earlier (no read action needed).
+        val suffixText = snapshot.fileContent.substring(snapshot.offset)
+        val prefixLastLine = snapshot.fileContent.substring(snapshot.lineStart, snapshot.offset)
 
         if (shouldDiscardSuggestion(suggestion, suffixText, prefixLastLine)) {
             return InlineCompletionSingleSuggestion.build {}
