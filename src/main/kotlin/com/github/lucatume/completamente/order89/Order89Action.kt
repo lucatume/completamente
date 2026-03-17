@@ -157,10 +157,12 @@ class Order89Action : AnAction() {
                 ApplicationManager.getApplication().invokeLater {
                     if (editor.isDisposed) return@invokeLater
                     if (result.success) {
+                        // Remove status lines BEFORE the command so the deletion
+                        // is truly undo-transparent. Nesting runUndoTransparentAction
+                        // inside WriteCommandAction causes IntelliJ to record it in
+                        // the same undo group, making status text reappear on undo.
+                        removeStatusDisplay(editor, session.statusDisplay)
                         WriteCommandAction.runWriteCommandAction(project, "Order 89", null, {
-                            // Remove status lines undo-transparently *inside* the command so undo
-                            // only reverts the model insertion, not the status-line removal.
-                            removeStatusDisplay(editor, session.statusDisplay)
                             if (!session.range.isValid) return@runWriteCommandAction
                             editor.document.replaceString(session.range.startOffset, session.range.endOffset, result.output)
                             PsiDocumentManager.getInstance(project).commitDocument(editor.document)
