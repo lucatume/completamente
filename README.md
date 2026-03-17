@@ -24,25 +24,15 @@ Then install the plugin in the IDE using `Settings/Preferences` -> `Plugins` -> 
 
 ## Usage
 
-### Managed server
+### Server
 
-The plugin can start and manage a `llama-server` process for you. Open `Settings/Preferences` -> `Tools` -> `completamente` and click **Start Server**.
-
-The default server command is:
+The plugin requires a running [llama.cpp](https://github.com/ggerganov/llama.cpp) server with a FIM-capable model. For example:
 
 ```
-llama-server --host {{host}} --port {{port}} -hf sweepai/sweep-next-edit-1.5B --ctx-size 8192 --parallel 1 --cache-prompt --temp 0.0
+llama-server --port 8012 --fim-qwen-30b-default
 ```
 
-- `{{host}}` and `{{port}}` are replaced at runtime from the **Server URL** setting.
-- The `-hf` flag downloads the model from HuggingFace on first run (this may take a few minutes).
-- You can edit the command to add custom flags or use a different model.
-
-When the server is managed, the Server URL field is locked to match the running server.
-
-### External server
-
-You can also run `llama-server` yourself and point the plugin at it by setting the **Server URL** (default: `http://localhost:8017`).
+Point the plugin at it by setting the **Server URL** (default: `http://127.0.0.1:8012`) in `Settings/Preferences` -> `Tools` -> `completamente`.
 
 ### Configuration
 
