@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -228,8 +229,10 @@ class Order89Action : AnAction() {
         if (display.range.isValid) {
             ApplicationManager.getApplication().runWriteAction {
                 CommandProcessor.getInstance().runUndoTransparentAction {
-                    if (display.range.isValid) {
-                        editor.document.deleteString(display.range.startOffset, display.range.endOffset)
+                    UndoUtil.disableUndoIn(editor.document) {
+                        if (display.range.isValid) {
+                            editor.document.deleteString(display.range.startOffset, display.range.endOffset)
+                        }
                     }
                 }
             }
@@ -255,7 +258,9 @@ class Order89Action : AnAction() {
 
         ApplicationManager.getApplication().runWriteAction {
             CommandProcessor.getInstance().runUndoTransparentAction {
-                editor.document.insertString(offset, statusText)
+                UndoUtil.disableUndoIn(editor.document) {
+                    editor.document.insertString(offset, statusText)
+                }
             }
         }
 
@@ -305,11 +310,13 @@ class Order89Action : AnAction() {
                 ApplicationManager.getApplication().invokeLater({
                     ApplicationManager.getApplication().runWriteAction {
                         CommandProcessor.getInstance().runUndoTransparentAction {
-                            if (symbolRange.isValid) {
-                                editor.document.replaceString(
-                                    symbolRange.startOffset, symbolRange.endOffset,
-                                    symbols[symbolIndex].toString()
-                                )
+                            UndoUtil.disableUndoIn(editor.document) {
+                                if (symbolRange.isValid) {
+                                    editor.document.replaceString(
+                                        symbolRange.startOffset, symbolRange.endOffset,
+                                        symbols[symbolIndex].toString()
+                                    )
+                                }
                             }
                         }
                     }

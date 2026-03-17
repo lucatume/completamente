@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.TextRange
@@ -271,7 +272,9 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val statusText = "\u2726 Executing...\n  do something\n"
         ApplicationManager.getApplication().runWriteAction {
             CommandProcessor.getInstance().runUndoTransparentAction {
-                doc.insertString(0, statusText)
+                UndoUtil.disableUndoIn(doc) {
+                    doc.insertString(0, statusText)
+                }
             }
         }
         assertTrue(doc.text.contains("Executing..."))
