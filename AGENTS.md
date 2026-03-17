@@ -31,7 +31,7 @@ Real-time, gray-text inline completions as you type — powered by a local llama
 
 ### 2. Order 89 — Code Transformation
 
-Select code, press `Cmd+Shift+8` (macOS) or `Ctrl+Shift+8`, type a natural-language instruction, and the selection is
+Select code, press `Opt+Cmd+8` (macOS) or `Ctrl+Alt+8`, type a natural-language instruction, and the selection is
 replaced with transformed code via a configurable shell command (defaults to piping through `claude`).
 
 - Animated status indicator while the transformation runs
@@ -136,7 +136,7 @@ Auto-trigger suppression: no completions when > 8 characters exist after the cur
 
 ## Order 89 — Code Transformation
 
-Flow: User selects text → `Cmd/Ctrl+Shift+8` → enters prompt → subprocess runs → output replaces selection.
+Flow: User selects text → `Opt+Cmd+8` / `Ctrl+Alt+8` → enters prompt → subprocess runs → output replaces selection.
 
 **Key components:**
 
