@@ -1,0 +1,826 @@
+# Whitespace at Cursor Position Boundaries
+
+Tests 5 cursor positions in Controller.php where completions may
+include leading/trailing newlines or spaces.
+
+Server: http://127.0.0.1:8012
+Runs per position: 10
+Temperature: 0.0
+
+---
+
+## Position A: Empty line between methods
+
+**Cursor:** Start of blank line between unregister() and register()
+**Results:** 10 successes, 0 failures
+
+### Unique completions: 2
+
+#### Completion A.1 (seen 2 times)
+
+```
+    size: 43 bytes
+    leading 20 bytes (hex): 20 20 20 20 2f 2a 2a 0a 20 20 20 20 20 2a 20 52 65 67 69 73 
+    leading 20 bytes (vis):     /**     * Regis
+    trailing 20 bytes (hex): 20 74 68 65 20 63 6f 6d 6d 61 6e 64 0a 20 20 20 20 20 2a 2f 
+    trailing 20 bytes (vis):  the command     */
+    leading newlines: 0
+    leading spaces: 4 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|    /**
+     * Register the command
+     */
+```
+
+#### Completion A.2 (seen 8 times)
+
+```
+    size: 35 bytes
+    leading 20 bytes (hex): 20 20 20 20 2f 2a 2a 0a 20 20 20 20 20 2a 20 40 72 65 74 75 
+    leading 20 bytes (vis):     /**     * @retu
+    trailing 20 bytes (hex): 40 72 65 74 75 72 6e 20 76 6f 69 64 0a 20 20 20 20 20 2a 2f 
+    trailing 20 bytes (vis): @return void     */
+    leading newlines: 0
+    leading spaces: 4 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|    /**
+     * @return void
+     */
+```
+
+---
+
+## Position B: End of line before blank line
+
+**Cursor:** After closing } of unregister(), before blank line
+**Results:** 0 successes, 10 failures
+
+### Unique completions: 0
+
+(no completions returned)
+
+---
+
+## Position C: Start of indented line
+
+**Cursor:** Column 0 of 'if ( ! defined...' line inside register()
+**Results:** 10 successes, 0 failures
+
+### Unique completions: 10
+
+#### Completion C.1 (seen 1 times)
+
+```
+    size: 573 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 20 20 20 20 20 72 65 74 75 72 6e 20 27 31 2e 30 2e 30 27 3b 
+    trailing 20 bytes (vis):      return '1.0.0';
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        // Register commands here
+        // Example: \WP_CLI::add_command( 'mycommand', '\Soloadventure\Commands\MyCommand' );
+    }
+
+    public function boot(): void {
+        $this->register();
+    }
+
+    public function init(): void {
+        $this->boot();
+    }
+
+    public function __construct() {
+        $this->init();
+    }
+
+    public function get_name(): string {
+        return 'controller';
+    }
+
+    public function get_version(): string {
+        return '1.0.0';
+```
+
+#### Completion C.2 (seen 1 times)
+
+```
+    size: 601 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 20 20 70 75 62 6c 69 63 20 66 75 6e 63 74 69 6f 6e 20 69 73 
+    trailing 20 bytes (vis):   public function is
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        // Register commands here
+        // WP_CLI::add_command( 'mycommand', 'MyCommand' );
+    }
+
+    public function boot(): void {
+        // Boot logic here
+    }
+
+    public function init(): void {
+        $this->register();
+        $this->boot();
+    }
+
+    public function is_registered(): bool {
+        // Check if commands are registered
+        return true;
+    }
+
+    public function is_booted(): bool {
+        // Check if boot logic has run
+        return true;
+    }
+
+    public function is
+```
+
+#### Completion C.3 (seen 1 times)
+
+```
+    size: 581 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 67 20 7b 0a 20 20 20 20 20 20 20 20 72 65 74 75 72 6e 20 27 
+    trailing 20 bytes (vis): g {        return '
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        \WP_CLI::add_command( 'solo', '\Soloadventure\Commands\Solo' );
+    }
+
+    public function boot(): void {
+        $this->register();
+    }
+
+    public function init(): void {
+        $this->boot();
+    }
+
+    public function __construct() {
+        $this->init();
+    }
+
+    public function __destruct() {
+        $this->unregister();
+    }
+
+    public function get_name(): string {
+        return 'controller';
+    }
+
+    public function get_version(): string {
+        return '
+```
+
+#### Completion C.4 (seen 1 times)
+
+```
+    size: 573 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 69 6e 67 20 7b 0a 20 20 20 20 20 20 20 20 72 65 74 75 72 6e 
+    trailing 20 bytes (vis): ing {        return
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        \WP_CLI::add_command( 'solo', '\Soloadventure\Commands\Solo' );
+    }
+
+    public function boot(): void {
+        $this->register();
+    }
+
+    public function init(): void {
+        $this->boot();
+    }
+
+    public function __construct() {
+        $this->init();
+    }
+
+    public function __destruct() {
+        $this->unregister();
+    }
+
+    public function get_name(): string {
+        return 'solo';
+    }
+
+    public function get_version(): string {
+        return
+```
+
+#### Completion C.5 (seen 1 times)
+
+```
+    size: 365 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 0a 20 20 20 20 70 75 62 6c 69 63 20 66 75 6e 63 74 69 6f 6e 
+    trailing 20 bytes (vis):     public function
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        // Register your commands here
+        // WP_CLI::add_command( 'your-command', 'Your_Command_Class' );
+    }
+
+    public function boot(): void {
+        $this->register();
+    }
+
+    public function init(): void {
+        $this->boot();
+    }
+
+    public function
+```
+
+#### Completion C.6 (seen 1 times)
+
+```
+    size: 348 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 0a 20 20 20 20 70 75 62 6c 69 63 20 66 75 6e 63 74 69 6f 6e 
+    trailing 20 bytes (vis):     public function
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        // Register commands here
+        // WP_CLI::add_command( 'mycommand', 'MyCommand' );
+    }
+
+    public function boot(): void {
+        $this->register();
+    }
+
+    public function init(): void {
+        $this->boot();
+    }
+
+    public function
+```
+
+#### Completion C.7 (seen 1 times)
+
+```
+    size: 357 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 0a 20 20 20 20 70 75 62 6c 69 63 20 66 75 6e 63 74 69 6f 6e 
+    trailing 20 bytes (vis):     public function
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        // Register commands here
+        \WP_CLI::add_command( 'solo', __NAMESPACE__ . '\Solo' );
+    }
+
+    public function boot(): void {
+        // Boot logic here
+    }
+
+    public function init(): void {
+        // Init logic here
+    }
+
+    public function
+```
+
+#### Completion C.8 (seen 1 times)
+
+```
+    size: 595 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 69 6e 67 20 7b 0a 20 20 20 20 20 20 20 20 72 65 74 75 72 6e 
+    trailing 20 bytes (vis): ing {        return
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        \WP_CLI::add_command( 'solo', __NAMESPACE__ . '\Solo' );
+    }
+
+    public function boot(): void {
+        $this->register();
+    }
+
+    public function init(): void {
+        $this->boot();
+    }
+
+    public function __construct() {
+        $this->init();
+    }
+
+    public function get_name(): string {
+        return 'solo';
+    }
+
+    public function get_description(): string {
+        return 'Solo Adventure Commands';
+    }
+
+    public function get_short_desc(): string {
+        return
+```
+
+#### Completion C.9 (seen 1 times)
+
+```
+    size: 359 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 0a 20 20 20 20 70 75 62 6c 69 63 20 66 75 6e 63 74 69 6f 6e 
+    trailing 20 bytes (vis):     public function
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        // Register commands here
+        // WP_CLI::add_command( 'command-name', 'Command_Class' );
+    }
+
+    public function boot(): void {
+        // Boot logic here
+    }
+
+    public function init(): void {
+        // Init logic here
+    }
+
+    public function
+```
+
+#### Completion C.10 (seen 1 times)
+
+```
+    size: 353 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 24 74 68 69 73 2d 3e 72 65 67 69 73 
+    leading 20 bytes (vis):         $this->regis
+    trailing 20 bytes (hex): 0a 20 20 20 20 70 75 62 6c 69 63 20 66 75 6e 63 74 69 6f 6e 
+    trailing 20 bytes (vis):     public function
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        $this->register_commands();
+    }
+
+    protected function register_commands(): void {
+        // Register your commands here
+        // WP_CLI::add_command( 'mycommand', 'MyCommand' );
+    }
+
+    public function boot(): void {
+        $this->register();
+    }
+
+    public function init(): void {
+        $this->boot();
+    }
+
+    public function
+```
+
+---
+
+## Position D: Blank line inside method body
+
+**Cursor:** Blank line between if-block and closing } of unregister()
+**Results:** 10 successes, 0 failures
+
+### Unique completions: 10
+
+#### Completion D.1 (seen 1 times)
+
+```
+    size: 466 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 6f 6d 6d 61 6e 64 27 2c 20 27 4d 79 43 6f 6d 6d 61 6e 64 27 
+    trailing 20 bytes (vis): ommand', 'MyCommand'
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'after_wp_load', function() {
+        //     WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // } );
+        // WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // WP_CLI::add_command( 'mycommand', 'MyCommand'
+```
+
+#### Completion D.2 (seen 1 times)
+
+```
+    size: 502 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 20 2f 2f 20 57 50 5f 43 4c 49 3a 3a 61 64 64 5f 68 6f 6f 6b 
+    trailing 20 bytes (vis):  // WP_CLI::add_hook
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'after_wp_load', function() {
+        // } );
+        // WP_CLI::add_hook( 'before_invoke', function() {
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function() {
+        // } );
+        // WP_CLI::add_hook( 'before_run', function() {
+        // } );
+        // WP_CLI::add_hook( 'after_run', function() {
+        // } );
+        // WP_CLI::add_hook( 'before_dispatch', function() {
+        // } );
+        // WP_CLI::add_hook
+```
+
+#### Completion D.3 (seen 1 times)
+
+```
+    size: 506 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 6e 64 5f 43 6c 61 73 73 27 20 29 3b 0a 20 20 20 20 20 20 20 
+    trailing 20 bytes (vis): nd_Class' );       
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 1
+    trailing spaces: 7
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands here.
+        // Example: \WP_CLI::add_command( 'command-name', 'Command_Class' );
+        // Example: \WP_CLI::add_command( 'command-name', 'Command_Class' );
+        // Example: \WP_CLI::add_command( 'command-name', 'Command_Class' );
+        // Example: \WP_CLI::add_command( 'command-name', 'Command_Class' );
+        // Example: \WP_CLI::add_command( 'command-name', 'Command_Class' );
+        // Example: \WP_CLI::add_command( 'command-name', 'Command_Class' );
+       
+```
+
+#### Completion D.4 (seen 1 times)
+
+```
+    size: 472 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 4c 49 3a 3a 61 64 64 5f 63 6f 6d 6d 61 6e 64 28 20 27 6d 79 
+    trailing 20 bytes (vis): LI::add_command( 'my
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands here.
+        // Example: \WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // Example: \WP_CLI::remove_command( 'mycommand' );
+        // Example: \WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // Example: \WP_CLI::remove_command( 'mycommand' );
+        // Example: \WP_CLI::add_command( 'mycommand', 'MyCommand' );
+        // Example: \WP_CLI::remove_command( 'mycommand' );
+        // Example: \WP_CLI::add_command( 'my
+```
+
+#### Completion D.5 (seen 1 times)
+
+```
+    size: 530 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 2f 2f 20 57 50 5f 43 4c 49 3a 3a 61 64 64 5f 68 6f 6f 6b 28 
+    trailing 20 bytes (vis): // WP_CLI::add_hook(
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'after_wp_load', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook( 'before_invoke', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook( 'after_wp_load', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook(
+```
+
+#### Completion D.6 (seen 1 times)
+
+```
+    size: 538 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 5f 69 6e 76 6f 6b 65 27 2c 20 66 75 6e 63 74 69 6f 6e 28 29 
+    trailing 20 bytes (vis): _invoke', function()
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'before_invoke', function() {
+        //     // Unregister commands
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function() {
+        //     // Re-register commands
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function() {
+        //     // Re-register commands
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function() {
+        //     // Re-register commands
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function()
+```
+
+#### Completion D.7 (seen 1 times)
+
+```
+    size: 453 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 6f 6b 65 27 20 5d 20 29 3b 0a 20 20 20 20 20 20 20 20 2f 2f 
+    trailing 20 bytes (vis): oke' ] );        //
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'before_invoke:command', [ $this, 'before_invoke' ] );
+        // WP_CLI::add_hook( 'after_invoke:command', [ $this, 'after_invoke' ] );
+        // WP_CLI::add_hook( 'after_invoke:command', [ $this, 'after_invoke' ] );
+        // WP_CLI::add_hook( 'after_invoke:command', [ $this, 'after_invoke' ] );
+        // WP_CLI::add_hook( 'after_invoke:command', [ $this, 'after_invoke' ] );
+        //
+```
+
+#### Completion D.8 (seen 1 times)
+
+```
+    size: 478 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 49 3a 3a 72 75 6e 63 6f 6d 6d 61 6e 64 28 20 27 68 65 6c 70 
+    trailing 20 bytes (vis): I::runcommand( 'help
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'before_run', function() {
+        //     WP_CLI::runcommand( 'help' );
+        // } );
+        // WP_CLI::add_hook( 'before_run', function() {
+        //     WP_CLI::runcommand( 'help' );
+        // } );
+        // WP_CLI::add_hook( 'before_run', function() {
+        //     WP_CLI::runcommand( 'help' );
+        // } );
+        // WP_CLI::add_hook( 'before_run', function() {
+        //     WP_CLI::runcommand( 'help
+```
+
+#### Completion D.9 (seen 1 times)
+
+```
+    size: 536 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 2d 6e 61 6d 65 27 2c 20 66 75 6e 63 74 69 6f 6e 28 29 20 7b 
+    trailing 20 bytes (vis): -name', function() {
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'after_wp_load', function() {
+        //     WP_CLI::add_command( 'command-name', 'Command_Class' );
+        // } );
+        // WP_CLI::add_hook( 'before_invoke:command-name', function() {
+        //     // Do something before command is invoked
+        // } );
+        // WP_CLI::add_hook( 'after_invoke:command-name', function() {
+        //     // Do something after command is invoked
+        // } );
+        // WP_CLI::add_hook( 'before_invoke:command-name', function() {
+```
+
+#### Completion D.10 (seen 1 times)
+
+```
+    size: 531 bytes
+    leading 20 bytes (hex): 20 20 20 20 20 20 20 20 2f 2f 20 55 6e 72 65 67 69 73 74 65 
+    leading 20 bytes (vis):         // Unregiste
+    trailing 20 bytes (hex): 20 57 50 5f 43 4c 49 3a 3a 61 64 64 5f 68 6f 6f 6b 28 20 27 
+    trailing 20 bytes (vis):  WP_CLI::add_hook( '
+    leading newlines: 0
+    leading spaces: 8 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|        // Unregister commands
+        // WP_CLI::add_hook( 'after_wp_load', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook( 'before_invoke', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook( 'after_invoke', function() {
+        //     // Unregister commands here
+        // } );
+        // WP_CLI::add_hook( '
+```
+
+---
+
+## Position E: After newline at end of file
+
+**Cursor:** After final newline, past closing }
+**Results:** 10 successes, 0 failures
+
+### Unique completions: 1
+
+#### Completion E.1 (seen 10 times)
+
+```
+    size: 2 bytes
+    leading 2 bytes (hex): 3f 3e 
+    leading 2 bytes (vis): ?>
+    trailing 2 bytes (hex): 3f 3e 
+    trailing 2 bytes (vis): ?>
+    leading newlines: 0
+    leading spaces: 0 (after leading newlines)
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Content (prefixed with cursor context):**
+```php
+|CURSOR|?>
+```
+
+---
+
+## Summary Table
+
+| Position | Label | Leading NL | Leading SP | Trailing NL | Trailing SP |
+|----------|-------|------------|------------|-------------|-------------|
+| A | Empty line between methods | 0 | 4 | 0 | 0 |
+| B | End of line before blank line | n/a | n/a | n/a | n/a |
+| C | Start of indented line | 0 | 8 | 0 | 0 |
+| D | Blank line inside method body | 0 | 8 | 0-1 | 0-7 |
+| E | After newline at end of file | 0 | 0 | 0 | 0 |
+

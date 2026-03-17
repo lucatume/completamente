@@ -9,6 +9,7 @@ import com.github.lucatume.completamente.completion.composeInfillRequest
 import com.github.lucatume.completamente.completion.estimateTokens
 import com.github.lucatume.completamente.completion.reindentSuggestion
 import com.github.lucatume.completamente.completion.shouldDiscardSuggestion
+import com.github.lucatume.completamente.completion.trimCompletion
 import com.github.lucatume.completamente.completion.shouldSuppressAutoTrigger
 import com.github.lucatume.completamente.services.CacheWarmingService
 import com.github.lucatume.completamente.services.Chunk
@@ -168,6 +169,12 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
             return InlineCompletionSingleSuggestion.build {}
         }
 
+        // Trim leading indent overlap on line 0 and trailing whitespace artifacts.
+        val trimmed = trimCompletion(suggestion, snapshot.cursorColumn)
+        if (trimmed.isEmpty()) {
+            return InlineCompletionSingleSuggestion.build {}
+        }
+
         // Schedule cache warming with current input_extra.
         try {
             val cacheWarmingService = project.service<CacheWarmingService>()
@@ -177,7 +184,7 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
         }
 
         // Reindent multi-line suggestions to match project code style.
-        val reindented = reindentSuggestion(suggestion, snapshot.cursorLineIndent, snapshot.indentStyle)
+        val reindented = reindentSuggestion(trimmed, snapshot.cursorLineIndent, snapshot.indentStyle)
 
         // Return the suggestion as gray text.
         return InlineCompletionSingleSuggestion.build {

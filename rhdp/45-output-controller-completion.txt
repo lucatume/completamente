@@ -1,0 +1,505 @@
+# Controller.php FIM Completion Results
+
+Cursor position: after 'WP_CLI::' on line 25
+Server: http://127.0.0.1:8012
+Runs: 30
+Successes: 30
+Failures: 0
+Temperature: 0.0
+
+## Whitespace Analysis
+
+Each unique completion is shown with its raw boundary bytes to make
+leading/trailing newlines and spaces explicitly visible.
+
+### Unique completions: 11
+
+---
+### Completion #1 (seen 7 times)
+
+**Boundary analysis:**
+```
+    size: 142 bytes
+    leading 20 bytes (hex): 61 64 64 43 6f 6d 6d 61 6e 64 28 20 27 73 6f 6c 6f 27 2c 20 
+    leading 20 bytes (vis): addCommand( 'solo', 
+    trailing 20 bytes (hex): 65 28 20 27 48 65 6c 6c 6f 2c 20 53 6f 6c 6f 21 27 20 29 3b 
+    trailing 20 bytes (vis): e( 'Hello, Solo!' );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+---
+### Completion #2 (seen 1 times)
+
+**Boundary analysis:**
+```
+    size: 329 bytes
+    leading 20 bytes (hex): 61 64 64 5f 68 6f 6f 6b 28 20 27 62 65 66 6f 72 65 5f 69 6e 
+    leading 20 bytes (vis): add_hook( 'before_in
+    trailing 20 bytes (hex): 65 72 20 68 65 6c 6c 6f 20 63 6f 6d 6d 61 6e 64 27 20 29 3b 
+    trailing 20 bytes (vis): er hello command' );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::add_hook( 'before_invoke:hello', [ $this, 'before_hello' ] );
+        WP_CLI::add_hook( 'after_invoke:hello', [ $this, 'after_hello' ] );
+    }
+
+    public function before_hello(): void {
+        WP_CLI::log( 'Before hello command' );
+    }
+
+    public function after_hello(): void {
+        WP_CLI::log( 'After hello command' );
+```
+
+---
+### Completion #3 (seen 4 times)
+
+**Boundary analysis:**
+```
+    size: 107 bytes
+    leading 20 bytes (hex): 61 64 64 43 6f 6d 6d 61 6e 64 28 20 27 73 6f 6c 6f 27 2c 20 
+    leading 20 bytes (vis): addCommand( 'solo', 
+    trailing 20 bytes (hex): 49 3a 3a 61 64 64 43 6f 6d 6d 61 6e 64 28 20 27 73 6f 6c 6f 
+    trailing 20 bytes (vis): I::addCommand( 'solo
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::addCommand( 'solo', __NAMESPACE__ . '\Command' ); // @phpstan-ignore-line
+        WP_CLI::addCommand( 'solo
+```
+
+---
+### Completion #4 (seen 2 times)
+
+**Boundary analysis:**
+```
+    size: 121 bytes
+    leading 20 bytes (hex): 61 64 64 5f 68 6f 6f 6b 28 20 27 62 65 66 6f 72 65 5f 69 6e 
+    leading 20 bytes (vis): add_hook( 'before_in
+    trailing 20 bytes (hex): 6e 76 6f 6b 65 64 2e 0a 20 20 20 20 20 20 20 20 7d 20 29 3b 
+    trailing 20 bytes (vis): nvoked.        } );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::add_hook( 'before_invoke:mycommand', function() {
+            // Do something before the command is invoked.
+        } );
+```
+
+---
+### Completion #5 (seen 3 times)
+
+**Boundary analysis:**
+```
+    size: 141 bytes
+    leading 20 bytes (hex): 61 64 64 43 6f 6d 6d 61 6e 64 28 20 27 73 6f 6c 6f 27 2c 20 
+    leading 20 bytes (vis): addCommand( 'solo', 
+    trailing 20 bytes (hex): 6e 65 28 20 27 48 65 6c 6c 6f 20 53 6f 6c 6f 21 27 20 29 3b 
+    trailing 20 bytes (vis): ne( 'Hello Solo!' );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello Solo!' );
+```
+
+---
+### Completion #6 (seen 1 times)
+
+**Boundary analysis:**
+```
+    size: 109 bytes
+    leading 20 bytes (hex): 61 64 64 5f 68 6f 6f 6b 28 20 27 62 65 66 6f 72 65 5f 69 6e 
+    leading 20 bytes (vis): add_hook( 'before_in
+    trailing 20 bytes (hex): 61 6e 64 27 20 29 3b 0a 20 20 20 20 20 20 20 20 7d 20 29 3b 
+    trailing 20 bytes (vis): and' );        } );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::add_hook( 'before_invoke:hello', function() {
+            WP_CLI::log( 'Before hello command' );
+        } );
+```
+
+---
+### Completion #7 (seen 2 times)
+
+**Boundary analysis:**
+```
+    size: 122 bytes
+    leading 20 bytes (hex): 61 64 64 5f 68 6f 6f 6b 28 20 27 62 65 66 6f 72 65 5f 69 6e 
+    leading 20 bytes (vis): add_hook( 'before_in
+    trailing 20 bytes (hex): 6e 76 6f 6b 65 64 2e 0a 20 20 20 20 20 20 20 20 7d 20 29 3b 
+    trailing 20 bytes (vis): nvoked.        } );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::add_hook( 'before_invoke:mycommand', function () {
+            // Do something before the command is invoked.
+        } );
+```
+
+---
+### Completion #8 (seen 1 times)
+
+**Boundary analysis:**
+```
+    size: 320 bytes
+    leading 20 bytes (hex): 61 64 64 5f 68 6f 6f 6b 28 20 27 62 65 66 6f 72 65 5f 69 6e 
+    leading 20 bytes (vis): add_hook( 'before_in
+    trailing 20 bytes (hex): 6f 67 28 20 27 53 61 69 64 20 68 65 6c 6c 6f 21 27 20 29 3b 
+    trailing 20 bytes (vis): og( 'Said hello!' );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::add_hook( 'before_invoke:hello', [ $this, 'before_hello' ] );
+        WP_CLI::add_hook( 'after_invoke:hello', [ $this, 'after_hello' ] );
+    }
+
+    public function before_hello(): void {
+        WP_CLI::log( 'About to say hello!' );
+    }
+
+    public function after_hello(): void {
+        WP_CLI::log( 'Said hello!' );
+```
+
+---
+### Completion #9 (seen 2 times)
+
+**Boundary analysis:**
+```
+    size: 110 bytes
+    leading 20 bytes (hex): 61 64 64 5f 68 6f 6f 6b 28 20 27 62 65 66 6f 72 65 5f 69 6e 
+    leading 20 bytes (vis): add_hook( 'before_in
+    trailing 20 bytes (hex): 61 6e 64 27 20 29 3b 0a 20 20 20 20 20 20 20 20 7d 20 29 3b 
+    trailing 20 bytes (vis): and' );        } );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::add_hook( 'before_invoke:hello', function () {
+            WP_CLI::log( 'Before hello command' );
+        } );
+```
+
+---
+### Completion #10 (seen 3 times)
+
+**Boundary analysis:**
+```
+    size: 147 bytes
+    leading 20 bytes (hex): 61 64 64 43 6f 6d 6d 61 6e 64 28 20 27 73 6f 6c 6f 27 2c 20 
+    leading 20 bytes (vis): addCommand( 'solo', 
+    trailing 20 bytes (hex): 49 3a 3a 61 64 64 43 6f 6d 6d 61 6e 64 28 20 27 73 6f 6c 6f 
+    trailing 20 bytes (vis): I::addCommand( 'solo
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::addCommand( 'solo', __NAMESPACE__ . '\Command' ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
+        WP_CLI::addCommand( 'solo
+```
+
+---
+### Completion #11 (seen 4 times)
+
+**Boundary analysis:**
+```
+    size: 49 bytes
+    leading 20 bytes (hex): 61 64 64 43 6f 6d 6d 61 6e 64 28 20 27 73 6f 6c 6f 27 2c 20 
+    leading 20 bytes (vis): addCommand( 'solo', 
+    trailing 20 bytes (hex): 43 45 5f 5f 20 2e 20 27 5c 43 6f 6d 6d 61 6e 64 27 20 29 3b 
+    trailing 20 bytes (vis): CE__ . '\Command' );
+    leading newlines: 0
+    trailing newlines: 0
+    trailing spaces: 0
+```
+
+**Raw content (between markers):**
+```php
+WP_CLI::addCommand( 'solo', __NAMESPACE__ . '\Command' );
+```
+
+---
+
+## Raw Completions (all 30)
+
+### Run 1
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+### Run 2
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
+        WP_CLI::addCommand( 'solo
+```
+
+### Run 3
+```
+add_hook( 'before_invoke:mycommand', function() {
+            // Do something before the command is invoked.
+        } );
+```
+
+### Run 4
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' );
+```
+
+### Run 5
+```
+add_hook( 'before_invoke:hello', function () {
+            WP_CLI::log( 'Before hello command' );
+        } );
+```
+
+### Run 6
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' );
+```
+
+### Run 7
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+### Run 8
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' );
+```
+
+### Run 9
+```
+add_hook( 'before_invoke:mycommand', function() {
+            // Do something before the command is invoked.
+        } );
+```
+
+### Run 10
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+### Run 11
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello Solo!' );
+```
+
+### Run 12
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
+        WP_CLI::addCommand( 'solo
+```
+
+### Run 13
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+### Run 14
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+### Run 15
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' ); // @phpstan-ignore-line
+        WP_CLI::addCommand( 'solo
+```
+
+### Run 16
+```
+add_hook( 'before_invoke:hello', function() {
+            WP_CLI::log( 'Before hello command' );
+        } );
+```
+
+### Run 17
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
+        WP_CLI::addCommand( 'solo
+```
+
+### Run 18
+```
+add_hook( 'before_invoke:hello', function () {
+            WP_CLI::log( 'Before hello command' );
+        } );
+```
+
+### Run 19
+```
+add_hook( 'before_invoke:hello', [ $this, 'before_hello' ] );
+        WP_CLI::add_hook( 'after_invoke:hello', [ $this, 'after_hello' ] );
+    }
+
+    public function before_hello(): void {
+        WP_CLI::log( 'About to say hello!' );
+    }
+
+    public function after_hello(): void {
+        WP_CLI::log( 'Said hello!' );
+```
+
+### Run 20
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+### Run 21
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' ); // @phpstan-ignore-line
+        WP_CLI::addCommand( 'solo
+```
+
+### Run 22
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello Solo!' );
+```
+
+### Run 23
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello Solo!' );
+```
+
+### Run 24
+```
+add_hook( 'before_invoke:hello', [ $this, 'before_hello' ] );
+        WP_CLI::add_hook( 'after_invoke:hello', [ $this, 'after_hello' ] );
+    }
+
+    public function before_hello(): void {
+        WP_CLI::log( 'Before hello command' );
+    }
+
+    public function after_hello(): void {
+        WP_CLI::log( 'After hello command' );
+```
+
+### Run 25
+```
+add_hook( 'before_invoke:mycommand', function () {
+            // Do something before the command is invoked.
+        } );
+```
+
+### Run 26
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' ); // @phpstan-ignore-line
+        WP_CLI::addCommand( 'solo
+```
+
+### Run 27
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' );
+```
+
+### Run 28
+```
+add_hook( 'before_invoke:mycommand', function () {
+            // Do something before the command is invoked.
+        } );
+```
+
+### Run 29
+```
+addCommand( 'solo', [ $this, 'command' ] );
+    }
+
+    public function command( $args, $assoc_args ) {
+        WP_CLI::line( 'Hello, Solo!' );
+```
+
+### Run 30
+```
+addCommand( 'solo', __NAMESPACE__ . '\Command' ); // @phpstan-ignore-line
+        WP_CLI::addCommand( 'solo
+```
+

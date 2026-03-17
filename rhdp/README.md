@@ -91,3 +91,9 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 41 | 41-research-inline-completion-reformatting.md | research | Reformatting ghost text before acceptance: IntelliJ APIs, approaches (temp PsiFile, getLineIndent, heuristic), what JetBrains Full Line Completion does |
 | 42 | 42-design-suggestion-reindent.md | design | IndentOptions-aware suggestion reindentation: detect model indent style, normalize to project settings, preserve relative levels |
 | 43 | 43-plan-suggestion-reindent.md | plan | 6-step implementation plan: pure reindent function, tests, snapshot capture, wiring into provider |
+| 44 | 44-harness-controller-completion.sh | harness | 100x FIM completion test for Controller.php at WP_CLI:: cursor position |
+| 45 | 45-output-controller-completion.txt | output | Results from harness 44: completion distribution for WP_CLI:: |
+| 46 | 46-harness-whitespace-cursor-positions.sh | harness | 5 cursor positions × 10 runs testing leading/trailing newlines and spaces in completions |
+| 47 | 47-output-whitespace-cursor-positions.txt | output | Results from harness 46: whitespace boundary analysis per cursor position |
+| 48 | 48-design-completion-whitespace-trimming.md | design | trimCompletion() pure function: strip leading indent overlap on line 0 + trailing whitespace |
+| 49 | 49-plan-completion-whitespace-trimming.md | plan | 6-step implementation plan: trim.kt, ~30 tests, wire into provider pipeline |
