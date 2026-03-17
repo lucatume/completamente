@@ -88,3 +88,6 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 38 | 38-output-kv-cache-behavior.txt | output | Results from harness 37 (pending execution) |
 | 39 | 39-research-kv-cache-behavior.md | research | How llama.cpp KV cache works: strictly prefix-based, order matters, no island caching |
 | 40 | 40-plan-fim-v2-implementation.md | plan | 11-step implementation plan for FIM v2: llama.vim-style `/infill`, 32k context, TDD with reviewer loop |
+| 41 | 41-research-inline-completion-reformatting.md | research | Reformatting ghost text before acceptance: IntelliJ APIs, approaches (temp PsiFile, getLineIndent, heuristic), what JetBrains Full Line Completion does |
+| 42 | 42-design-suggestion-reindent.md | design | IndentOptions-aware suggestion reindentation: detect model indent style, normalize to project settings, preserve relative levels |
+| 43 | 43-plan-suggestion-reindent.md | plan | 6-step implementation plan: pure reindent function, tests, snapshot capture, wiring into provider |

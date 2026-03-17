@@ -1,11 +1,13 @@
 package com.github.lucatume.completamente.fim
 
 import com.github.lucatume.completamente.completion.CompletionContext
+import com.github.lucatume.completamente.completion.IndentStyle
 import com.github.lucatume.completamente.completion.InfillClient
 import com.github.lucatume.completamente.completion.InfillExtraChunk
 import com.github.lucatume.completamente.completion.buildStructureChunks
 import com.github.lucatume.completamente.completion.composeInfillRequest
 import com.github.lucatume.completamente.completion.estimateTokens
+import com.github.lucatume.completamente.completion.reindentSuggestion
 import com.github.lucatume.completamente.completion.shouldDiscardSuggestion
 import com.github.lucatume.completamente.completion.shouldSuppressAutoTrigger
 import com.github.lucatume.completamente.services.CacheWarmingService
@@ -21,6 +23,7 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSin
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.application.options.CodeStyle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -77,7 +80,9 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
             val fileContent: String,
             val filePath: String,
             val structureChunks: List<InfillExtraChunk>,
-            val ringChunks: List<Chunk>
+            val ringChunks: List<Chunk>,
+            val cursorLineIndent: String,
+            val indentStyle: IndentStyle
         )
 
         val snapshot = readAction {
@@ -97,6 +102,16 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
             val chunksRingBuffer = project.service<ChunksRingBuffer>()
             val ringChunks = chunksRingBuffer.getRingChunks().toList()
 
+            // Capture indent style for suggestion reindentation.
+            val lineEnd = fileContent.indexOf('\n', lineStart).let { if (it < 0) fileContent.length else it }
+            val currentLineText = fileContent.substring(lineStart, lineEnd)
+            val cursorLineIndent = currentLineText.takeWhile { it == ' ' || it == '\t' }
+            val indentOptions = CodeStyle.getIndentOptions(psiFile)
+            val indentStyle = IndentStyle(
+                useTabs = indentOptions.USE_TAB_CHARACTER,
+                indentSize = indentOptions.INDENT_SIZE
+            )
+
             EditorSnapshot(
                 offset = offset,
                 cursorLine = cursorLine,
@@ -105,7 +120,9 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
                 fileContent = fileContent,
                 filePath = filePath,
                 structureChunks = structureChunks,
-                ringChunks = ringChunks
+                ringChunks = ringChunks,
+                cursorLineIndent = cursorLineIndent,
+                indentStyle = indentStyle
             )
         }
 
@@ -159,9 +176,12 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
             // Cache warming failure should not block completion.
         }
 
+        // Reindent multi-line suggestions to match project code style.
+        val reindented = reindentSuggestion(suggestion, snapshot.cursorLineIndent, snapshot.indentStyle)
+
         // Return the suggestion as gray text.
         return InlineCompletionSingleSuggestion.build {
-            emit(InlineCompletionGrayTextElement(suggestion))
+            emit(InlineCompletionGrayTextElement(reindented))
         }
     }
 }
