@@ -4,7 +4,7 @@
 Code writing helper from local models.
 "Completamente" means "completely" in Italian and it's also the union of the words "complete" and "mind".
 
-This plugin provides fill-in-the-middle (FIM) and next-edit prediction (NEP) completions for IntelliJ IDEs using a local [llama.cpp](https://github.com/ggml-org/llama.cpp) server with the [SweepAI 1.5B](https://huggingface.co/sweepai/sweep-next-edit-1.5B) model.
+This plugin provides fill-in-the-middle (FIM) inline completions for IntelliJ IDEs using a local [llama.cpp](https://github.com/ggml-org/llama.cpp) server's `/infill` endpoint. Designed around the [SweepAI 1.5B](https://huggingface.co/sweepai/sweep-next-edit-1.5B) FIM model but works with any model served via llama.cpp.
 
 This plugin is my attempt at a port of the excellent [llama.vim][1] plugin to the IntelliJ platform.
 All the good ideas in this code come from the original plugin, all the bad ideas are my mistakes.
@@ -50,31 +50,29 @@ Plugin settings are at `Settings/Preferences` -> `Tools` -> `completamente`:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Server URL | `http://localhost:8017` | URL of the llama.cpp completion server |
+| Server URL | `http://127.0.0.1:8012` | URL of the llama.cpp `/infill` endpoint |
+| Context size | `32768` | Total token budget |
+| Max predicted tokens | `128` | Tokens per completion |
 | Automatic suggestions | On | Show FIM suggestions while typing |
-| Recent diffs | 10 | Max recent edit diffs sent as context |
-| Server command | (see above) | Full command to start the managed server |
-| Number of chunks | 16 | Max ring buffer chunks as extra context |
+| Number of chunks | 16 | Max ring buffer chunks as extra context (0 = disabled) |
 | Chunk size (lines) | 64 | Lines per ring buffer chunk |
 | Max queued chunks | 16 | Max chunks in the queue |
 
 ### Completions
 
-Completions appear as ghost text in the editor. Press **Tab** to accept the current sub-edit, or continue typing to dismiss.
+Completions appear as ghost text in the editor. Press **Tab** to accept, or continue typing to dismiss.
 
-The plugin sends a prompt to the server containing:
+The plugin sends a request to the llama.cpp `/infill` endpoint containing:
 
-1. **Definition chunks** -- cross-file symbol definitions near the cursor
-2. **Ring buffer chunks** -- recent code from other files you visited
-3. **Recent diffs** -- your recent edits across the project
-4. **Original file** -- the file content when it was opened
-5. **Current file** -- the file content now (windowed around the cursor)
+1. **Current file** -- split at the cursor into prefix and suffix (windowed for large files)
+2. **Structure chunks** -- cross-file symbol definitions resolved via PSI references
+3. **Ring buffer chunks** -- recent code from files you opened, saved, or copied from
 
-A token budget (8192 tokens total, 512 reserved for output) ensures the prompt fits within the model's context window. Definition chunks and ring buffer chunks are included only if space remains after the mandatory sections.
+A token budget (`contextSize - nPredict - 20`) ensures the prompt fits. File content gets first priority; remaining budget is filled greedily with structure chunks, then ring buffer chunks.
 
 ### Order 89
 
-Inspired by [ThePrimeagen/99](https://github.com/ThePrimeagen/99). Select text, hit `Ctrl+Shift+8` (`Cmd+Shift+8` on macOS), type a prompt, and the selection is piped through a shell command and replaced with the output.
+Inspired by [ThePrimeagen/99](https://github.com/ThePrimeagen/99). Select text, hit `Ctrl+Alt+8` (`Opt+Cmd+8` on macOS), type a prompt, and the selection is piped through a shell command and replaced with the output.
 
 The default command is:
 
