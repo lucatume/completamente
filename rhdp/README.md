@@ -97,3 +97,4 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 47 | 47-output-whitespace-cursor-positions.txt | output | Results from harness 46: whitespace boundary analysis per cursor position |
 | 48 | 48-design-completion-whitespace-trimming.md | design | trimCompletion() pure function: strip leading indent overlap on line 0 + trailing whitespace |
 | 49 | 49-plan-completion-whitespace-trimming.md | plan | 6-step implementation plan: trim.kt, ~30 tests, wire into provider pipeline |
+| 50 | 50-research-intellij-undo-free-document-edits.md | research | How to insert/modify text in an IntelliJ Document without it appearing in the undo history |
