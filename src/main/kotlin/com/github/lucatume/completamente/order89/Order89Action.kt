@@ -35,7 +35,7 @@ import javax.swing.Timer
 import kotlin.math.sin
 
 private val ORDER89_NEON_PINK = Color(255, 16, 240)
-private val ORDER89_CYAN = Color(0, 255, 255)
+private val ORDER89_ELECTRIC_BLUE = Color(40, 110, 255)
 
 internal fun lerpColor(a: Color, b: Color, t: Double): Color {
     val ct = t.coerceIn(0.0, 1.0)
@@ -297,7 +297,7 @@ class Order89Action : AnAction() {
             // Wraps at 1000 to prevent unbounded growth; at 100ms intervals this cycles every ~100s.
             frameCount = (frameCount + 1) % 1000
             val t = (sin(frameCount * 0.5) + 1.0) / 2.0
-            val color = lerpColor(ORDER89_NEON_PINK, ORDER89_CYAN, t)
+            val color = lerpColor(ORDER89_NEON_PINK, ORDER89_ELECTRIC_BLUE, t)
             attrsList.forEach { it.foregroundColor = color }
             // Rotate star symbol every 3rd frame (~300ms).
             if (frameCount % 3 == 0 && symbolRange.isValid) {
