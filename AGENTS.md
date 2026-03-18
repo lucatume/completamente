@@ -1,288 +1,162 @@
-**Language:** Kotlin
-**Platform:** IntelliJ IDEA (Community & Ultimate), 2024.3+
-**JDK:** 21
+# AGENTS.md
 
-## What is completamente?
+## Project Overview
 
-completamente is an IntelliJ plugin that provides **fill-in-the-middle (FIM) inline completions** and **AI-powered code
-transformations** using a local [llama.cpp](https://github.com/ggerganov/llama.cpp) server. It is designed around the
-SweepAI 1.5b FIM model but works with any model served via llama.cpp's `/infill` endpoint.
+Completamente is an IntelliJ Platform plugin (v0.0.4-dev) that provides Fill-In-the-Middle (FIM) inline code completions powered by a local llama.cpp server. Built with Kotlin 2.3.10 targeting Java 21, on IntelliJ Platform 2024.3.6 (IC) using Gradle 9.0.0 and the IntelliJ Platform Gradle Plugin 2.11.0. Serialization via kotlinx-serialization 1.10.0.
 
-The plugin draws inspiration from [llama.vim](https://github.com/ggml-org/llama.vim) but has diverged significantly into
-its own architecture.
+Ported from [llama.vim](https://github.com/ggml-org/llama.vim), designed for SweepAI 1.5B FIM but compatible with any FIM-capable model.
 
-**Key design philosophy:** Pure functions for logic, data classes for information flow, IntelliJ services only where the
-platform requires them.
+Two main features:
+1. **FIM Completions** — Ghost text suggestions via the `/infill` endpoint on keystroke
+2. **Order 89** — Code transformation action triggered by keyboard shortcut
 
----
-
-## Features
-
-### 1. FIM Inline Completions
-
-Real-time, gray-text inline completions as you type — powered by a local llama.cpp server.
-
-- Triggered automatically on keystrokes (can be toggled off)
-- Context-aware: includes cross-file structure references and a ring buffer of recently-seen code chunks
-- Token budget system prevents context overflow
-- Quality filters discard echoed/redundant suggestions
-- KV cache warming for faster follow-up completions
-- Coroutine-based; respects cancellation so the IDE never blocks
-
-### 2. Order 89 — Code Transformation
-
-Select code, press `Opt+Cmd+8` (macOS) or `Ctrl+Alt+8`, type a natural-language instruction, and the selection is
-replaced with transformed code via a configurable shell command (defaults to piping through `claude`).
-
-- Animated status indicator while the transformation runs
-- Automatic output cleaning: extracts code blocks, strips prose, reindents to match surrounding code
-- ESC cancels in-flight requests
-- Configurable command template in settings
-
----
-
-## Architecture Overview
+## Project Structure
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    IntelliJ IDE                     │
-│                                                     │
-│  ┌──────────────────┐    ┌───────────────────────┐  │
-│  │  FimInlineComple- │    │   Order89Action       │  │
-│  │  tionProvider     │    │   Order89Dialog        │  │
-│  │  (inline suggest) │    │   Order89Executor      │  │
-│  └────────┬─────────┘    └──────────┬────────────┘  │
-│           │                         │                │
-│  ┌────────▼──────────────────────┐  │  shell subprocess
-│  │  Pure Completion Pipeline     │  │  (claude, etc.)
-│  │  ┌────────┐ ┌──────────────┐  │  │                │
-│  │  │context │ │compose       │  │  │                │
-│  │  │ .kt    │ │ .kt          │  │  │                │
-│  │  ├────────┤ ├──────────────┤  │  │                │
-│  │  │budget  │ │structure     │  │  │                │
-│  │  │ .kt    │ │ .kt (PSI)   │  │  │                │
-│  │  ├────────┤ ├──────────────┤  │  │                │
-│  │  │filters │ │chunk         │  │  │                │
-│  │  │ .kt    │ │ .kt          │  │  │                │
-│  │  └────────┘ └──────────────┘  │  │                │
-│  └────────┬──────────────────────┘  │                │
-│           │                         │                │
-│  ┌────────▼─────────┐               │                │
-│  │  InfillClient    │               │                │
-│  │  (HTTP)          │               │                │
-│  └────────┬─────────┘               │                │
-└───────────┼─────────────────────────┼────────────────┘
-            │                         │
-            ▼                         ▼
-     llama.cpp /infill          shell command
-     (local server)             (e.g. claude)
+src/main/kotlin/com/github/lucatume/completamente/
+├── completion/       # FIM context building, request composition, budget, reindent, trim
+├── fim/              # FimInlineCompletionProvider (IntelliJ inline completion integration)
+├── order89/          # Order 89 action, dialog, and executor
+├── services/         # Plugin services: settings state, ring buffer, cache warming, clipboard/file listeners
+├── settings/         # Settings UI configurable
+└── startup/          # Project startup activity
+
+src/test/kotlin/com/github/lucatume/completamente/
+├── BaseCompletionTest.kt   # Base test class extending BasePlatformTestCase
+├── completion/              # Unit tests for pure completion functions
+├── fim/                     # FIM provider tests
+├── order89/                 # Order 89 tests
+└── services/                # Service tests
+
+src/test/testData/completion/ # Test fixture files
+
+rhdp/                        # Research docs, harness scripts, design documents
 ```
 
-### Package Map
+## Commands
 
-| Package       | Purpose                                                                                                     |
-|---------------|-------------------------------------------------------------------------------------------------------------|
-| `completion/` | Pure functions: context building, request composition, budget allocation, quality filters, chunk management |
-| `fim/`        | IntelliJ inline completion provider integration                                                             |
-| `order89/`    | Code transformation action, dialog, and subprocess executor                                                 |
-| `services/`   | Application/project-level services: settings persistence, ring buffer, cache warming, event listeners       |
-| `settings/`   | Settings UI (Tools → completamente)                                                                         |
-| `startup/`    | Project startup activity — registers event listeners                                                        |
+- Build the plugin: `./gradlew buildPlugin`
+- Run all tests: `./gradlew test`
+- Full build (tests + build): `./gradlew build`
+- Verify plugin compatibility: `./gradlew verifyPlugin`
+- Clean build: `./gradlew clean build`
 
----
+The plugin ZIP is output to `build/distributions/completamente-<version>.zip`.
 
-## FIM Completion Pipeline
+## Testing
 
-The inline completion flow is the core of the plugin:
+**Framework:** JUnit 4 + IntelliJ Platform Test Framework (`BasePlatformTestCase`)
 
-1. **Trigger** — IntelliJ calls `FimInlineCompletionProvider.getSuggestion()` on keystrokes
-2. **Snapshot** — All editor/document/PSI state captured in a single `readAction` (`EditorSnapshot`)
-3. **Context** — `buildContext()` splits the file at cursor into prefix/suffix (windowed for files > 512+128 lines)
-4. **Structure** — `buildStructureChunks()` resolves cross-file references via PSI and extracts public signatures
-5. **Budget** — `allocateBudget()` packs file content, structure chunks, and ring chunks into the token budget
-6. **Compose** — `composeInfillRequest()` assembles the final `InfillRequest` payload
-7. **Send** — `InfillClient` POSTs to `llama.cpp /infill` endpoint
-8. **Filter** — `shouldDiscardSuggestion()` checks for echoed/redundant completions
-9. **Warm** — `CacheWarmingService` pre-warms KV cache for the next keystroke (debounced, fire-and-forget)
+**Run tests:** `./gradlew test`
 
-### Context Enrichment
+**File naming:** `XxxTest.kt` (not `XxxTests`), e.g., `trimTest.kt`, `budgetTest.kt`
 
-**Structure extraction** (`structure.kt`) — Uses PSI reference resolution to find cross-file symbols, then
-`surfaceExtract()` extracts public signatures via a language-agnostic heuristic (brace-depth tracking, skipping
-strings/comments).
+**Method naming:** `testXxx` (JUnit 4 convention, camelCase), e.g., `testLeadingSpacesEqualToCursorCol`
 
-**Ring buffer** (`ChunksRingBuffer`) — Maintains a rotating set of code chunks from recently opened/saved/copied files.
-Chunks are similarity-filtered to avoid redundancy (`chunkSim` = 2 × common lines / total lines; evict if > 0.5).
+**Base class:** Tests that need IntelliJ fixtures extend `BaseCompletionTest` which extends `BasePlatformTestCase`:
 
-### Token Budget
-
-- Total budget = `contextSize - nPredict - 20` (overhead for special tokens)
-- File content gets first priority
-- Remaining budget filled greedily: structure chunks first, then ring chunks
-- Rough token estimate: `(charCount + 2) / 3`
-
-### Quality Filters
-
-Four discard rules in `filters.kt`:
-
-1. Empty/whitespace-only suggestion
-2. Single-line echo of text already after cursor
-3. Combined prefix+suggestion matches next non-blank suffix line
-4. Multi-line suggestion matches consecutive suffix lines
-
-Auto-trigger suppression: no completions when > 8 characters exist after the cursor on the current line.
-
----
-
-## Order 89 — Code Transformation
-
-Flow: User selects text → `Opt+Cmd+8` / `Ctrl+Alt+8` → enters prompt → subprocess runs → output replaces selection.
-
-**Key components:**
-
-- `Order89Action` — Action handler, manages session lifecycle and animated status display
-- `Order89Dialog` — Themed prompt input dialog
-- `Order89Executor` — Builds a temp prompt file with annotated source, spawns shell subprocess, cleans output
-
-**Output cleaning pipeline:**
-
-1. Extract fenced code blocks (`` ```lang ... ``` ``)
-2. Strip leading/trailing prose (text before/after code-like lines)
-3. Reindent to match the original selection's indentation
-
----
-
-## Services
-
-| Service                | Scope       | Role                                                    |
-|------------------------|-------------|---------------------------------------------------------|
-| `SettingsState`        | Application | Persistent settings (stored in `completamente.xml`)     |
-| `ChunksRingBuffer`     | Project     | Ring buffer of recently-seen code chunks                |
-| `CacheWarmingService`  | Project     | Debounced KV cache warming (500ms delay, deduplication) |
-| `FileOpenCloseService` | Project     | Listens for file open/close → feeds ring buffer         |
-| `FileSaveService`      | Project     | Listens for file save → feeds ring buffer               |
-| `ClipboardCopyService` | Project     | Listens for clipboard copy → feeds ring buffer          |
-
----
-
-## Settings
-
-Accessible at **Tools → completamente** in IDE preferences.
-
-| Setting              | Default                             | Description                                    |
-|----------------------|-------------------------------------|------------------------------------------------|
-| Server URL           | `http://127.0.0.1:8012`             | llama.cpp server endpoint                      |
-| Context size         | `32768`                             | Total token budget                             |
-| Max predicted tokens | `128`                               | Tokens per completion                          |
-| Auto-suggestions     | `true`                              | Enable/disable automatic inline completions    |
-| Ring chunk count     | `16`                                | Number of chunks in ring buffer (0 = disabled) |
-| Chunk size (lines)   | `64`                                | Lines per ring chunk                           |
-| Max queued chunks    | `16`                                | Queue capacity                                 |
-| Order 89 command     | `cat {{prompt_file}} \| claude ...` | Shell command template                         |
-
----
-
-## Build & Test
-
-```bash
-# Build distributable plugin
-./gradlew buildPlugin
-
-# Run tests
-./gradlew test
-
-# Code coverage report
-./gradlew koverHtmlReport
+```kotlin
+class trimTest : BaseCompletionTest() {
+    fun testNoLeadingWhitespaceUnchanged() {
+        assertEquals("foo()", trimCompletion("foo()", 4))
+    }
+}
 ```
 
-**Output:** `build/distributions/completamente-0.0.4-dev.zip`
+**Pure function tests** call the function directly with assertions. **Platform tests** use `myFixture.configureByText()` and the IntelliJ test harness.
 
-**Install:** Settings → Plugins → Install Plugin from Disk...
+**Test data fixtures** live in `src/test/testData/completion/`.
 
-### Dependencies
+## Code Style
 
-- **kotlinx-serialization** 1.10.0 — JSON serialization for HTTP payloads
-- **IntelliJ Platform SDK** 2024.3.6 — IDE APIs and test framework
-- **JUnit** 4.13.2 — Testing
-- No external ML/LLM libraries — all inference delegated to llama.cpp
+### Pure functions for logic, services for state
 
-### Build Plugins
+Core logic lives in top-level pure functions (`buildFileContext()`, `composeInfillRequest()`, `allocateBudget()`, `trimCompletion()`, `reindentSuggestion()`). Mutable state is confined to IntelliJ service components.
 
-- `org.jetbrains.kotlin.jvm` — Kotlin compiler
-- `org.jetbrains.intellij.platform` — IntelliJ plugin packaging
-- `org.jetbrains.kotlin.plugin.serialization` — Serialization codegen
-- `org.jetbrains.kotlinx.kover` — Code coverage
-- `org.jetbrains.changelog` — Changelog management
-- `org.jetbrains.qodana` — Static analysis
+```kotlin
+// Pure function — no side effects, easy to test
+fun trimCompletion(suggestion: String, cursorCol: Int): String {
+    if (suggestion.isEmpty()) return suggestion
+    // ...
+}
+```
 
----
+### Immutable DTOs + mutable state components
 
-## Testing Conventions
+```kotlin
+// Immutable DTO for passing around
+data class Settings(val serverUrl: String = "http://127.0.0.1:8012", ...)
 
-- **No mocks** — tests use real instances and IntelliJ's test framework (`BasePlatformTestCase`)
-- **No fake filesystems** — real test files in `src/test/testData/`
-- Test data: inline via `myFixture.configureByText()` (≤15 lines) or fixture files (>15 lines)
-- All code paths covered, including error/exception paths
-- See `src/test/README.md` for full conventions and data generation details
+// Mutable IntelliJ PersistentStateComponent
+@Service(Service.Level.APP)
+@State(name = "...", storages = [Storage("completamente.xml")])
+class SettingsState : PersistentStateComponent<SettingsState> {
+    var serverUrl: String = "http://127.0.0.1:8012"
+    fun toSettings(): Settings = Settings(serverUrl = serverUrl, ...)
+}
+```
 
-### Test Coverage Map
+### kotlinx-serialization (not Jackson)
 
-| Test File                            | Covers                                                      |
-|--------------------------------------|-------------------------------------------------------------|
-| `contextTest.kt`                     | File splitting, windowing, boundary conditions (~40 tests)  |
-| `filtersTest.kt`                     | Suggestion discarding, auto-trigger suppression (~50 tests) |
-| `budgetTest.kt`                      | Token budget allocation                                     |
-| `chunkTest.kt`                       | Chunk picking, similarity                                   |
-| `composeTest.kt`                     | Request composition                                         |
-| `structureTest.kt`                   | PSI reference resolution                                    |
-| `Order89ExecutorTest.kt`             | Prompt generation, code cleaning, reindentation (~80 tests) |
-| `FimInlineCompletionProviderTest.kt` | Integration tests                                           |
-| `CacheWarmingServiceTest.kt`         | Service lifecycle                                           |
-| `InfillClientTest.kt`                | HTTP client                                                 |
-| `SettingsStateTest.kt`               | Settings persistence                                        |
+```kotlin
+val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
+json.encodeToString<InfillRequest>(request)
+```
 
----
+### Java HttpClient (not Retrofit/OkHttp)
 
-## Error Handling & Resilience
+```kotlin
+val httpClient: HttpClient = HttpClient.newBuilder()
+    .connectTimeout(Duration.ofSeconds(5)).build()
+```
 
-- **Completion failures** → return empty suggestion; never block the IDE
-- **HTTP timeouts** → calculated per-request from prompt/predict timing estimates
-- **Cache warming failures** → silently ignored (optimization, not critical)
-- **PSI access errors** → graceful degradation; empty structure chunks
-- **Settings parse errors** → fall back to defaults
+### Coroutines for async completion
 
----
+`getSuggestion()` is a `suspend` function using `readAction {}` for PSI/editor access and `withContext(Dispatchers.IO)` for network calls.
 
-## Key Design Decisions
+### Naming conventions
 
-1. **Pure functions over services** — Core logic (context, filters, budget, composition) is implemented as stateless
-   pure functions. Highly testable, no side effects.
+- Classes: PascalCase (`InfillClient`, `Order89Action`)
+- Functions/variables: camelCase (`buildFileContext`, `cursorCol`)
+- Files: Match their primary class/function name
+- Test classes: `XxxTest` suffix, method prefix `test`
 
-2. **Single read action** — All editor/document/PSI access captured in one `readAction` call into an `EditorSnapshot`.
-   No scattered read actions throughout the pipeline.
+## Git Workflow
 
-3. **Coroutine cancellation** — The completion provider checks `ensureActive()` at key points. HTTP requests run on
-   `Dispatchers.IO` and respect cancellation via thread interrupt.
+**Commit messages:** Conventional Commits format:
+```
+feat: trim leading/trailing whitespace from FIM completions
+fix: harden Order 89 status display undo suppression with UndoUtil.disableUndoIn
+docs: add rhdp/50 research on undo-free IntelliJ document edits
+style: replace Order 89 animation cyan with electric blue
+refactor: remove FIM/NEP completion feature
+chore: bump version to 0.0.4-dev
+```
 
-4. **Language-agnostic structure extraction** — `surfaceExtract()` uses brace-depth heuristics rather than
-   language-specific PSI trees, making it work across languages supported by IntelliJ.
+**Branch:** Development happens on `main`.
 
-5. **Silent failure** — Completion providers must never crash or block the IDE. All failures result in empty
-   suggestions.
+**CI:** GitHub Actions (`.github/workflows/build.yml`) runs on push to main and all PRs. Pipeline: Build → Test → Qodana inspection → Plugin verification.
 
----
+## Boundaries
 
-## File Reference
+### Always do
+- Run `./gradlew test` before committing
+- Use Kotlin idioms (data classes, extension functions, null safety)
+- Keep completion pipeline functions pure — side effects belong in services
+- Follow existing naming conventions (PascalCase classes, camelCase functions, `XxxTest` test classes)
+- Use kotlinx-serialization for JSON, not Jackson or Gson
+- Use Java HttpClient for HTTP, not Retrofit or OkHttp
 
-| Functionality       | Key Files                                                                                         |
-|---------------------|---------------------------------------------------------------------------------------------------|
-| Entry point         | `plugin.xml`, `FimInlineCompletionProvider.kt`                                                    |
-| Context building    | `context.kt`, `structure.kt`, `chunk.kt`                                                          |
-| Request composition | `compose.kt`, `infill.kt`, `budget.kt`                                                            |
-| Quality control     | `filters.kt`                                                                                      |
-| HTTP                | `InfillClient.kt`                                                                                 |
-| Cache warming       | `CacheWarmingService.kt`                                                                          |
-| Ring buffer         | `ChunksRingBuffer.kt`, `FileOpenCloseService.kt`, `FileSaveService.kt`, `ClipboardCopyService.kt` |
-| Settings            | `SettingsState.kt`, `Settings.kt`, `SettingsConfigurable.kt`                                      |
-| Code transform      | `Order89Action.kt`, `Order89Dialog.kt`, `Order89Executor.kt`                                      |
-| Startup             | `CompletamenteStartupActivity.kt`                                                                 |
+### Ask first
+- Before modifying `plugin.xml` (service registrations, actions, extension points)
+- Before changing the completion pipeline order (trim → reindent → filter)
+- Before adding new IntelliJ platform dependencies
+- Before modifying `SettingsState` (affects persisted user configuration)
+- Before changing keyboard shortcuts or action registrations
+
+### Never do
+- Never commit secrets or API keys
+- Never push directly to main without tests passing
+- Never add heavyweight dependencies (OkHttp, Retrofit, Jackson) — this plugin stays lean
+- Never block the EDT (Event Dispatch Thread) with network calls or long computations
+- Never remove failing tests without understanding why they fail
