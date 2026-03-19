@@ -105,7 +105,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val range = doc.createRangeMarker(0, doc.getLineEndOffset(1) + 1)
         val symbolRange = doc.createRangeMarker(0, 1)
         val attrs = TextAttributes().apply {
-            foregroundColor = Color(255, 16, 240)
+            foregroundColor = Color(0, 128, 255)
             fontType = Font.ITALIC
         }
         val h = myFixture.editor.markupModel.addRangeHighlighter(
@@ -214,45 +214,6 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         }
         assertEquals("\u2737", doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset)))
         symbolRange.dispose()
-    }
-
-    // -- lerpColor tests --
-
-    fun testLerpColorAtZeroReturnsFirstColor() {
-        val a = Color(255, 0, 0)
-        val b = Color(0, 255, 0)
-        val result = lerpColor(a, b, 0.0)
-        assertEquals(a, result)
-    }
-
-    fun testLerpColorAtOneReturnsSecondColor() {
-        val a = Color(255, 0, 0)
-        val b = Color(0, 255, 0)
-        val result = lerpColor(a, b, 1.0)
-        assertEquals(b, result)
-    }
-
-    fun testLerpColorAtHalfReturnsMidpoint() {
-        val a = Color(0, 0, 0)
-        val b = Color(200, 100, 50)
-        val result = lerpColor(a, b, 0.5)
-        assertEquals(100, result.red)
-        assertEquals(50, result.green)
-        assertEquals(25, result.blue)
-    }
-
-    fun testLerpColorClampsAboveOne() {
-        val a = Color(100, 100, 100)
-        val b = Color(200, 200, 200)
-        val result = lerpColor(a, b, 2.0)
-        assertEquals(b, result)
-    }
-
-    fun testLerpColorClampsBelowZero() {
-        val a = Color(100, 100, 100)
-        val b = Color(200, 200, 200)
-        val result = lerpColor(a, b, -1.0)
-        assertEquals(a, result)
     }
 
     // -- Undo after successful Order 89 should restore original text, not status lines --

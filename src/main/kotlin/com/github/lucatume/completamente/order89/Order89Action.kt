@@ -28,7 +28,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleManager
-import java.awt.Color
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import java.awt.Font
 import java.awt.event.KeyEvent
 import java.util.ArrayDeque
@@ -36,19 +37,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import javax.swing.KeyStroke
 import javax.swing.Timer
-import kotlin.math.sin
-
-private val ORDER89_NEON_PINK = Color(255, 16, 240)
-private val ORDER89_ELECTRIC_BLUE = Color(40, 110, 255)
-
-internal fun lerpColor(a: Color, b: Color, t: Double): Color {
-    val ct = t.coerceIn(0.0, 1.0)
-    return Color(
-        (a.red + (b.red - a.red) * ct).toInt(),
-        (a.green + (b.green - a.green) * ct).toInt(),
-        (a.blue + (b.blue - a.blue) * ct).toInt()
-    )
-}
 
 internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
     val collapsed = prompt.replace('\n', ' ').replace('\r', ' ').trim()
@@ -282,20 +270,22 @@ class Order89Action : AnAction() {
         val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
         var symbolIndex = 0
 
+        val editorScheme = EditorColorsManager.getInstance().globalScheme
+        val popColor = editorScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)?.foregroundColor
+            ?: editorScheme.defaultForeground
+        val defaultFg = editorScheme.defaultForeground
+
         val markup = editor.markupModel
-        // Build one highlighter per line with shared TextAttributes for color animation.
-        val attrsList = mutableListOf<TextAttributes>()
         val highlighters = mutableListOf<RangeHighlighter>()
         var pos = offset
         val lines = statusText.split('\n').dropLast(1) // drop trailing empty from final '\n'
-        for (line in lines) {
+        for ((index, line) in lines.withIndex()) {
             val lineStart = pos
             val lineEndOffset = pos + line.length
             val attrs = TextAttributes().apply {
-                foregroundColor = ORDER89_NEON_PINK
+                foregroundColor = if (index == 0) popColor else defaultFg
                 fontType = Font.ITALIC
             }
-            attrsList.add(attrs)
             // LAST ensures status text styling takes priority over editor default colors.
             highlighters.add(
                 markup.addRangeHighlighter(
@@ -312,9 +302,6 @@ class Order89Action : AnAction() {
         val timer = Timer(100) {
             // Wraps at 1000 to prevent unbounded growth; at 100ms intervals this cycles every ~100s.
             frameCount = (frameCount + 1) % 1000
-            val t = (sin(frameCount * 0.5) + 1.0) / 2.0
-            val color = lerpColor(ORDER89_NEON_PINK, ORDER89_ELECTRIC_BLUE, t)
-            attrsList.forEach { it.foregroundColor = color }
             // Rotate star symbol every 3rd frame (~300ms).
             if (frameCount % 3 == 0 && symbolRange.isValid) {
                 symbolIndex = (symbolIndex + 1) % symbols.size
