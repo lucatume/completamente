@@ -2,7 +2,6 @@ package com.github.lucatume.completamente.order89
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
@@ -24,12 +23,10 @@ import javax.swing.border.TitledBorder
 class Order89Dialog(parentComponent: Component) :
     JDialog(SwingUtilities.getWindowAncestor(parentComponent) as? Frame, true) {
 
-    private val neonPink = darkenAndDesaturate(Color(255, 16, 240), 0.05)
-    private val borderColor = darkenAndDesaturate(neonPink, 0.05)
     private val editorScheme = EditorColorsManager.getInstance().globalScheme
     private val editorBg = editorScheme.defaultBackground
     private val editorFontSize = editorScheme.editorFontSize
-    private val cyan = darkenAndDesaturate(Color(0, 255, 255), 0.15)
+    private val borderColor = editorScheme.defaultForeground
 
     private val textArea = JTextArea()
     private var submitted = false
@@ -47,14 +44,16 @@ class Order89Dialog(parentComponent: Component) :
 
         val titledBorder = BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(borderColor, 1),
-            "Order 89",
+            "[ Order 89 ]",
             TitledBorder.CENTER,
             TitledBorder.TOP,
             Font(Font.MONOSPACED, Font.PLAIN, editorFontSize),
             borderColor
         )
+        val outer = BorderFactory.createEmptyBorder(4, 12, 8, 12)
         val inner = BorderFactory.createEmptyBorder(4, 8, 8, 8)
-        (contentPane as JComponent).border = BorderFactory.createCompoundBorder(titledBorder, inner)
+        val outerWithTitle = BorderFactory.createCompoundBorder(outer, titledBorder)
+        (contentPane as JComponent).border = BorderFactory.createCompoundBorder(outerWithTitle, inner)
         contentPane.background = editorBg
 
         textArea.apply {
@@ -111,12 +110,4 @@ class Order89Dialog(parentComponent: Component) :
         return submitted
     }
 
-    companion object {
-        private fun darkenAndDesaturate(c: Color, amount: Double): Color {
-            val hsb = Color.RGBtoHSB(c.red, c.green, c.blue, null)
-            hsb[1] = (hsb[1] * (1.0 - amount)).toFloat().coerceIn(0f, 1f)
-            hsb[2] = (hsb[2] * (1.0 - amount)).toFloat().coerceIn(0f, 1f)
-            return Color(Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]))
-        }
-    }
 }
