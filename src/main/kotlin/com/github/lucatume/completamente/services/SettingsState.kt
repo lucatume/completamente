@@ -24,7 +24,13 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     var ringChunkSize: Int = 64
     var maxQueuedChunks: Int = 16
 
-    var order89Command: String = "cat {{prompt_file}} | claude --dangerously-skip-permissions --print --output-format text"
+    // Order 89
+    var order89ServerUrl: String = "http://127.0.0.1:8017"
+    var order89Temperature: Double = 0.7
+    var order89TopP: Double = 0.8
+    var order89TopK: Int = 20
+    var order89RepeatPenalty: Double = 1.05
+    var order89NPredict: Int = 1024
 
     override fun getState(): SettingsState = this
 
@@ -40,7 +46,12 @@ class SettingsState : PersistentStateComponent<SettingsState> {
         ringNChunks = ringNChunks,
         ringChunkSize = ringChunkSize,
         maxQueuedChunks = maxQueuedChunks,
-        order89Command = order89Command
+        order89ServerUrl = order89ServerUrl,
+        order89Temperature = order89Temperature,
+        order89TopP = order89TopP,
+        order89TopK = order89TopK,
+        order89RepeatPenalty = order89RepeatPenalty,
+        order89NPredict = order89NPredict
     )
 
     companion object {

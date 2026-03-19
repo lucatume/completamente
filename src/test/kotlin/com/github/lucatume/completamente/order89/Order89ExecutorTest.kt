@@ -1,166 +1,139 @@
 package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.BaseCompletionTest
-import java.io.File
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class Order89ExecutorTest : BaseCompletionTest() {
 
     private fun makeRequest(
-        commandTemplate: String = "echo test",
         prompt: String = "",
         filePath: String = "/tmp/test.kt",
         fileContent: String = "",
         language: String = "kotlin",
         selectionStart: Int = 0,
         selectionEnd: Int = 0,
-        workingDirectory: String = "/tmp"
+        contextChunks: List<ContextChunk> = emptyList()
     ) = Order89Request(
-        commandTemplate = commandTemplate,
         prompt = prompt,
         filePath = filePath,
         fileContent = fileContent,
         language = language,
         selectionStart = selectionStart,
         selectionEnd = selectionEnd,
-        workingDirectory = workingDirectory
+        contextChunks = contextChunks
     )
 
-    // -- buildPromptFile tests --
+    // -- buildPrompt tests --
 
-    fun testBuildPromptFileSelectionInMiddle() {
-        val content = "fun main() {\n    println(\"hello\")\n}"
+    fun testBuildPromptContainsAllSections() {
         val request = makeRequest(
-            prompt = "make it print world",
-            fileContent = content,
+            prompt = "add a method",
+            fileContent = "class Foo {}",
             language = "kotlin",
-            filePath = "/tmp/test.kt",
+            filePath = "/src/Foo.kt",
+            selectionStart = 10,
+            selectionEnd = 10
+        )
+        val result = Order89Executor.buildPrompt(request)
+        assertTrue(result.contains("<Order89Prompt>"))
+        assertTrue(result.contains("</Order89Prompt>"))
+        assertTrue(result.contains("<Order89Rules>"))
+        assertTrue(result.contains("</Order89Rules>"))
+        assertTrue(result.contains("<Order89Context>"))
+        assertTrue(result.contains("</Order89Context>"))
+        assertTrue(result.contains("<Order89Instruction>"))
+        assertTrue(result.contains("add a method"))
+        assertTrue(result.contains("</Order89Instruction>"))
+        assertTrue(result.contains("<Order89FileContent>"))
+        assertTrue(result.contains("</Order89FileContent>"))
+        assertTrue(result.contains("Language: kotlin"))
+        assertTrue(result.contains("File: /src/Foo.kt"))
+        assertTrue(result.contains("REMINDER: Match the file's documentation style."))
+    }
+
+    fun testBuildPromptEmptySelection() {
+        val request = makeRequest(
+            fileContent = "class Foo {}",
+            selectionStart = 11,
+            selectionEnd = 11
+        )
+        val result = Order89Executor.buildPrompt(request)
+        assertTrue(result.contains("class Foo {<Order89UserSelection></Order89UserSelection>}"))
+    }
+
+    fun testBuildPromptWithSelection() {
+        val request = makeRequest(
+            fileContent = "fun main() {\n    println(\"hello\")\n}",
             selectionStart = 17,
             selectionEnd = 33
         )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("fun main() {\n    <Order89UserSelection>println(\"hello\")</Order89UserSelection>\n}"))
-        } finally {
-            File(path).delete()
-        }
+        val result = Order89Executor.buildPrompt(request)
+        assertTrue(result.contains("fun main() {\n    <Order89UserSelection>println(\"hello\")</Order89UserSelection>\n}"))
     }
 
-    fun testBuildPromptFileEmptySelection() {
-        val content = "fun main() {}"
-        val request = makeRequest(
-            prompt = "add a println",
-            fileContent = content,
-            selectionStart = 12,
-            selectionEnd = 12
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("fun main() {<Order89UserSelection></Order89UserSelection>}"))
-        } finally {
-            File(path).delete()
-        }
-    }
-
-    fun testBuildPromptFileSelectionAtStart() {
-        val content = "fun main() {}"
-        val request = makeRequest(
-            prompt = "rename function",
-            fileContent = content,
-            selectionStart = 0,
-            selectionEnd = 3
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("<Order89UserSelection>fun</Order89UserSelection> main() {}"))
-        } finally {
-            File(path).delete()
-        }
-    }
-
-    fun testBuildPromptFileSelectionAtEnd() {
-        val content = "fun main() {}"
-        val request = makeRequest(
-            prompt = "change closing",
-            fileContent = content,
-            selectionStart = 12,
-            selectionEnd = 13
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("fun main() {<Order89UserSelection>}</Order89UserSelection>"))
-        } finally {
-            File(path).delete()
-        }
-    }
-
-    fun testBuildPromptFileSelectionSpansEntireFile() {
-        val content = "fun main() {}"
-        val request = makeRequest(
-            prompt = "rewrite everything",
-            fileContent = content,
-            selectionStart = 0,
-            selectionEnd = content.length
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("<Order89UserSelection>fun main() {}</Order89UserSelection>"))
-        } finally {
-            File(path).delete()
-        }
-    }
-
-    fun testBuildPromptFileContainsInstructionLanguageAndPath() {
-        val request = makeRequest(
-            prompt = "do something",
-            fileContent = "code",
-            language = "java",
-            filePath = "/home/user/Main.java",
-            selectionStart = 0,
-            selectionEnd = 4
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("<Order89Instruction>"))
-            assertTrue(result.contains("do something"))
-            assertTrue(result.contains("</Order89Instruction>"))
-            assertTrue(result.contains("Language: java"))
-            assertTrue(result.contains("File: /home/user/Main.java"))
-        } finally {
-            File(path).delete()
-        }
-    }
-
-    fun testBuildPromptFileCreatesReadableFileWithExpectedContent() {
+    fun testBuildPromptWithContextChunks() {
         val request = makeRequest(
             prompt = "test",
-            fileContent = "hello",
+            fileContent = "code",
             selectionStart = 0,
-            selectionEnd = 5
+            selectionEnd = 4,
+            contextChunks = listOf(
+                ContextChunk("src/Helper.kt", "class Helper { fun help() }"),
+                ContextChunk("src/Utils.kt", "object Utils { fun util() }")
+            )
         )
+        val result = Order89Executor.buildPrompt(request)
+        assertTrue(result.contains("<Order89ContextFile path=\"src/Helper.kt\">"))
+        assertTrue(result.contains("class Helper { fun help() }"))
+        assertTrue(result.contains("</Order89ContextFile>"))
+        assertTrue(result.contains("<Order89ContextFile path=\"src/Utils.kt\">"))
+        assertTrue(result.contains("object Utils { fun util() }"))
+    }
 
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val file = File(path)
-            assertTrue(file.exists())
-            assertTrue(file.canRead())
-            val content = file.readText()
-            assertTrue(content.contains("<Order89UserSelection>hello</Order89UserSelection>"))
-            assertTrue(content.contains("<Order89Instruction>"))
-        } finally {
-            File(path).delete()
-        }
+    fun testBuildPromptNoContextChunks() {
+        val request = makeRequest(
+            prompt = "test",
+            fileContent = "code",
+            selectionStart = 0,
+            selectionEnd = 4,
+            contextChunks = emptyList()
+        )
+        val result = Order89Executor.buildPrompt(request)
+        assertTrue(result.contains("<Order89Context>"))
+        assertFalse(result.contains("<Order89ContextFile"))
+    }
+
+    fun testBuildPromptRulesContainFenceInstruction() {
+        val request = makeRequest(fileContent = "x", selectionStart = 0, selectionEnd = 1)
+        val result = Order89Executor.buildPrompt(request)
+        assertTrue(result.contains("fenced code block using triple backticks"))
+    }
+
+    // -- buildRequestBody tests --
+
+    fun testBuildRequestBodyContainsAllFields() {
+        val settings = com.github.lucatume.completamente.services.Settings(
+            order89Temperature = 0.7,
+            order89TopP = 0.8,
+            order89TopK = 20,
+            order89RepeatPenalty = 1.05,
+            order89NPredict = 1024
+        )
+        val result = Order89Executor.buildRequestBody("test prompt", settings)
+        val json = kotlinx.serialization.json.Json.parseToJsonElement(result).jsonObject
+        assertEquals("test prompt", json["prompt"]!!.jsonPrimitive.content)
+        assertEquals("1024", json["n_predict"]!!.jsonPrimitive.content)
+        assertEquals(0.7, json["temperature"]!!.jsonPrimitive.content.toDouble(), 0.001)
+        assertEquals(0.8, json["top_p"]!!.jsonPrimitive.content.toDouble(), 0.001)
+        assertEquals("20", json["top_k"]!!.jsonPrimitive.content)
+        assertEquals(1.05, json["repeat_penalty"]!!.jsonPrimitive.content.toDouble(), 0.001)
+        assertEquals("false", json["cache_prompt"]!!.jsonPrimitive.content)
+        val stopArray = json["stop"]!!.jsonArray
+        assertEquals(2, stopArray.size)
+        assertEquals("</Order89Prompt>", stopArray[0].jsonPrimitive.content)
+        assertEquals("\n\n\n\n", stopArray[1].jsonPrimitive.content)
     }
 
     // -- reindentOutput tests --
@@ -232,96 +205,6 @@ class Order89ExecutorTest : BaseCompletionTest() {
     fun testDetectBaseIndentMixedTabsAndSpaces() {
         val text = "\t\tif (x) {\n\t\t\tdoStuff()\n\t\t}"
         assertEquals("\t\t", Order89Executor.detectBaseIndent(text))
-    }
-
-    // -- buildCommand tests --
-
-    fun testBuildCommandSubstitutesPromptFile() {
-        val request = makeRequest(
-            commandTemplate = "claude --prompt-file {{prompt_file}}"
-        )
-
-        val result = Order89Executor.buildCommand(request, "/tmp/order89-abc.txt")
-
-        assertEquals("claude --prompt-file /tmp/order89-abc.txt", result)
-    }
-
-    fun testBuildCommandWithNoPlaceholders() {
-        val request = makeRequest(
-            commandTemplate = "echo hello world"
-        )
-
-        val result = Order89Executor.buildCommand(request, "/tmp/order89-abc.txt")
-
-        assertEquals("echo hello world", result)
-    }
-
-    // -- execute tests --
-
-    fun testExecuteWithEchoCommand() {
-        val request = makeRequest(
-            commandTemplate = "echo 'val x = 1'",
-            workingDirectory = "/tmp"
-        )
-
-        val (process, future) = Order89Executor.execute(request)
-        val result = future.get()
-
-        assertTrue(result.success)
-        assertEquals("val x = 1", result.output)
-        assertEquals(0, result.exitCode)
-    }
-
-    fun testExecuteWithFailingCommand() {
-        val request = makeRequest(
-            commandTemplate = "exit 1",
-            workingDirectory = "/tmp"
-        )
-
-        val (process, future) = Order89Executor.execute(request)
-        val result = future.get()
-
-        assertFalse(result.success)
-        assertEquals(1, result.exitCode)
-    }
-
-    fun testExecuteStripsCodeFencesOnSuccess() {
-        val request = makeRequest(
-            commandTemplate = "printf '```kotlin\\nval x = 1\\n```'",
-            workingDirectory = "/tmp"
-        )
-        val (_, future) = Order89Executor.execute(request)
-        val result = future.get()
-        assertTrue(result.success)
-        assertEquals("val x = 1", result.output)
-    }
-
-    fun testExecuteWithCommandThatProducesStderr() {
-        val request = makeRequest(
-            commandTemplate = "echo error >&2 && exit 1",
-            workingDirectory = "/tmp"
-        )
-
-        val (process, future) = Order89Executor.execute(request)
-        val result = future.get()
-
-        assertFalse(result.success)
-        assertTrue(result.output.contains("error"))
-    }
-
-    fun testBuildPromptFileContainsV3PromptElements() {
-        val request = makeRequest(prompt = "test", fileContent = "code", selectionStart = 0, selectionEnd = 4)
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("You are a code transformation tool"))
-            assertTrue(result.contains("<Order89Rules>"))
-            assertTrue(result.contains("</Order89Rules>"))
-            assertTrue(result.contains("Do NOT describe what you are about to do"))
-            assertTrue(result.contains("valid in the target language"))
-        } finally {
-            File(path).delete()
-        }
     }
 
     // -- truncatePrompt tests --
@@ -571,43 +454,6 @@ class Order89ExecutorTest : BaseCompletionTest() {
         assertEquals(expected, Order89Executor.cleanOutput(input))
     }
 
-    // -- buildPromptFile edge cases --
-
-    fun testBuildPromptFileEmptyFileContent() {
-        val request = makeRequest(
-            prompt = "write something",
-            fileContent = "",
-            selectionStart = 0,
-            selectionEnd = 0
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("<Order89UserSelection></Order89UserSelection>"))
-            assertTrue(result.contains("write something"))
-        } finally {
-            File(path).delete()
-        }
-    }
-
-    fun testBuildPromptFilePromptWithXmlLikeTags() {
-        val request = makeRequest(
-            prompt = "Fix the </Order89Instruction> tag",
-            fileContent = "code",
-            selectionStart = 0,
-            selectionEnd = 4
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            assertTrue(result.contains("Fix the </Order89Instruction> tag"))
-        } finally {
-            File(path).delete()
-        }
-    }
-
     // -- reindentOutput edge cases --
 
     fun testReindentOutputAllBlankLines() {
@@ -620,27 +466,6 @@ class Order89ExecutorTest : BaseCompletionTest() {
         val output = "line1\nline2\nline3"
         val result = Order89Executor.reindentOutput(output, "")
         assertEquals("line1\nline2\nline3", result)
-    }
-
-    fun testBuildPromptFileContentContainingXmlMarkerStrings() {
-        val content = "before <Order89UserSelection>inner</Order89UserSelection> after"
-        val request = makeRequest(
-            prompt = "fix it",
-            fileContent = content,
-            selectionStart = 7,
-            selectionEnd = 12
-        )
-
-        val path = Order89Executor.buildPromptFile(request)
-        try {
-            val result = File(path).readText()
-            // Selection is offsets 7..12 = "<Orde"
-            assertTrue(result.contains("<Order89UserSelection><Orde</Order89UserSelection>"))
-            assertTrue(result.contains("<Order89Instruction>"))
-            assertTrue(result.contains("fix it"))
-        } finally {
-            File(path).delete()
-        }
     }
 
     fun testExtractCodeBlockUnclosedFenceReturnsRawInput() {

@@ -24,7 +24,7 @@
         <action id="com.github.lucatume.completamente.order89.Order89Action"
                 class="com.github.lucatume.completamente.order89.Order89Action"
                 text="Order 89"
-                description="Transform selected text using a configured shell command">
+                description="Transform selected text using a local llama.cpp model">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 8"/>
             <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt 8"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt 8"/>

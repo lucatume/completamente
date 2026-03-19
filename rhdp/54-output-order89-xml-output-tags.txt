@@ -1,0 +1,165 @@
+Checking llama.cpp server at http://localhost:8012...
+  Server status: ok
+
+Testing 4 variants, 10 run(s) each.
+
+==========================================================================================
+
+[1/4] xml_tags_simple
+  Ask for <Order89OutputCode> tags, simple instruction
+  Run 1/10... extraction=xml_closed | php=yes | prose=no | 3.4s | len=533
+  Run 2/10... extraction=xml_closed | php=yes | prose=no | 3.5s | len=533
+  Run 3/10... extraction=xml_closed | php=yes | prose=no | 4.9s | len=844
+  Run 4/10... extraction=xml_closed | php=yes | prose=no | 5.1s | len=782
+  Run 5/10... extraction=xml_closed | php=yes | prose=no | 3.8s | len=514
+  Run 6/10... extraction=xml_closed | php=yes | prose=no | 3.9s | len=515
+  Run 7/10... extraction=xml_closed | php=yes | prose=no | 3.9s | len=484
+  Run 8/10... extraction=xml_closed | php=yes | prose=no | 3.9s | len=515
+  Run 9/10... extraction=xml_closed | php=yes | prose=no | 2.4s | len=124
+  Run 10/10... extraction=xml_closed | php=yes | prose=no | 2.5s | len=124
+
+[2/4] xml_tags_with_example
+  Ask for <Order89OutputCode> tags with explicit example
+  Run 1/10... extraction=xml_closed | php=yes | prose=no | 4.1s | len=514
+  Run 2/10... extraction=xml_closed | php=yes | prose=no | 4.1s | len=558
+  Run 3/10... extraction=xml_closed | php=yes | prose=no | 4.1s | len=514
+  Run 4/10... extraction=xml_closed | php=yes | prose=no | 2.6s | len=131
+  Run 5/10... extraction=xml_closed | php=yes | prose=no | 2.7s | len=131
+  Run 6/10... extraction=xml_closed | php=yes | prose=no | 2.8s | len=131
+  Run 7/10... extraction=xml_closed | php=yes | prose=no | 4.6s | len=514
+  Run 8/10... extraction=xml_closed | php=yes | prose=no | 2.8s | len=131
+  Run 9/10... extraction=xml_closed | php=yes | prose=no | 4.2s | len=527
+  Run 10/10... extraction=xml_closed | php=yes | prose=no | 2.6s | len=131
+
+[3/4] xml_tags_prefill
+  Prompt ends with <Order89OutputCode> to prefill/nudge the model
+  Run 1/10... extraction=raw_unfenced | php=yes | prose=no | 2.4s | len=131
+  Run 2/10... extraction=raw_unfenced | php=yes | prose=no | 2.4s | len=126
+  Run 3/10... extraction=raw_unfenced | php=yes | prose=no | 2.4s | len=124
+  Run 4/10... extraction=raw_unfenced | php=yes | prose=no | 2.4s | len=131
+  Run 5/10... extraction=raw_unfenced | php=yes | prose=no | 2.4s | len=131
+  Run 6/10... extraction=raw_unfenced | php=yes | prose=no | 2.4s | len=131
+  Run 7/10... extraction=raw_unfenced | php=yes | prose=no | 2.5s | len=131
+  Run 8/10... extraction=raw_unfenced | php=yes | prose=no | 2.5s | len=131
+  Run 9/10... extraction=raw_unfenced | php=yes | prose=no | 2.6s | len=131
+  Run 10/10... extraction=raw_unfenced | php=yes | prose=no | 2.5s | len=131
+
+[4/4] backtick_fences_baseline
+  Backtick fences (v2 from harness 51, baseline comparison)
+  Run 1/10... extraction=backtick_fence | php=yes | prose=no | 2.5s | len=128
+  Run 2/10... extraction=backtick_fence | php=yes | prose=no | 2.6s | len=128
+  Run 3/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s | len=0
+  Run 4/10... extraction=backtick_fence | php=yes | prose=no | 2.6s | len=128
+  Run 5/10... extraction=backtick_fence | php=yes | prose=no | 2.8s | len=128
+  Run 6/10... extraction=backtick_fence | php=yes | prose=no | 2.7s | len=128
+  Run 7/10... extraction=backtick_fence | php=yes | prose=no | 2.7s | len=128
+  Run 8/10... extraction=backtick_fence | php=yes | prose=no | 2.7s | len=128
+  Run 9/10... extraction=backtick_fence | php=yes | prose=no | 2.8s | len=128
+  Run 10/10... extraction=backtick_fence | php=yes | prose=no | 2.9s | len=128
+
+==========================================================================================
+SUMMARY
+==========================================================================================
+
+Variant                         Fenced%   PHP%  Prose%  AvgLen  Avg(s)
+------------------------------------------------------------------------
+xml_tags_simple                    100%   100%      0%     497    3.7
+xml_tags_with_example              100%   100%      0%     328    3.5
+xml_tags_prefill                     0%   100%      0%     130    2.5
+backtick_fences_baseline            90%    90%      0%     115    2.6
+
+==========================================================================================
+SAMPLE OUTPUTS (first run per variant)
+==========================================================================================
+
+--- xml_tags_simple (extraction=xml_closed) ---
+Raw output (579 chars):
+  |  <Order89OutputCode>
+  |     /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+  |      * @param array<string,mixed> $parameters An array of parameters to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue resolving the class.
+  |      */
+  |     public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver->resolve($id, $parameters);
+  |     }
+  | </Order89OutputCode>
+
+Extracted code (533 chars):
+  | /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+  |      * @param array<string,mixed> $parameters An array of parameters to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue resolving the class.
+  |      */
+  |     public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver-
+
+--- xml_tags_with_example (extraction=xml_closed) ---
+Raw output (560 chars):
+  |  <Order89OutputCode>
+  |     /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+  |      * @param array               $args An array of arguments to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue resolving the class.
+  |      */
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         return $this->resolver->resolve($id, $args);
+  |     }
+  | </Order89OutputCode>
+
+Extracted code (514 chars):
+  | /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+  |      * @param array               $args An array of arguments to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue resolving the class.
+  |      */
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         return $this->resolver->resolve($id,
+
+--- xml_tags_prefill (extraction=raw_unfenced) ---
+Raw output (135 chars):
+  |     public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver->resolve($id, [$id], $parameters);
+  |     }
+
+Extracted code (131 chars):
+  | public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver->resolve($id, [$id], $parameters);
+  |     }
+
+--- backtick_fences_baseline (extraction=backtick_fence) ---
+Raw output (140 chars):
+  |  ```php
+  |     public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver->resolve($id, $parameters);
+  |     }
+  | ```
+
+Extracted code (128 chars):
+  |     public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver->resolve($id, $parameters);
+  |     }

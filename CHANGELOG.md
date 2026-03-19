@@ -9,7 +9,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
+- Order 89: replaced Claude Code shell-command backend with direct HTTP calls to a local
+  llama.cpp `/completion` endpoint. The prompt structure has been optimized for
+  Qwen3-Coder-30B-A3B-Instruct via extensive harness testing (rhdp/51–67).
+- Order 89 now sends structure-extracted context (API signatures of referenced files) to
+  improve generated code accuracy (correct method calls, try/catch patterns).
+- Order 89 prompt includes a convention-matching reminder so generated code mirrors the
+  documentation style of the file under edit (docblocks, type annotations, naming).
+- Order 89 sampling parameters (temperature, top_p, top_k, repeat_penalty, n_predict)
+  are now user-configurable in settings, defaulting to Qwen3-Coder recommended values.
+- Order 89 server URL is now a separate setting (default: `http://127.0.0.1:8017`),
+  independent of the FIM completions server.
 - FIM ghost text gradient updated from neon pink→electric cyan to neon pink→violet.
+
+### Removed
+- Order 89 shell command setting (`order89Command`) and `{{prompt_file}}` template mechanism.
+- Order 89 temp file creation for prompt delivery.
+- Claude Code dependency for Order 89.
 
 ### Fixed
 - FIM suggestions now only appear in main editor windows (no popups, diffs, or tool windows).

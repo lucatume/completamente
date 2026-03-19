@@ -8,5 +8,10 @@ data class Settings(
     val ringNChunks: Int = 16,
     val ringChunkSize: Int = 64,
     val maxQueuedChunks: Int = 16,
-    val order89Command: String = "cat {{prompt_file}} | claude --dangerously-skip-permissions --print --output-format text"
+    val order89ServerUrl: String = "http://127.0.0.1:8017",
+    val order89Temperature: Double = 0.7,
+    val order89TopP: Double = 0.8,
+    val order89TopK: Int = 20,
+    val order89RepeatPenalty: Double = 1.05,
+    val order89NPredict: Int = 1024
 )

@@ -1,0 +1,158 @@
+Checking llama.cpp server at http://localhost:8012...
+  Server status: ok
+Testing chat endpoint at http://localhost:8012/v1/chat/completions...
+  Chat endpoint OK
+
+Endpoint: /v1/chat/completions (instruct mode)
+Testing 6 variants, 10 run(s) each.
+========================================================================================================================
+
+[1/6] A_no_context
+  No context baseline
+  Run 1/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 1.9s
+  Run 2/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 3/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 4/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 5/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 6/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 7/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 8/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 9/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+  Run 10/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=N | conv=5.5 | api=2.0 | tot=7.5/13.5 | 0.6s
+
+[2/6] B_struct_baseline
+  Structure context, original intro
+  Run 1/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 2.6s
+  Run 2/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 3/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 4/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 5/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 6/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 7/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 8/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 9/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+  Run 10/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.6s
+
+[3/6] C_api_ref_only
+  Context intro: 'API reference only, not style examples'
+  Run 1/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 3.8s
+  Run 2/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.6s
+  Run 3/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.6s
+  Run 4/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.5s
+  Run 5/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.5s
+  Run 6/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.6s
+  Run 7/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.6s
+  Run 8/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.5s
+  Run 9/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.5s
+  Run 10/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 1.5s
+
+[4/6] E_sole_authority
+  System rule: 'file under edit is sole source of truth for style'
+  Run 1/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 3.2s
+  Run 2/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 3/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 4/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 5/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 6/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 7/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 8/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 9/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 10/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+
+[5/6] F_combined
+  Structure-view intro + sole-authority rule in system message
+  Run 1/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 3.3s
+  Run 2/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 3/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 4/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 5/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 6/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 7/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 8/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 9/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 10/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+
+[6/6] I_strong_negative
+  Strong negative: 'Do NOT use context files for conventions' in system
+  Run 1/10... fence=Y | doc=N | @p=N | @r=N | try=Y | rwa=Y | conv=5.5 | api=4.0 | tot=9.5/13.5 | 4.3s
+  Run 2/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 3/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 4/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 5/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 6/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+  Run 7/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 8/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 9/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.8s
+  Run 10/10... fence=Y | doc=N | @p=N | @r=N | try=N | rwa=Y | conv=5.5 | api=3.0 | tot=8.5/13.5 | 0.7s
+
+========================================================================================================================
+SUMMARY — sorted by total score
+========================================================================================================================
+Variant                 Total  Conv  API  Fence%  Doc%  @par%  @ret%  @thr%  Try%  RWA%  AvgLen  Avg(s)
+-------------------------------------------------------------------------------------------------------
+C_api_ref_only           9.5   5.5  4.0    100%    0%     0%     0%     0%  100%  100%     351    1.8
+I_strong_negative        8.6   5.5  3.1    100%    0%     0%     0%     0%   10%  100%     155    1.1
+B_struct_baseline        8.5   5.5  3.0    100%    0%     0%     0%     0%    0%  100%     133    0.8
+E_sole_authority         8.5   5.5  3.0    100%    0%     0%     0%     0%    0%  100%     133    1.0
+F_combined               8.5   5.5  3.0    100%    0%     0%     0%     0%    0%  100%     134    1.0
+A_no_context             7.5   5.5  2.0    100%    0%     0%     0%     0%    0%    0%     128    0.7
+
+========================================================================================================================
+SAMPLE OUTPUTS (first run from top 4 variants)
+========================================================================================================================
+
+--- C_api_ref_only (total=9.5/13.5, conv=5.5, api=4.0) ---
+Extracted code (351 chars):
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         try {
+  |             return $this->resolver->resolveWithArgs($id, null, ...$args);
+  |         } catch (Throwable $throwable) {
+  |             throw $this->castThrown($throwable, $id);
+  |         } catch (Exception $exception) {
+  |             throw $this->castThrown($exception, $id);
+  |         }
+  |     }
+
+--- I_strong_negative (total=9.5/13.5, conv=5.5, api=4.0) ---
+Extracted code (351 chars):
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         try {
+  |             return $this->resolver->resolveWithArgs($id, null, ...$args);
+  |         } catch (Throwable $throwable) {
+  |             throw $this->castThrown($throwable, $id);
+  |         } catch (Exception $exception) {
+  |             throw $this->castThrown($exception, $id);
+  |         }
+  |     }
+
+--- B_struct_baseline (total=8.5/13.5, conv=5.5, api=3.0) ---
+Extracted code (133 chars):
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         return $this->resolver->resolveWithArgs($id, null, ...$args);
+  |     }
+
+--- E_sole_authority (total=8.5/13.5, conv=5.5, api=3.0) ---
+Extracted code (133 chars):
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         return $this->resolver->resolveWithArgs($id, null, ...$args);
+  |     }
+
+========================================================================================================================
+COMPARISON: /v1/chat/completions vs /completion (harness 59)
+========================================================================================================================
+
+Harness 59 (/completion) results for reference:
+  A_no_context:      total=11.4, conv=9.0, api=2.4, doc=100%, try=40%,  rwa=0%
+  B_struct_baseline: total=9.3,  conv=5.5, api=3.8, doc=0%,   try=80%,  rwa=100%
+  C_api_ref_only:    total=9.5,  conv=5.5, api=4.0, doc=0%,   try=100%, rwa=100%
+  E_sole_authority:  total=9.4,  conv=5.5, api=3.9, doc=0%,   try=90%,  rwa=100%
+  F_combined:        total=9.5,  conv=5.5, api=4.0, doc=0%,   try=100%, rwa=100%
+  I_strong_negative: total=8.7,  conv=5.5, api=3.2, doc=0%,   try=20%,  rwa=100%
+
+========================================================================================================================
+WINNER: C_api_ref_only (avg total 9.5/13.5)
+========================================================================================================================

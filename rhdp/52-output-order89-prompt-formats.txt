@@ -1,0 +1,816 @@
+Checking llama.cpp server at http://localhost:8012...
+  Server status: ok
+
+Testing 8 prompt variants, 10 run(s) each.
+
+================================================================================
+
+[1/8] v1_current_xml_raw
+  Current Order 89 format: XML tags, asks for raw code only (no fences)
+  Run 1/10... extraction=raw_unfenced | php=yes | prose=no | 2.7s
+  Run 2/10... extraction=raw_unfenced | php=yes | prose=no | 2.6s
+  Run 3/10... extraction=raw_unfenced | php=yes | prose=no | 2.6s
+  Run 4/10... extraction=raw_unfenced | php=yes | prose=no | 2.7s
+  Run 5/10... extraction=raw_unfenced | php=yes | prose=no | 2.8s
+  Run 6/10... extraction=raw_unfenced | php=yes | prose=no | 2.7s
+  Run 7/10... extraction=raw_unfenced | php=yes | prose=no | 2.7s
+  Run 8/10... extraction=raw_unfenced | php=yes | prose=no | 2.8s
+  Run 9/10... extraction=raw_unfenced | php=yes | prose=no | 2.8s
+  Run 10/10... extraction=raw_unfenced | php=yes | prose=no | 2.9s
+
+[2/8] v2_xml_request_fences
+  XML tags, explicitly asks model to wrap output in triple-backtick fences
+  Run 1/10... extraction=backtick_fence | php=yes | prose=no | 3.3s
+  Run 2/10... extraction=backtick_fence | php=yes | prose=no | 3.2s
+  Run 3/10... extraction=backtick_fence | php=yes | prose=no | 3.5s
+  Run 4/10... extraction=backtick_fence | php=yes | prose=no | 3.2s
+  Run 5/10... extraction=backtick_fence | php=yes | prose=no | 3.3s
+  Run 6/10... extraction=backtick_fence | php=yes | prose=no | 3.7s
+  Run 7/10... extraction=backtick_fence | php=yes | prose=no | 3.9s
+  Run 8/10... extraction=backtick_fence | php=yes | prose=no | 3.7s
+  Run 9/10... extraction=backtick_fence | php=yes | prose=no | 3.8s
+  Run 10/10... extraction=backtick_fence | php=yes | prose=no | 4.6s
+
+[3/8] v3_xml_request_xml_output
+  XML tags, asks model to wrap output in <code>...</code> XML tags
+  Run 1/10... extraction=raw_unfenced | php=yes | prose=no | 4.4s
+  Run 2/10... extraction=raw_unfenced | php=yes | prose=no | 8.0s
+  Run 3/10... extraction=raw_unfenced | php=yes | prose=no | 4.7s
+  Run 4/10... extraction=raw_unfenced | php=yes | prose=no | 11.3s
+  Run 5/10... extraction=raw_unfenced | php=yes | prose=no | 5.8s
+  Run 6/10... extraction=raw_unfenced | php=yes | prose=no | 12.9s
+  Run 7/10... extraction=raw_unfenced | php=yes | prose=no | 15.8s
+  Run 8/10... extraction=raw_unfenced | php=yes | prose=no | 8.4s
+  Run 9/10... extraction=raw_unfenced | php=yes | prose=no | 10.3s
+  Run 10/10... extraction=raw_unfenced | php=yes | prose=no | 14.3s
+
+[4/8] v4_chat_fences
+  Plain chat/instruct style with no XML tags, asks for fenced output
+  Run 1/10... extraction=raw_unfenced | php=NO | prose=no | 10.4s
+  Run 2/10... extraction=raw_unfenced | php=NO | prose=no | 11.1s
+  Run 3/10... extraction=raw_unfenced | php=NO | prose=no | 10.1s
+  Run 4/10... extraction=raw_unfenced | php=NO | prose=no | 9.5s
+  Run 5/10... extraction=raw_unfenced | php=NO | prose=no | 8.5s
+  Run 6/10... extraction=raw_unfenced | php=NO | prose=no | 7.3s
+  Run 7/10... extraction=raw_unfenced | php=NO | prose=no | 6.2s
+  Run 8/10... extraction=raw_unfenced | php=NO | prose=no | 5.8s
+  Run 9/10... extraction=raw_unfenced | php=NO | prose=no | 5.7s
+  Run 10/10... extraction=raw_unfenced | php=NO | prose=no | 5.1s
+
+[5/8] v5_fim_style
+  FIM-style with prefix/suffix markers and instruction as comment
+  Run 1/10... extraction=backtick_fence | php=yes | prose=no | 12.0s
+  Run 2/10... extraction=backtick_fence | php=yes | prose=no | 6.4s
+  Run 3/10... extraction=backtick_fence | php=yes | prose=no | 7.2s
+  Run 4/10... extraction=backtick_fence | php=yes | prose=no | 5.3s
+  Run 5/10... extraction=backtick_fence | php=yes | prose=no | 6.0s
+  Run 6/10... extraction=backtick_fence | php=yes | prose=no | 5.4s
+  Run 7/10... extraction=backtick_fence | php=yes | prose=no | 5.9s
+  Run 8/10... extraction=backtick_fence | php=yes | prose=no | 4.3s
+  Run 9/10... extraction=backtick_fence | php=yes | prose=no | 6.0s
+  Run 10/10... extraction=backtick_fence | php=yes | prose=no | 5.1s
+
+[6/8] v6_xml_with_example
+  XML tags with an explicit output format example showing fences
+  Run 1/10... extraction=backtick_fence | php=yes | prose=no | 3.6s
+  Run 2/10... extraction=backtick_fence | php=yes | prose=no | 3.4s
+  Run 3/10... extraction=backtick_fence | php=yes | prose=no | 3.4s
+  Run 4/10... extraction=backtick_fence | php=yes | prose=no | 3.3s
+  Run 5/10... extraction=backtick_fence | php=yes | prose=no | 3.2s
+  Run 6/10... extraction=backtick_fence | php=yes | prose=no | 3.2s
+  Run 7/10... extraction=backtick_fence | php=yes | prose=no | 3.2s
+  Run 8/10... extraction=backtick_fence | php=yes | prose=no | 3.2s
+  Run 9/10... extraction=backtick_fence | php=yes | prose=no | 3.3s
+  Run 10/10... extraction=backtick_fence | php=yes | prose=no | 3.1s
+
+[7/8] v7_minimal_raw
+  Minimal prompt: just the instruction and file, asks for raw code only
+  Run 1/10... extraction=raw_unfenced | php=NO | prose=no | 2.1s
+  Run 2/10... extraction=raw_unfenced | php=NO | prose=no | 2.0s
+  Run 3/10... extraction=raw_unfenced | php=NO | prose=no | 2.0s
+  Run 4/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s
+  Run 5/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s
+  Run 6/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s
+  Run 7/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s
+  Run 8/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s
+  Run 9/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s
+  Run 10/10... extraction=raw_unfenced | php=NO | prose=no | 1.9s
+
+[8/8] v8_json_structured
+  JSON-structured request asking for response in JSON with code field
+  Run 1/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+  Run 2/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+  Run 3/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+  Run 4/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+  Run 5/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+  Run 6/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+  Run 7/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+  Run 8/10... extraction=raw_unfenced | php=NO | prose=no | 0.7s
+  Run 9/10... extraction=raw_unfenced | php=NO | prose=no | 0.7s
+  Run 10/10... extraction=raw_unfenced | php=NO | prose=no | 0.6s
+
+================================================================================
+SUMMARY
+================================================================================
+
+Variant                         Fence%    PHP%  Prose%   Score  Avg(s)
+------------------------------------------------------------------------
+v2_xml_request_fences             100%    100%      0%   1.00    3.6
+v5_fim_style                      100%    100%      0%   1.00    6.3
+v6_xml_with_example               100%    100%      0%   1.00    3.3
+v1_current_xml_raw                  0%    100%      0%   0.60    2.7
+v3_xml_request_xml_output           0%    100%      0%   0.60    9.6
+v4_chat_fences                      0%      0%      0%   0.20    8.0
+v7_minimal_raw                      0%      0%      0%   0.20    1.9
+v8_json_structured                  0%      0%      0%   0.20    0.7
+
+Best variant: v2_xml_request_fences (score 1.00)
+
+================================================================================
+DETAILED OUTPUTS
+================================================================================
+
+--- v2_xml_request_fences ---
+Description: XML tags, explicitly asks model to wrap output in triple-backtick fences
+
+  [Run 1] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 2] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 3] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 4] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 5] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 6] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 7] extraction=backtick_fence php=True prose=False
+  Raw output (140 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ```
+
+  [Run 8] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 9] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 10] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $arguments)
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $arguments);
+    |     }
+    | ``` ```
+
+--- v5_fim_style ---
+Description: FIM-style with prefix/suffix markers and instruction as comment
+
+  [Run 1] extraction=backtick_fence php=True prose=False
+  Raw output (583 chars):
+    | ```php
+    |     public function makeWith($id, array $parameters)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builders = $this->builders;
+    |         $callback = function () use ($id, $parameters, $resolver, $builders) {
+    |             $builder = $builders->getBuilder($id, $id);
+    |             return $builder->build($resolver, $parameters);
+    |         };
+    | 
+    |         $key = spl_object_hash($callback);
+    |         $this->callbacks[$key] = $callback;
+    | 
+    |         try {
+    |             return $resolver->resolve($key, [$id]);
+    |         } finally {
+    |             unset($this->callbacks[$key]);
+    |         }
+    |     }
+    | ```
+
+  [Run 2] extraction=backtick_fence php=True prose=False
+  Raw output (239 chars):
+    | ```php
+    |     public function makeWith($id, array $parameters)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builder = $resolver->getBuilder($id);
+    |         $builder->setParameters($parameters);
+    |         return $builder->build();
+    |     }
+    | ```
+
+  [Run 3] extraction=backtick_fence php=True prose=False
+  Raw output (427 chars):
+    | ```php
+    |     public function makeWith($id, array $parameters)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builders = $this->builders;
+    |         $callback = function () use ($id, $parameters, $resolver, $builders) {
+    |             $builder = $builders->getBuilder($id, $id);
+    |             return $builder->build($resolver, $parameters);
+    |         };
+    | 
+    |         $this->callbacks[$id] = $callback;
+    |         return $callback();
+    |     }
+    | ```
+
+  [Run 4] extraction=backtick_fence php=True prose=False
+  Raw output (244 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builder = $resolver->getBuilder($id);
+    |         $builder->setParameters($parameters);
+    |         return $builder->build();
+    |     }
+    | ``` ```
+
+  [Run 5] extraction=backtick_fence php=True prose=False
+  Raw output (282 chars):
+    | ```php
+    |     public function makeWith($id, array $bindings)
+    |     {
+    |         $resolver = clone $this->resolver;
+    |         foreach ($bindings as $key => $value) {
+    |             $resolver->bind($key, ValueBuilder::of($value));
+    |         }
+    |         return $resolver->resolve($id, [$id]);
+    |     }
+    | ```
+
+  [Run 6] extraction=backtick_fence php=True prose=False
+  Raw output (250 chars):
+    | ```php
+    |     public function makeWith($id, array $params)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builder = $resolver->getBuilder($id);
+    |         $args = $params;
+    |         $instance = $builder->build($args);
+    |         return $instance;
+    |     }
+    | ```
+
+  [Run 7] extraction=backtick_fence php=True prose=False
+  Raw output (356 chars):
+    | ```php
+    |     public function makeWith($id, array $parameters)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builder = $resolver->getBuilder($id);
+    | 
+    |         if ($builder === null) {
+    |             $builder = $this->builders->getBuilder($id, $id);
+    |         }
+    | 
+    |         $builder->setParameters($parameters);
+    | 
+    |         return $builder->build($resolver);
+    |     }
+    | ```
+
+  [Run 8] extraction=backtick_fence php=True prose=False
+  Raw output (201 chars):
+    | ```php
+    |     public function makeWith($id, array $params)
+    |     {
+    |         $builder = $this->builders->getBuilder($id, $id);
+    |         $builder->setParams($params);
+    |         return $builder->build();
+    |     }
+    | ```
+
+  [Run 9] extraction=backtick_fence php=True prose=False
+  Raw output (351 chars):
+    | ```php
+    |     public function makeWith($id, array $parameters)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builder = $resolver->getBuilder($id);
+    |         $args = $builder->getArgs();
+    |         $args = array_merge($args, $parameters);
+    |         $builder->setArgs($args);
+    |         $resolver->bind($id, $builder);
+    |         return $this->get($id);
+    |     }
+    | ```
+
+  [Run 10] extraction=backtick_fence php=True prose=False
+  Raw output (248 chars):
+    | ```php
+    |     public function makeWith($id, array $parameters)
+    |     {
+    |         $resolver = $this->resolver;
+    |         $builder = $resolver->getBuilder($id);
+    |         $builder->setParameters($parameters);
+    |         return $builder->build($resolver);
+    |     }
+    | ```
+
+--- v6_xml_with_example ---
+Description: XML tags with an explicit output format example showing fences
+
+  [Run 1] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 2] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 3] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 4] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 5] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 6] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 7] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 8] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 9] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+  [Run 10] extraction=backtick_fence php=True prose=False
+  Raw output (144 chars):
+    |  ```php
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | ``` ```
+
+--- v1_current_xml_raw ---
+Description: Current Order 89 format: XML tags, asks for raw code only (no fences)
+
+  [Run 1] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 2] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 3] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 4] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 5] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 6] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 7] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 8] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 9] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+  [Run 10] extraction=raw_unfenced php=True prose=False
+  Raw output (132 chars):
+    |  public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, [$id], $parameters);
+    |     }
+
+--- v3_xml_request_xml_output ---
+Description: XML tags, asks model to wrap output in <code>...</code> XML tags
+
+  [Run 1] extraction=raw_unfenced php=True prose=False
+  Raw output (137 chars):
+    |  <code>
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | 
+
+  [Run 2] extraction=raw_unfenced php=True prose=False
+  Raw output (614 chars):
+    |  <code>
+    |     /**
+    |      * Makes an instance of a class using the container.
+    |      *
+    |      * @param string|class-string $id      A fully qualified class or interface name or an already built object.
+    |      * @param array               $params  An array of parameters to pass to the constructor.
+    |      *
+    |      * @return object The built instance.
+    |      * @throws ContainerException If there's an issue resolving the class.
+    |      */
+    |     public function makeWith($id, array $params = [])
+    |     {
+    |         $resolver = clone $this->resolver;
+    |         $resolver->setParams($params);
+    |         return $resolver->resolve($id, 
+    | ... (truncated)
+
+  [Run 3] extraction=raw_unfenced php=True prose=False
+  Raw output (137 chars):
+    |  <code>
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | 
+
+  [Run 4] extraction=raw_unfenced php=True prose=False
+  Raw output (688 chars):
+    |  <code>
+    |     /**
+    |      * Makes an instance of a class using the container.
+    |      *
+    |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+    |      * @param array<mixed>        $params An array of parameters to pass to the constructor.
+    |      *
+    |      * @return object The built instance.
+    |      * @throws ContainerException If there's an issue resolving the class.
+    |      */
+    |     public function makeWith($id, array $params = [])
+    |     {
+    |         $resolver = clone $this->resolver;
+    |         $resolver->bind($id, $this->builders->getBuilder($id, $id, null));
+    |         $
+    | ... (truncated)
+
+  [Run 5] extraction=raw_unfenced php=True prose=False
+  Raw output (137 chars):
+    |  <code>
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | 
+
+  [Run 6] extraction=raw_unfenced php=True prose=False
+  Raw output (746 chars):
+    |  <code>
+    |     /**
+    |      * Makes an instance of a class using the container.
+    |      *
+    |      * @param string|class-string $id  A fully qualified class or interface name or an already built object.
+    |      * @param array               $args An array of arguments to pass to the constructor.
+    |      *
+    |      * @return object The built instance.
+    |      * @throws ContainerException If there's an issue resolving the class.
+    |      */
+    |     public function makeWith($id, array $args = [])
+    |     {
+    |         try {
+    |             return $this->resolver->resolve($id, $args);
+    |         } catch (Throwable $throwable) {
+    |             throw $
+    | ... (truncated)
+
+  [Run 7] extraction=raw_unfenced php=True prose=False
+  Raw output (779 chars):
+    |  <code>
+    |     /**
+    |      * Makes an instance of a class with the specified dependencies.
+    |      *
+    |      * @param string|class-string $id The fully qualified class name or an already built object.
+    |      * @param array<string,mixed> $parameters An array of parameters to pass to the constructor.
+    |      *
+    |      * @return object The built instance.
+    |      * @throws ContainerException If there's an issue resolving the dependencies.
+    |      */
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         try {
+    |             return $this->resolver->resolve($id, [$id], $parameters);
+    |         } catch (Throwable 
+    | ... (truncated)
+
+  [Run 8] extraction=raw_unfenced php=True prose=False
+  Raw output (137 chars):
+    |  <code>
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | 
+
+  [Run 9] extraction=raw_unfenced php=True prose=False
+  Raw output (137 chars):
+    |  <code>
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | 
+
+  [Run 10] extraction=raw_unfenced php=True prose=False
+  Raw output (137 chars):
+    |  <code>
+    |     public function makeWith($id, array $parameters = [])
+    |     {
+    |         return $this->resolver->resolve($id, $parameters);
+    |     }
+    | 
+
+--- v4_chat_fences ---
+Description: Plain chat/instruct style with no XML tags, asks for fenced output
+
+  [Run 1] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 2] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 3] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 4] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 5] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 6] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 7] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 8] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 9] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 10] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+--- v7_minimal_raw ---
+Description: Minimal prompt: just the instruction and file, asks for raw code only
+
+  [Run 1] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 2] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 3] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 4] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 5] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 6] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 7] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 8] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 9] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 10] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+--- v8_json_structured ---
+Description: JSON-structured request asking for response in JSON with code field
+
+  [Run 1] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 2] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 3] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 4] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 5] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 6] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 7] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 8] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 9] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+  [Run 10] extraction=raw_unfenced php=False prose=False
+  Raw output (0 chars):
+    | 
+
+================================================================================
+RECOMMENDATION
+================================================================================
+
+Best prompt format: v2_xml_request_fences
+  Fence extraction rate: 100%
+  PHP code quality rate: 100%
+  Prose contamination:   0%
+  Composite score:       1.00
+  Avg response time:     3.6s
+
+  The model reliably produces fenced output with this format.
+  Extraction method: backtick_fence

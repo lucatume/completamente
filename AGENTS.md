@@ -8,7 +8,7 @@ Ported from [llama.vim](https://github.com/ggml-org/llama.vim), designed for Swe
 
 Two main features:
 1. **FIM Completions** — Ghost text suggestions via the `/infill` endpoint on keystroke
-2. **Order 89** — Code transformation action triggered by keyboard shortcut
+2. **Order 89** — Code transformation via a local llama.cpp `/completion` endpoint, prompt optimized for Qwen3-Coder-30B-A3B-Instruct
 
 ## Project Structure
 
@@ -16,7 +16,7 @@ Two main features:
 src/main/kotlin/com/github/lucatume/completamente/
 ├── completion/       # FIM context building, request composition, budget, reindent, trim
 ├── fim/              # FimInlineCompletionProvider (IntelliJ inline completion integration)
-├── order89/          # Order 89 action, dialog, and executor
+├── order89/          # Order 89 action, dialog, executor (HTTP client to llama.cpp /completion)
 ├── services/         # Plugin services: settings state, ring buffer, cache warming, clipboard/file listeners
 ├── settings/         # Settings UI configurable
 └── startup/          # Project startup activity
@@ -71,7 +71,7 @@ class trimTest : BaseCompletionTest() {
 
 ### Pure functions for logic, services for state
 
-Core logic lives in top-level pure functions (`buildFileContext()`, `composeInfillRequest()`, `allocateBudget()`, `trimCompletion()`, `reindentSuggestion()`). Mutable state is confined to IntelliJ service components.
+Core logic lives in top-level pure functions (`buildFileContext()`, `composeInfillRequest()`, `allocateBudget()`, `trimCompletion()`, `reindentSuggestion()`) and in object singletons with pure methods (`Order89Executor.buildPrompt()`, `Order89Executor.cleanOutput()`). Mutable state is confined to IntelliJ service components.
 
 ```kotlin
 // Pure function — no side effects, easy to test
@@ -110,9 +110,11 @@ val httpClient: HttpClient = HttpClient.newBuilder()
     .connectTimeout(Duration.ofSeconds(5)).build()
 ```
 
-### Coroutines for async completion
+### Coroutines for FIM completion, Executors for Order 89
 
-`getSuggestion()` is a `suspend` function using `readAction {}` for PSI/editor access and `withContext(Dispatchers.IO)` for network calls.
+FIM: `getSuggestion()` is a `suspend` function using `readAction {}` for PSI/editor access and `withContext(Dispatchers.IO)` for network calls.
+
+Order 89: `Order89Executor.execute()` uses `Executors.newSingleThreadExecutor()` with a `Callable` to run the HTTP call off-EDT. Context collection via `collectReferencedFiles()` and `surfaceExtract()` runs in a `runReadAction {}` on the EDT before dispatch.
 
 ### Naming conventions
 
@@ -149,7 +151,7 @@ chore: bump version to 0.0.4-dev
 
 ### Ask first
 - Before modifying `plugin.xml` (service registrations, actions, extension points)
-- Before changing the completion pipeline order (trim → reindent → filter)
+- Before changing the completion pipeline order (trim → reindent → filter) or the Order 89 output pipeline (extractCodeBlock → stripLeadingProse → stripTrailingProse)
 - Before adding new IntelliJ platform dependencies
 - Before modifying `SettingsState` (affects persisted user configuration)
 - Before changing keyboard shortcuts or action registrations

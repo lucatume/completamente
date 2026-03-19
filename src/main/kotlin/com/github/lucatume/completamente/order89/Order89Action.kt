@@ -1,5 +1,7 @@
 package com.github.lucatume.completamente.order89
 
+import com.github.lucatume.completamente.completion.collectReferencedFiles
+import com.github.lucatume.completamente.completion.surfaceExtract
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -11,6 +13,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoUtil
@@ -78,7 +81,6 @@ data class Order89StatusDisplay(
 )
 
 data class Order89Session(
-    val process: Process,
     val future: Future<Order89Result>,
     val statusDisplay: Order89StatusDisplay?,
     val range: RangeMarker
@@ -103,27 +105,36 @@ class Order89Action : AnAction() {
         val dialog = Order89Dialog(editor.component)
         if (!dialog.showAndWait() || dialog.promptText.isBlank()) return
 
-        val order89Command = SettingsState.getInstance().order89Command
-        if (order89Command.isBlank()) {
-            NotificationGroupManager.getInstance()
-                .getNotificationGroup("completamente")
-                .createNotification("Order 89 command not configured", NotificationType.WARNING)
-                .notify(project)
-            return
+        val settings = SettingsState.getInstance().toSettings()
+
+        val contextChunks = runReadAction<List<ContextChunk>> {
+            try {
+                val startLine = editor.document.getLineNumber(selectionStart)
+                val endLine = editor.document.getLineNumber(selectionEnd)
+                val referencedFiles = collectReferencedFiles(psiFile, startLine, endLine)
+                referencedFiles.mapNotNull { file ->
+                    val extracted = surfaceExtract(project, file)
+                    if (extracted != null) {
+                        val relativePath = file.path.removePrefix(project.basePath ?: "").removePrefix("/")
+                        ContextChunk(relativePath, extracted)
+                    } else null
+                }
+            } catch (_: Exception) {
+                emptyList()
+            }
         }
 
         val filePath = psiFile.virtualFile?.path ?: ""
 
         // Capture file content BEFORE inserting status lines.
         val request = Order89Request(
-            commandTemplate = order89Command,
             prompt = dialog.promptText,
             filePath = filePath,
             fileContent = editor.document.text,
             language = psiFile.language.id,
             selectionStart = selectionStart,
             selectionEnd = selectionEnd,
-            workingDirectory = project.basePath ?: "."
+            contextChunks = contextChunks
         )
 
         // Create selection range marker BEFORE inserting status lines.
@@ -134,9 +145,9 @@ class Order89Action : AnAction() {
         val insertionOffset = editor.document.getLineStartOffset(targetLine)
         val statusDisplay = insertStatusLines(editor, insertionOffset, dialog.promptText)
 
-        val (process, future) = Order89Executor.execute(request)
+        val future = Order89Executor.execute(request, settings)
 
-        val session = Order89Session(process, future, statusDisplay, rangeMarker)
+        val session = Order89Session(future, statusDisplay, rangeMarker)
         val sessions = editor.getUserData(SESSIONS_KEY) ?: ArrayDeque<Order89Session>().also {
             editor.putUserData(SESSIONS_KEY, it)
         }
@@ -182,7 +193,7 @@ class Order89Action : AnAction() {
             } catch (_: CancellationException) {
                 // Cancelled by user via ESC.
             } catch (ex: Exception) {
-                // Covers process I/O errors, unexpected executor failures, etc.
+                // Covers HTTP errors, unexpected executor failures, etc.
                 ApplicationManager.getApplication().invokeLater {
                     if (editor.isDisposed) return@invokeLater
                     NotificationGroupManager.getInstance()
@@ -357,7 +368,6 @@ private class Order89EscAction(
 
         if (match != null) {
             deque.remove(match)
-            match.process.destroyForcibly()
             match.future.cancel(true)
             parent.removeStatusDisplay(editor, match.statusDisplay)
             match.range.dispose()

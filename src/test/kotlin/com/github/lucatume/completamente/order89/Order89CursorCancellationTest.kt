@@ -10,19 +10,9 @@ import java.util.concurrent.CompletableFuture
 
 class Order89CursorCancellationTest : BaseCompletionTest() {
 
-    private val processes = mutableListOf<Process>()
-
     private fun makeTestSession(range: RangeMarker): Order89Session {
-        val process = ProcessBuilder("sleep", "300").start()
-        processes.add(process)
         val future = CompletableFuture<Order89Result>()
-        return Order89Session(process, future, null as Order89StatusDisplay?, range)
-    }
-
-    override fun tearDown() {
-        processes.forEach { it.destroyForcibly() }
-        processes.clear()
-        super.tearDown()
+        return Order89Session(future, null as Order89StatusDisplay?, range)
     }
 
     private fun findSessionAtCaret(

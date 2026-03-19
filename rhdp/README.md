@@ -98,3 +98,22 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 48 | 48-design-completion-whitespace-trimming.md | design | trimCompletion() pure function: strip leading indent overlap on line 0 + trailing whitespace |
 | 49 | 49-plan-completion-whitespace-trimming.md | plan | 6-step implementation plan: trim.kt, ~30 tests, wire into provider pipeline |
 | 50 | 50-research-intellij-undo-free-document-edits.md | research | How to insert/modify text in an IntelliJ Document without it appearing in the undo history |
+| 51 | 51-harness-order89-prompt-formats.py | harness | Test 8 prompt format variants for Order 89 against local llama.cpp to find best fencing/extraction strategy |
+| 52 | 52-output-order89-prompt-formats.txt | output | Results from harness 51: 10 runs per variant, prompt format comparison for Order 89 local model fallback |
+| 53 | 53-harness-order89-xml-output-tags.py | harness | Test <Order89OutputCode> XML tags vs backtick fences for Order 89 output extraction |
+| 54 | 54-output-order89-xml-output-tags.txt | output | Results from harness 53: XML tags vs backtick fences comparison (10 runs each) |
+| 55 | 55-harness-order89-convention-matching.py | harness | Test 8 generic prompt wordings for convention-matching quality (docblocks, types, naming, indent) |
+| 56 | 56-output-order89-convention-matching.txt | output | Results from harness 55: convention-matching scores for 8 prompt variants (10 runs each) |
+| 57 | 57-harness-order89-context-quality.py | harness | Test 7 context variants (none, full files, structure, windowed) for Order 89 code quality |
+| 58 | 58-output-order89-context-quality.txt | output | Results from harness 57: context type vs code quality (10 runs each) |
+| 59 | 59-harness-order89-structure-convention-fix.py | harness | Test 8 prompt variations to fix convention regression when structure context is provided |
+| 60 | 60-output-order89-structure-convention-fix.txt | output | Results from harness 59: none of 7 structure prompt fixes (incl. strong negative) recovered docblocks |
+| 61 | 61-harness-order89-chat-endpoint.py | harness | Test Order 89 prompts via /v1/chat/completions instruct endpoint (Qwen 3 A30B) |
+| 62 | 62-output-order89-chat-endpoint.txt | output | Results from harness 61: chat endpoint worse than /completion — 0% docblocks across all variants |
+| 63 | 63-output-order89-recommended-params.txt | output | Results from harness 59 re-run with Qwen3-Coder recommended params (temp=0.7, top_p=0.8, top_k=20) — D_structure_view wins 12.3/13.5 |
+| 64 | 64-harness-order89-de-refinement.py | harness | Refine D/E prompt variants with repetition, neighbor-anchoring, final-nudge guardrails |
+| 65 | 65-output-order89-de-refinement.txt | output | Results from harness 64: E2_repeat_x3 achieves perfect 13.0/13.5 with 100% docblocks + 100% API accuracy |
+| 66 | 66-harness-order89-e2-ablation.py | harness | Ablation study: position vs repetition for E2 guardrails (12 variants, single/pair/triple, verbose/terse) |
+| 67 | 67-output-order89-e2-ablation.txt | output | Results from harness 66: pre-file reminder is the key position — terse_reminder (49 chars) achieves perfect 13.0 |
+| 68 | 68-design-order89-local-model.md | design | Replace Claude Code with local llama.cpp model for Order 89: prompt structure, HTTP client, settings, context assembly |
+| 69 | 69-plan-order89-local-model.md | plan | 7-step implementation plan for Order 89 local model: settings, UI, executor rewrite, action update, tests, cleanup |

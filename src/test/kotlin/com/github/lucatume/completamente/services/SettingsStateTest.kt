@@ -47,30 +47,30 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals(128, state.ringChunkSize)
     }
 
-    fun testOrder89CommandDefaultValue() {
+    fun testOrder89ServerUrlDefaultValue() {
         val state = SettingsState()
         val settings = state.toSettings()
 
-        assertEquals("cat {{prompt_file}} | claude --dangerously-skip-permissions --print --output-format text", settings.order89Command)
+        assertEquals("http://127.0.0.1:8017", settings.order89ServerUrl)
     }
 
-    fun testOrder89CommandCustomValueRoundTrips() {
+    fun testOrder89ServerUrlCustomValueRoundTrips() {
         val state = SettingsState()
-        state.order89Command = "custom-command --flag"
+        state.order89ServerUrl = "http://localhost:9999"
 
         val settings = state.toSettings()
 
-        assertEquals("custom-command --flag", settings.order89Command)
+        assertEquals("http://localhost:9999", settings.order89ServerUrl)
     }
 
-    fun testLoadStateCopiesOrder89Command() {
+    fun testLoadStateCopiesOrder89ServerUrl() {
         val state = SettingsState()
         val source = SettingsState()
-        source.order89Command = "another-command --test"
+        source.order89ServerUrl = "http://other:1234"
 
         state.loadState(source)
 
-        assertEquals("another-command --test", state.order89Command)
+        assertEquals("http://other:1234", state.order89ServerUrl)
     }
 
     fun testToSettingsWithZeroRingNChunks() {
@@ -171,7 +171,7 @@ class SettingsStateTest : BaseCompletionTest() {
         state.ringNChunks = 4
         state.ringChunkSize = 32
         state.maxQueuedChunks = 2
-        state.order89Command = "echo test"
+        state.order89ServerUrl = "http://order89:8017"
 
         val settings = state.toSettings()
 
@@ -182,7 +182,7 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals(4, settings.ringNChunks)
         assertEquals(32, settings.ringChunkSize)
         assertEquals(2, settings.maxQueuedChunks)
-        assertEquals("echo test", settings.order89Command)
+        assertEquals("http://order89:8017", settings.order89ServerUrl)
     }
 
     fun testLoadStateCopiesAllFields() {
@@ -195,7 +195,7 @@ class SettingsStateTest : BaseCompletionTest() {
         source.ringNChunks = 99
         source.ringChunkSize = 200
         source.maxQueuedChunks = 50
-        source.order89Command = "custom-order89"
+        source.order89ServerUrl = "http://custom:8017"
 
         state.loadState(source)
 
@@ -206,6 +206,6 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals(99, state.ringNChunks)
         assertEquals(200, state.ringChunkSize)
         assertEquals(50, state.maxQueuedChunks)
-        assertEquals("custom-order89", state.order89Command)
+        assertEquals("http://custom:8017", state.order89ServerUrl)
     }
 }

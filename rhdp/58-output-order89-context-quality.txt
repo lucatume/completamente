@@ -1,0 +1,180 @@
+Checking llama.cpp server at http://localhost:8012...
+  Server status: ok
+
+Testing 7 context variants, 10 run(s) each.
+==============================================================================================================
+
+[1/7] A_no_context (prompt: 8,238 chars)
+  No context — only the file under edit
+  Run 1/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=Y | conv=9.0 | api=3.0 | total=12.0/12.5 | 4.2s
+  Run 2/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=N | conv=9.0 | api=2.0 | total=11.0/12.5 | 3.2s
+  Run 3/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=N | conv=9.0 | api=2.0 | total=11.0/12.5 | 3.3s
+  Run 4/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=Y | conv=9.0 | api=3.0 | total=12.0/12.5 | 4.2s
+  Run 5/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=N | conv=9.0 | api=2.0 | total=11.0/12.5 | 3.6s
+  Run 6/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=N | conv=9.0 | api=2.0 | total=11.0/12.5 | 4.2s
+  Run 7/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=Y | conv=9.0 | api=3.0 | total=12.0/12.5 | 4.4s
+  Run 8/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=Y | conv=9.0 | api=3.0 | total=12.0/12.5 | 4.6s
+  Run 9/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=N | conv=9.0 | api=2.0 | total=11.0/12.5 | 3.8s
+  Run 10/10... fence=Y | doc=Y | real_api=Y | sig=Y | try=N | conv=9.0 | api=2.0 | total=11.0/12.5 | 4.7s
+
+[2/7] B_full_files (prompt: 15,400 chars)
+  Full source of all referenced files
+  Run 1/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.3s
+  Run 2/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.6s
+  Run 3/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.6s
+  Run 4/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.8s
+  Run 5/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.7s
+  Run 6/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.0s
+  Run 7/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.7s
+  Run 8/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.7s
+  Run 9/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.6s
+  Run 10/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.4s
+
+[3/7] C_structure (prompt: 11,444 chars)
+  Structure-extracted referenced files (signatures only, no bodies)
+  Run 1/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.6s
+  Run 2/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.2s
+  Run 3/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.2s
+  Run 4/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.1s
+  Run 5/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.1s
+  Run 6/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.1s
+  Run 7/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.1s
+  Run 8/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.0s
+  Run 9/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.2s
+  Run 10/10... fence=Y | doc=N | real_api=Y | sig=Y | try=Y | conv=5.5 | api=3.0 | total=8.5/12.5 | 4.5s
+
+[4/7] D_window_10 (prompt: 11,434 chars)
+  Windowed referenced files (10-line window around key symbols)
+  Run 1/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.3s
+  Run 2/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.3s
+  Run 3/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.5s
+  Run 4/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.4s
+  Run 5/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.3s
+  Run 6/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.2s
+  Run 7/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.3s
+  Run 8/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.3s
+  Run 9/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.3s
+  Run 10/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.2s
+
+[5/7] D_window_20 (prompt: 12,325 chars)
+  Windowed referenced files (20-line window around key symbols)
+  Run 1/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.4s
+  Run 2/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.5s
+  Run 3/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.6s
+  Run 4/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.7s
+  Run 5/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.7s
+  Run 6/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.6s
+  Run 7/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.6s
+  Run 8/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.5s
+  Run 9/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.4s
+  Run 10/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.5s
+
+[6/7] D_window_40 (prompt: 13,623 chars)
+  Windowed referenced files (40-line window around key symbols)
+  Run 1/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.9s
+  Run 2/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 3.9s
+  Run 3/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.0s
+  Run 4/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.0s
+  Run 5/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.0s
+  Run 6/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.0s
+  Run 7/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.1s
+  Run 8/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.2s
+  Run 9/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.1s
+  Run 10/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.2s
+
+[7/7] D_window_80 (prompt: 14,799 chars)
+  Windowed referenced files (80-line window around key symbols)
+  Run 1/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.6s
+  Run 2/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.8s
+  Run 3/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 4.9s
+  Run 4/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.3s
+  Run 5/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.1s
+  Run 6/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.2s
+  Run 7/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.2s
+  Run 8/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.2s
+  Run 9/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.3s
+  Run 10/10... fence=Y | doc=N | real_api=Y | sig=Y | try=N | conv=5.5 | api=2.0 | total=7.5/12.5 | 5.3s
+
+==============================================================================================================
+SUMMARY — sorted by total score (convention + API accuracy)
+==============================================================================================================
+Variant               Total  Conv  API  Fence%  Doc%  Real%  Sig%  Try%   Prompt  AvgLen  Avg(s)
+------------------------------------------------------------------------------------------------
+A_no_context          11.4   9.0  2.4    100%  100%   100%  100%   40%   8,238     627    4.0
+C_structure            8.5   5.5  3.0    100%    0%   100%  100%  100%  11,444     351    4.2
+B_full_files           7.5   5.5  2.0    100%    0%   100%  100%    0%  15,400     133    4.8
+D_window_10            7.5   5.5  2.0    100%    0%   100%  100%    0%  11,434     128    3.3
+D_window_20            7.5   5.5  2.0    100%    0%   100%  100%    0%  12,325     129    3.5
+D_window_40            7.5   5.5  2.0    100%    0%   100%  100%    0%  13,623     133    4.0
+D_window_80            7.5   5.5  2.0    100%    0%   100%  100%    0%  14,799     133    5.1
+
+==============================================================================================================
+SAMPLE OUTPUTS (first run from top variants)
+==============================================================================================================
+
+--- A_no_context (total=12.0/12.5, conv=9.0, api=3.0) ---
+Extracted code (789 chars):
+  |     /**
+  |      * Makes an instance of a class, using the container to resolve dependencies.
+  |      *
+  |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+  |      * @param array<string,mixed> $params An array of parameters to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      *
+  |      * @throws ContainerException If there's an issue resolving the dependencies.
+  |      */
+  |     public function makeWith($id, array $params = [])
+  |     {
+  |         try {
+  |             return $this->resolver->resolve($id, [$id], $params);
+  |         } catch (Throwable $throwable) {
+  |             throw $this->castThrown($throwable, $id);
+  |         } catch (Exception $exception) {
+  |             throw $this->castThrown($exception, $id);
+  |         }
+  |     }
+
+--- C_structure (total=8.5/12.5, conv=5.5, api=3.0) ---
+Extracted code (351 chars):
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         try {
+  |             return $this->resolver->resolveWithArgs($id, null, ...$args);
+  |         } catch (Throwable $throwable) {
+  |             throw $this->castThrown($throwable, $id);
+  |         } catch (Exception $exception) {
+  |             throw $this->castThrown($exception, $id);
+  |         }
+  |     }
+
+--- B_full_files (total=7.5/12.5, conv=5.5, api=2.0) ---
+Extracted code (133 chars):
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         return $this->resolver->resolveWithArgs($id, null, ...$args);
+  |     }
+
+--- D_window_10 (total=7.5/12.5, conv=5.5, api=2.0) ---
+Extracted code (128 chars):
+  |     public function makeWith($id, array $args)
+  |     {
+  |         return $this->resolver->resolveWithArgs($id, null, ...$args);
+  |     }
+
+==============================================================================================================
+CONTEXT EFFICIENCY (score per 1K prompt chars)
+==============================================================================================================
+Variant               Total  Prompt(K)  Score/K
+--------------------------------------------------
+A_no_context          11.4       8.2    1.38
+C_structure            8.5      11.4    0.74
+B_full_files           7.5      15.4    0.49
+D_window_10            7.5      11.4    0.66
+D_window_20            7.5      12.3    0.61
+D_window_40            7.5      13.6    0.55
+D_window_80            7.5      14.8    0.51
+
+==============================================================================================================
+WINNER: A_no_context (avg total score 11.4/12.5)
+==============================================================================================================

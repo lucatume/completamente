@@ -16,7 +16,7 @@ class SettingsConfigurableTest : BaseCompletionTest() {
             state.ringNChunks = defaults.ringNChunks
             state.ringChunkSize = defaults.ringChunkSize
             state.maxQueuedChunks = defaults.maxQueuedChunks
-            state.order89Command = defaults.order89Command
+            state.order89ServerUrl = defaults.order89ServerUrl
         } finally {
             super.tearDown()
         }
@@ -142,10 +142,9 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         val configurable = SettingsConfigurable()
         configurable.createComponent()
 
-        val field = SettingsConfigurable::class.java.getDeclaredField("order89CommandArea")
+        val field = SettingsConfigurable::class.java.getDeclaredField("order89ServerUrl")
         field.isAccessible = true
-        val area = field.get(configurable) as javax.swing.JTextArea
-        area.text = "changed-command"
+        field.set(configurable, "http://changed:9999")
 
         assertTrue(configurable.isModified)
     }

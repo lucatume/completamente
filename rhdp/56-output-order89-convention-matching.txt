@@ -1,0 +1,265 @@
+Checking llama.cpp server at http://localhost:8012...
+  Server status: ok
+
+Testing 8 prompt variants, 10 run(s) each.
+Convention target: docblock + @param + @return + @throws + public + 4-space indent + resolver pattern
+====================================================================================================
+
+[1/8] baseline_no_guidance
+  Backtick fences, no convention-matching guidance at all
+  Run 1/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 1.9s
+  Run 2/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 1.9s
+  Run 3/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 1.9s
+  Run 4/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 1.9s
+  Run 5/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 1.9s
+  Run 6/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 1.9s
+  Run 7/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 1.9s
+  Run 8/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.1s
+  Run 9/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.3s
+  Run 10/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.2s
+
+[2/8] match_style_oneliner
+  One-liner: 'Match the style and conventions of the surrounding code'
+  Run 1/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.1s
+  Run 2/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.3s
+  Run 3/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.2s
+  Run 4/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.2s
+  Run 5/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.3s
+  Run 6/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.3s
+  Run 7/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.3s
+  Run 8/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.3s
+  Run 9/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.2s
+  Run 10/10... fence=Y | doc=N | @param=N | @return=N | @throws=N | vis=Y | indent=Y | resolver=Y | score=5.5/9.5 | 2.3s
+
+[3/8] convention_checklist
+  Explicit checklist: docblocks, comments, types, naming, indentation
+  Run 1/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.8s
+  Run 2/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.5s
+  Run 3/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 5.2s
+  Run 4/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.7s
+  Run 5/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.8s
+  Run 6/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.8s
+  Run 7/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.8s
+  Run 8/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.8s
+  Run 9/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.9s
+  Run 10/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 5.0s
+
+[4/8] blend_in
+  'Your code should blend in seamlessly' + look at neighbors
+  Run 1/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.7s
+  Run 2/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.8s
+  Run 3/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.9s
+  Run 4/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.1s
+  Run 5/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.6s
+  Run 6/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.9s
+  Run 7/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.1s
+  Run 8/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.9s
+  Run 9/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.9s
+  Run 10/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.0s
+
+[5/8] negative_constraint
+  'Do not add documentation or annotations the surrounding code does not have'
+  Run 1/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.7s
+  Run 2/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.7s
+  Run 3/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.8s
+  Run 4/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.8s
+  Run 5/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.9s
+  Run 6/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.8s
+  Run 7/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.0s
+  Run 8/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.8s
+  Run 9/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 3.7s
+  Run 10/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.6s
+
+[6/8] original_author
+  'You are the original author of this file, continuing your work'
+  Run 1/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.8s
+  Run 2/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.7s
+  Run 3/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.7s
+  Run 4/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.8s
+  Run 5/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.8s
+  Run 6/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.8s
+  Run 7/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.8s
+  Run 8/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.8s
+  Run 9/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.7s
+  Run 10/10... fence=N | doc=N | @param=N | @return=N | @throws=N | vis=N | indent=Y | resolver=N | score=2.0/9.5 | 1.7s
+
+[7/8] mirror_neighbor
+  Explicitly say: 'mirror the structure of the function directly above'
+  Run 1/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.0s
+  Run 2/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.7s
+  Run 3/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.9s
+  Run 4/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.1s
+  Run 5/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.0s
+  Run 6/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.9s
+  Run 7/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.0s
+  Run 8/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 5.0s
+  Run 9/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.1s
+  Run 10/10... fence=Y | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=9.0/9.5 | 4.1s
+
+[8/8] compact_context_only
+  Minimal rules: just 'output code matching the file style' + fences
+  Run 1/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 22.2s
+  Run 2/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 24.1s
+  Run 3/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 26.2s
+  Run 4/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 27.2s
+  Run 5/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 26.6s
+  Run 6/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 24.3s
+  Run 7/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 23.0s
+  Run 8/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 22.4s
+  Run 9/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 21.8s
+  Run 10/10... fence=N | doc=Y | @param=Y | @return=Y | @throws=Y | vis=Y | indent=N | resolver=Y | score=8.0/9.5 | 21.4s
+
+====================================================================================================
+SUMMARY — sorted by average convention score
+====================================================================================================
+Variant                    Score  Fence%  Doc%  @par%  @ret%  @thr%  Vis%  Ind%  Res%  Prose%  AvgLen  Avg(s)
+-------------------------------------------------------------------------------------------------------------
+convention_checklist        9.0    100%  100%   100%   100%   100%  100%    0%  100%      0%     774    4.8
+blend_in                    9.0    100%  100%   100%   100%   100%  100%    0%  100%      0%     611    4.2
+negative_constraint         9.0    100%  100%   100%   100%   100%  100%    0%  100%      0%     588    4.1
+mirror_neighbor             9.0    100%  100%   100%   100%   100%  100%    0%  100%      0%     615    4.4
+compact_context_only        8.0      0%  100%   100%   100%   100%  100%    0%  100%      0%    4567   23.9
+baseline_no_guidance        5.5    100%    0%     0%     0%     0%  100%  100%  100%      0%     128    2.0
+match_style_oneliner        5.5    100%    0%     0%     0%     0%  100%  100%  100%      0%     129    2.3
+original_author             2.0      0%    0%     0%     0%     0%    0%  100%    0%      0%       0    1.8
+
+====================================================================================================
+SAMPLE OUTPUTS (first run from each variant, sorted by score)
+====================================================================================================
+
+--- convention_checklist (score=9.0/9.5) ---
+Extracted code (789 chars):
+  |     /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id       A fully qualified class or interface name or an already built object.
+  |      * @param array               $params   An array of parameters to pass to the constructor.
+  |      * @param array<string>|null  $afterBuildMethods An array of methods that should be called on the built
+  |      *                                              implementation after resolving it.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue resolving the class.
+  |      */
+  |     public function makeWith($id, array $params = [], ?array $afterBuildMethods = null)
+  |     {
+  |         return $this->resolver->resolve($id, [$id], $params, $afterBuildMethods);
+  |     }
+
+--- blend_in (score=9.0/9.5) ---
+Extracted code (744 chars):
+  |     /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id  A fully qualified class or interface name or an already built object.
+  |      * @param array               $args An array of arguments to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue resolving the class.
+  |      */
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         try {
+  |             return $this->resolver->resolve($id, [$id], $args);
+  |         } catch (Throwable $throwable) {
+  |             throw $this->castThrown($throwable, $id);
+  |         } catch (Exception $exception) {
+  |             throw $this->castThrown($exception, $id);
+  |         }
+  |     }
+
+--- negative_constraint (score=9.0/9.5) ---
+Extracted code (520 chars):
+  |     /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+  |      * @param array               $args An array of arguments to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue building the instance.
+  |      */
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         return $this->resolver->resolve($id, $args);
+  |     }
+
+--- mirror_neighbor (score=9.0/9.5) ---
+Extracted code (520 chars):
+  |     /**
+  |      * Makes an instance of a class using the container.
+  |      *
+  |      * @param string|class-string $id A fully qualified class or interface name or an already built object.
+  |      * @param array<mixed>        $args An array of arguments to pass to the constructor.
+  |      *
+  |      * @return object The built instance.
+  |      * @throws ContainerException If there's an issue building the instance.
+  |      */
+  |     public function makeWith($id, array $args = [])
+  |     {
+  |         return $this->resolver->resolve($id, $args);
+  |     }
+
+--- compact_context_only (score=8.0/9.5) ---
+Extracted code (4567 chars):
+  | ```php
+  | <?php
+  | /**
+  |  * The Dependency Injection container.
+  |  *
+  |  * @package lucatume\DI52
+  |  */
+  | 
+  | namespace lucatume\DI52;
+  | 
+  | use ArrayAccess;
+  | use Closure;
+  | use Exception;
+  | use lucatume\DI52\Builders\BuilderInterface;
+  | use lucatume\DI52\Builders\ValueBuilder;
+  | use Psr\Container\ContainerInterface;
+  | use ReflectionClass;
+  | use ReflectionException;
+  | use ReflectionMethod;
+  | use ReturnTypeWillChange;
+  | use Throwable;
+  | use function spl_object_hash;
+  | 
+  | /**
+  |  * Class Container
+  |  *
+  |  * @package lucatume\DI52
+  |  * @implements ArrayAccess<string,object>
+  |  */
+  | class Container implements ArrayAccess, ContainerInterface
+  | {
+  |     const EXCEPTION_MASK_NONE = 0;
+  |     const EXCEPTION_MASK_MESSAGE = 1;
+  |     const EXCEPTION_MASK_FILE_LINE = 2;
+  | 
+  |     /**
+  |      * An array cache to store the results of the class exists checks.
+  |      *
+  |      * @var arra
+  | ... (truncated)
+
+--- baseline_no_guidance (score=5.5/9.5) ---
+Extracted code (128 chars):
+  |     public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver->resolve($id, $parameters);
+  |     }
+
+--- match_style_oneliner (score=5.5/9.5) ---
+Extracted code (128 chars):
+  |     public function makeWith($id, array $parameters = [])
+  |     {
+  |         return $this->resolver->resolve($id, $parameters);
+  |     }
+
+--- original_author (score=2.0/9.5) ---
+Extracted code (0 chars):
+  | 
+
+====================================================================================================
+WINNER: convention_checklist (avg convention score 9.0/9.5)
+====================================================================================================

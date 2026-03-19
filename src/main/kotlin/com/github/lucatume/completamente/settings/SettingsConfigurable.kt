@@ -3,15 +3,10 @@ package com.github.lucatume.completamente.settings
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextArea
-import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.ScrollPaneConstants
 
 class SettingsConfigurable : Configurable {
     private var dialogPanel: DialogPanel? = null
@@ -25,10 +20,12 @@ class SettingsConfigurable : Configurable {
     private var ringNChunks = ""
     private var ringChunkSize = ""
     private var maxQueuedChunks = ""
-    private var order89Command = ""
-
-    // UI components
-    private var order89CommandArea: JBTextArea? = null
+    private var order89ServerUrl = ""
+    private var order89Temperature = ""
+    private var order89TopP = ""
+    private var order89TopK = ""
+    private var order89RepeatPenalty = ""
+    private var order89NPredict = ""
 
     override fun getDisplayName(): String = "completamente"
 
@@ -75,27 +72,35 @@ class SettingsConfigurable : Configurable {
                 }
             }
             group("Order 89") {
-                row("Command template:") {
-                    val area = JBTextArea(3, 40)
-                    area.lineWrap = true
-                    area.wrapStyleWord = true
-                    area.text = order89Command
-                    order89CommandArea = area
-                    val scrollPane = JBScrollPane(
-                        area,
-                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-                    )
-                    cell(scrollPane)
-                        .align(AlignX.FILL)
-                        .comment("Placeholders: {{prompt_file}}.")
+                row("Server URL:") {
+                    textField()
+                        .bindText(::order89ServerUrl)
+                        .comment("llama.cpp server endpoint for Order 89")
                 }
-                row {
-                    val resetBtn = JButton("Reset")
-                    resetBtn.addActionListener {
-                        order89CommandArea?.text = SettingsState().order89Command
-                    }
-                    cell(resetBtn)
+                row("Temperature:") {
+                    textField()
+                        .bindText(::order89Temperature)
+                        .comment("Sampling temperature (0.0–2.0)")
+                }
+                row("Top-P:") {
+                    textField()
+                        .bindText(::order89TopP)
+                        .comment("Nucleus sampling probability (0.0–1.0)")
+                }
+                row("Top-K:") {
+                    textField()
+                        .bindText(::order89TopK)
+                        .comment("Top-K sampling (0 to disable)")
+                }
+                row("Repeat penalty:") {
+                    textField()
+                        .bindText(::order89RepeatPenalty)
+                        .comment("Repetition penalty (1.0 = no penalty)")
+                }
+                row("Max predicted tokens:") {
+                    textField()
+                        .bindText(::order89NPredict)
+                        .comment("Maximum number of tokens to predict")
                 }
             }
         }
@@ -111,18 +116,20 @@ class SettingsConfigurable : Configurable {
         ringNChunks = state.ringNChunks.toString()
         ringChunkSize = state.ringChunkSize.toString()
         maxQueuedChunks = state.maxQueuedChunks.toString()
-        order89Command = state.order89Command
+        order89ServerUrl = state.order89ServerUrl
+        order89Temperature = state.order89Temperature.toString()
+        order89TopP = state.order89TopP.toString()
+        order89TopK = state.order89TopK.toString()
+        order89RepeatPenalty = state.order89RepeatPenalty.toString()
+        order89NPredict = state.order89NPredict.toString()
     }
 
     override fun isModified(): Boolean {
-        val panelModified = dialogPanel?.isModified() ?: false
-        val order89Modified = (order89CommandArea?.text ?: "") != state.order89Command
-        return panelModified || order89Modified
+        return dialogPanel?.isModified() ?: false
     }
 
     override fun apply() {
         dialogPanel?.apply()
-        order89Command = order89CommandArea?.text ?: ""
         applyToState()
     }
 
@@ -135,12 +142,16 @@ class SettingsConfigurable : Configurable {
         state.ringNChunks = ringNChunks.toIntOrNull() ?: defaults.ringNChunks
         state.ringChunkSize = ringChunkSize.toIntOrNull() ?: defaults.ringChunkSize
         state.maxQueuedChunks = maxQueuedChunks.toIntOrNull() ?: defaults.maxQueuedChunks
-        state.order89Command = order89Command
+        state.order89ServerUrl = order89ServerUrl
+        state.order89Temperature = order89Temperature.toDoubleOrNull() ?: defaults.order89Temperature
+        state.order89TopP = order89TopP.toDoubleOrNull() ?: defaults.order89TopP
+        state.order89TopK = order89TopK.toIntOrNull() ?: defaults.order89TopK
+        state.order89RepeatPenalty = order89RepeatPenalty.toDoubleOrNull() ?: defaults.order89RepeatPenalty
+        state.order89NPredict = order89NPredict.toIntOrNull() ?: defaults.order89NPredict
     }
 
     override fun reset() {
         loadFromState()
-        order89CommandArea?.text = order89Command
         dialogPanel?.reset()
     }
 }
