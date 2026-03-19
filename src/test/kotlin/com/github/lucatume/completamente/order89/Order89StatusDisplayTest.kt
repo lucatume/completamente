@@ -11,6 +11,7 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.util.TextRange
 import java.awt.Color
 import java.awt.Font
@@ -218,30 +219,36 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
 
     // -- statusLineColors tests --
 
-    fun testStatusLineColorsReturnsNonNullPair() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val (popColor, defaultFg) = statusLineColors(myFixture.editor)
-        assertNotNull(popColor)
-        assertNotNull(defaultFg)
-    }
-
-    fun testStatusLineColorsDefaultFgMatchesScheme() {
+    fun testStatusLineColorsDefaultFgMatchesEditorScheme() {
         myFixture.configureByText("test.kt", "fun main() {}")
         val (_, defaultFg) = statusLineColors(myFixture.editor)
-        val expected = com.intellij.openapi.editor.colors.EditorColorsManager.getInstance().globalScheme.defaultForeground
-        assertEquals(expected, defaultFg)
+        assertEquals(myFixture.editor.colorsScheme.defaultForeground, defaultFg)
     }
 
-    fun testStatusLineColorsPopColorDiffersFromDefaultWhenHyperlinkColorSet() {
+    fun testStatusLineColorsPopColorUsesHyperlinkForeground() {
         myFixture.configureByText("test.kt", "fun main() {}")
-        val scheme = com.intellij.openapi.editor.colors.EditorColorsManager.getInstance().globalScheme
-        val hyperlinkAttrs = scheme.getAttributes(com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR)
-        val hyperlinkFg = hyperlinkAttrs?.foregroundColor
-        val (popColor, defaultFg) = statusLineColors(myFixture.editor)
-        if (hyperlinkFg != null && hyperlinkFg != scheme.defaultForeground) {
-            assertNotSame("Pop color should differ from default foreground when hyperlink color is set", defaultFg, popColor)
+        val scheme = myFixture.editor.colorsScheme
+        val hyperlinkFg = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)?.foregroundColor
+        val (popColor, _) = statusLineColors(myFixture.editor)
+        if (hyperlinkFg != null) {
+            assertEquals("Pop color should match hyperlink foreground", hyperlinkFg, popColor)
         } else {
-            assertEquals("Pop color should fall back to default foreground", defaultFg, popColor)
+            assertEquals("Pop color should fall back to default foreground", scheme.defaultForeground, popColor)
+        }
+    }
+
+    fun testStatusLineColorsFallsBackWhenHyperlinkForegroundNull() {
+        myFixture.configureByText("test.kt", "fun main() {}")
+        val scheme = myFixture.editor.colorsScheme
+        val savedAttrs = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
+        try {
+            scheme.setAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR, TextAttributes())
+            val (popColor, defaultFg) = statusLineColors(myFixture.editor)
+            assertEquals("Pop color should equal default foreground when hyperlink has no foreground", defaultFg, popColor)
+        } finally {
+            if (savedAttrs != null) {
+                scheme.setAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR, savedAttrs)
+            }
         }
     }
 

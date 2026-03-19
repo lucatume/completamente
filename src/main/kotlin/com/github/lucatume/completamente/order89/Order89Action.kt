@@ -29,7 +29,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import java.awt.Color
 import java.awt.Font
 import java.awt.event.KeyEvent
@@ -40,7 +39,7 @@ import javax.swing.KeyStroke
 import javax.swing.Timer
 
 internal fun statusLineColors(editor: Editor): Pair<Color, Color> {
-    val scheme = EditorColorsManager.getInstance().globalScheme
+    val scheme = editor.colorsScheme
     val popColor = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)?.foregroundColor
         ?: scheme.defaultForeground
     val defaultFg = scheme.defaultForeground
@@ -304,12 +303,8 @@ class Order89Action : AnAction() {
             pos = lineEndOffset + 1 // +1 skips the newline
         }
 
-        var frameCount = 0
-        val timer = Timer(100) {
-            // Wraps at 1000 to prevent unbounded growth; at 100ms intervals this cycles every ~100s.
-            frameCount = (frameCount + 1) % 1000
-            // Rotate star symbol every 3rd frame (~300ms).
-            if (frameCount % 3 == 0 && symbolRange.isValid) {
+        val timer = Timer(300) {
+            if (symbolRange.isValid) {
                 symbolIndex = (symbolIndex + 1) % symbols.size
                 ApplicationManager.getApplication().invokeLater({
                     ApplicationManager.getApplication().runWriteAction {
