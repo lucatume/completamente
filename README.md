@@ -87,6 +87,58 @@ The prompt structure has been optimized for [Qwen3-Coder-30B-A3B-Instruct](https
 | Repeat penalty | `1.05` | Repetition penalty |
 | Max predicted tokens | `1024` | Maximum tokens to generate |
 
+## Running the server
+
+FIM completions and Order 89 use different endpoints (`/infill` and `/completion`) but can share a single llama.cpp server.
+
+### Single server (recommended)
+
+Run one server and point both features at it by setting the Order 89 **Server URL** to `http://127.0.0.1:8012` in `Settings/Preferences` -> `Tools` -> `completamente`.
+
+```bash
+llama-server --fim-qwen-30b-default
+```
+
+This is the simplest setup and avoids any GPU memory-splitting concerns. The only tradeoff is KV cache efficiency: each parallel slot maintains its own cache, and the server reuses cached entries when consecutive requests on the same slot share a common prefix (`n_cache_reuse = 256`). FIM and Order 89 prompts have completely different structures (zero prefix overlap), so when an Order 89 request lands on a slot that was serving FIM completions, that slot's cache is fully invalidated. In practice this is negligible — FIM fires frequently on keystrokes with good cache reuse, while Order 89 is triggered manually and rarely. The one-time recomputation cost on the affected slot is a few hundred milliseconds.
+
+### Two servers
+
+If you want dedicated servers — for example to use different models or tuning — you can run two instances on different ports.
+
+### Why you need explicit context sizes
+
+The `--fim-qwen-30b-default` preset sets `n_ctx = 0`, which triggers llama.cpp's `--fit` auto-sizing. Each server instance independently queries Metal's `currentAllocatedSize` (a **per-process** metric) to determine free GPU memory, then sizes its KV cache to fill it. Two instances will each believe they have the full Metal budget available and over-commit GPU memory, resulting in `"Compute error"` on every inference request even though `/health` reports `"ok"`.
+
+To run two servers you **must** pass explicit `-c` (context size) and `--parallel` (slot count) flags so the combined KV caches fit in available Metal memory.
+
+### Recommended settings (128 GB Apple Silicon)
+
+The Qwen3-Coder-30B-A3B Q8_0 model uses ~30 GB for weights (shared via `mmap` between instances). On a 128 GB machine, roughly 65–75 GB remains for KV caches and compute buffers across both servers.
+
+**Balanced (recommended starting point):**
+
+```bash
+# FIM completions — higher parallelism, moderate context
+llama-server --fim-qwen-30b-default -c 65536 --parallel 4
+
+# Order 89 — lower parallelism, same context budget
+llama-server --fim-qwen-30b-default --port 8017 -c 65536 --parallel 2
+```
+
+**Conservative (leaves headroom for other apps):**
+
+```bash
+llama-server --fim-qwen-30b-default -c 32768 --parallel 4
+llama-server --fim-qwen-30b-default --port 8017 -c 32768 --parallel 1
+```
+
+**Maximum Order 89 context (for large code transformations):**
+
+```bash
+llama-server --fim-qwen-30b-default -c 16384 --parallel 2
+llama-server --fim-qwen-30b-default --port 8017 -c 131072 --parallel 1
+```
+
 ## Support
 
 None.
