@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import java.awt.Color
 import java.awt.Font
 import java.awt.event.KeyEvent
 import java.util.ArrayDeque
@@ -37,6 +38,14 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import javax.swing.KeyStroke
 import javax.swing.Timer
+
+internal fun statusLineColors(editor: Editor): Pair<Color, Color> {
+    val scheme = EditorColorsManager.getInstance().globalScheme
+    val popColor = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)?.foregroundColor
+        ?: scheme.defaultForeground
+    val defaultFg = scheme.defaultForeground
+    return Pair(popColor, defaultFg)
+}
 
 internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
     val collapsed = prompt.replace('\n', ' ').replace('\r', ' ').trim()
@@ -270,10 +279,7 @@ class Order89Action : AnAction() {
         val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
         var symbolIndex = 0
 
-        val editorScheme = EditorColorsManager.getInstance().globalScheme
-        val popColor = editorScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)?.foregroundColor
-            ?: editorScheme.defaultForeground
-        val defaultFg = editorScheme.defaultForeground
+        val (popColor, defaultFg) = statusLineColors(editor)
 
         val markup = editor.markupModel
         val highlighters = mutableListOf<RangeHighlighter>()

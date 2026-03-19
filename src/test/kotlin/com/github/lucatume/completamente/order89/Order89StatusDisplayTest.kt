@@ -216,6 +216,35 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         symbolRange.dispose()
     }
 
+    // -- statusLineColors tests --
+
+    fun testStatusLineColorsReturnsNonNullPair() {
+        myFixture.configureByText("test.kt", "fun main() {}")
+        val (popColor, defaultFg) = statusLineColors(myFixture.editor)
+        assertNotNull(popColor)
+        assertNotNull(defaultFg)
+    }
+
+    fun testStatusLineColorsDefaultFgMatchesScheme() {
+        myFixture.configureByText("test.kt", "fun main() {}")
+        val (_, defaultFg) = statusLineColors(myFixture.editor)
+        val expected = com.intellij.openapi.editor.colors.EditorColorsManager.getInstance().globalScheme.defaultForeground
+        assertEquals(expected, defaultFg)
+    }
+
+    fun testStatusLineColorsPopColorDiffersFromDefaultWhenHyperlinkColorSet() {
+        myFixture.configureByText("test.kt", "fun main() {}")
+        val scheme = com.intellij.openapi.editor.colors.EditorColorsManager.getInstance().globalScheme
+        val hyperlinkAttrs = scheme.getAttributes(com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR)
+        val hyperlinkFg = hyperlinkAttrs?.foregroundColor
+        val (popColor, defaultFg) = statusLineColors(myFixture.editor)
+        if (hyperlinkFg != null && hyperlinkFg != scheme.defaultForeground) {
+            assertNotSame("Pop color should differ from default foreground when hyperlink color is set", defaultFg, popColor)
+        } else {
+            assertEquals("Pop color should fall back to default foreground", defaultFg, popColor)
+        }
+    }
+
     // -- Undo after successful Order 89 should restore original text, not status lines --
 
     fun testUndoAfterSuccessRestoresOriginalTextNotStatusLines() {
