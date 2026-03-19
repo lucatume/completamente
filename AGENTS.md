@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Completamente is an IntelliJ Platform plugin (v0.0.4-dev) that provides Fill-In-the-Middle (FIM) inline code completions powered by a local llama.cpp server. Built with Kotlin 2.3.10 targeting Java 21, on IntelliJ Platform 2024.3.6 (IC) using Gradle 9.0.0 and the IntelliJ Platform Gradle Plugin 2.11.0. Serialization via kotlinx-serialization 1.10.0.
+Completamente is an IntelliJ Platform plugin (v0.0.4-dev) that provides Fill-In-the-Middle (FIM) inline code completions powered by a local llama.cpp server. Built with Kotlin 2.3.10 targeting Java 21, on IntelliJ Platform 2024.3.6 (IC) using Gradle 9.4.0 and the IntelliJ Platform Gradle Plugin 2.11.0. Serialization via kotlinx-serialization 1.10.0.
 
 Ported from [llama.vim](https://github.com/ggml-org/llama.vim), designed for SweepAI 1.5B FIM but compatible with any FIM-capable model.
 
@@ -26,7 +26,8 @@ src/test/kotlin/com/github/lucatume/completamente/
 ├── completion/              # Unit tests for pure completion functions
 ├── fim/                     # FIM provider tests
 ├── order89/                 # Order 89 tests
-└── services/                # Service tests
+├── services/                # Service tests
+└── settings/                # Settings UI tests
 
 src/test/testData/completion/ # Test fixture files
 
