@@ -49,6 +49,25 @@ internal fun statusLineColors(editor: Editor): Pair<Color, Color> {
     return Pair(popColor, defaultFg)
 }
 
+internal fun shimmerColors(editor: Editor): Pair<Color, Color> {
+    val bg = editor.colorsScheme.defaultBackground
+    val luminance = (0.299 * bg.red + 0.587 * bg.green + 0.114 * bg.blue) / 255.0
+    return if (luminance < 0.5) {
+        Pair(Color(180, 130, 255), Color(230, 200, 255))
+    } else {
+        Pair(Color(120, 60, 200), Color(170, 120, 255))
+    }
+}
+
+internal fun interpolateColor(base: Color, peak: Color, factor: Float): Color {
+    val f = factor.coerceIn(0f, 1f)
+    return Color(
+        (base.red + (peak.red - base.red) * f).toInt(),
+        (base.green + (peak.green - base.green) * f).toInt(),
+        (base.blue + (peak.blue - base.blue) * f).toInt()
+    )
+}
+
 internal fun truncatePrompt(prompt: String, maxLength: Int = 60): String {
     val collapsed = prompt.replace('\n', ' ').replace('\r', ' ').trim()
     if (collapsed.length <= maxLength) return collapsed
@@ -75,8 +94,10 @@ internal fun formatPromptLines(prompt: String, maxWidth: Int = 80): List<String>
 data class Order89StatusDisplay(
     val range: RangeMarker,
     val symbolRange: RangeMarker,
-    val highlighters: List<RangeHighlighter>,
-    val timer: Timer
+    val highlighters: MutableList<RangeHighlighter>,
+    val shimmerHighlighters: List<RangeHighlighter>,
+    val timer: Timer,
+    val shimmerTimer: Timer
 )
 
 data class Order89Session(
@@ -170,16 +191,16 @@ class Order89Action : AnAction() {
                     else -> "Unknown tool: ${call.name}"
                 }
             }
+            val sharedHttpClient = java.net.http.HttpClient.newBuilder()
+                .connectTimeout(java.time.Duration.ofSeconds(5))
+                .build()
             val completionFn: (String, String) -> String = { body, serverUrl ->
-                val httpClient = java.net.http.HttpClient.newBuilder()
-                    .connectTimeout(java.time.Duration.ofSeconds(5))
-                    .build()
                 val httpRequest = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create("$serverUrl/completion"))
                     .header("Content-Type", "application/json")
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
                     .build()
-                val response = httpClient.send(httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString())
+                val response = sharedHttpClient.send(httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString())
                 if (response.statusCode() != 200) {
                     throw RuntimeException("HTTP ${response.statusCode()}: ${response.body()}")
                 }
@@ -189,10 +210,10 @@ class Order89Action : AnAction() {
             val f = executor.submit(Callable {
                 Order89Executor.executeWithTools(
                     effectiveRequest, settings, toolExecutor, completionFn,
-                    onStatusUpdate = { text ->
+                    onStatusUpdate = { update ->
                         ApplicationManager.getApplication().invokeLater({
                             if (!editor.isDisposed) {
-                                updateStatusText(editor, statusDisplay, text)
+                                updateStatusDisplay(editor, statusDisplay, update)
                             }
                         }, ModalityState.defaultModalityState())
                     }
@@ -292,6 +313,8 @@ class Order89Action : AnAction() {
     internal fun removeStatusDisplay(editor: Editor, display: Order89StatusDisplay?) {
         if (display == null) return
         display.timer.stop()
+        display.shimmerTimer.stop()
+        display.shimmerHighlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
         display.highlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
         display.symbolRange.dispose()
         if (display.range.isValid) {
@@ -308,24 +331,79 @@ class Order89Action : AnAction() {
         display.range.dispose()
     }
 
-    internal fun updateStatusText(editor: Editor, display: Order89StatusDisplay?, newText: String) {
+    internal fun updateStatusDisplay(editor: Editor, display: Order89StatusDisplay?, update: StatusUpdate) {
         if (display == null || !display.range.isValid) return
+        // WaitingForModel: leave existing sub-lines (prompt text or previous tool calls) intact.
+        if (update is StatusUpdate.WaitingForModel) return
         val doc = editor.document
         val startOffset = display.range.startOffset
         val startLine = doc.getLineNumber(startOffset)
-        val lineStart = doc.getLineStartOffset(startLine)
-        val lineEnd = doc.getLineEndOffset(startLine)
-        val currentLine = doc.getText(TextRange(lineStart, lineEnd))
-        val indent = currentLine.takeWhile { it == ' ' || it == '\t' }
-        val symbol = currentLine.trimStart().firstOrNull() ?: '\u2726'
-        val replacement = "$indent$symbol $newText"
+        val firstLineEnd = doc.getLineEndOffset(startLine)
+        val firstLineText = doc.getText(TextRange(doc.getLineStartOffset(startLine), firstLineEnd))
+        val indent = firstLineText.takeWhile { it == ' ' || it == '\t' }
+
+        // Remove old sub-line highlighters (shimmer handles the first line separately)
+        while (display.highlighters.isNotEmpty()) {
+            val h = display.highlighters.removeAt(display.highlighters.lastIndex)
+            if (h.isValid) editor.markupModel.removeHighlighter(h)
+        }
+
+        // Build new sub-line text
+        val subLineText = when (update) {
+            is StatusUpdate.WaitingForModel -> "" // unreachable after early return above
+            is StatusUpdate.ToolCalls -> {
+                buildString {
+                    update.calls.forEachIndexed { i, call ->
+                        val treeChar = if (i == update.calls.lastIndex) "\u2514" else "\u251C"
+                        append("$indent  $treeChar\u2500 ").append(formatToolCallDisplay(call)).append('\n')
+                    }
+                }
+            }
+        }
+
+        // Replace everything after the first line's newline to the end of the range.
+        // Invariant: insertStatusLines always appends '\n' after every line, so firstLineEnd + 1
+        // points to the start of the sub-line region. The guard handles the degenerate case where
+        // the range has been trimmed to a single line with no trailing newline.
         ApplicationManager.getApplication().runWriteAction {
             CommandProcessor.getInstance().runUndoTransparentAction {
                 UndoUtil.disableUndoIn(doc) {
                     if (display.range.isValid) {
-                        doc.replaceString(lineStart, lineEnd, replacement)
+                        val replaceStart = firstLineEnd + 1
+                        val replaceEnd = display.range.endOffset
+                        if (replaceStart <= replaceEnd) {
+                            doc.replaceString(replaceStart, replaceEnd, subLineText)
+                        }
                     }
                 }
+            }
+        }
+
+        // Add new highlighters for sub-lines, recalculating positions from the
+        // (now-updated) first line end to account for any document shifts.
+        if (subLineText.isNotEmpty() && display.range.isValid) {
+            val updatedFirstLineEnd = doc.getLineEndOffset(doc.getLineNumber(display.range.startOffset))
+            val (_, defaultFg) = statusLineColors(editor)
+            val markup = editor.markupModel
+            val subLines = subLineText.split('\n').dropLast(1)
+            val subLineAttrs = TextAttributes().apply {
+                foregroundColor = defaultFg
+                fontType = Font.ITALIC
+            }
+            var pos = updatedFirstLineEnd + 1
+            for (line in subLines) {
+                if (!display.range.isValid) break
+                val lineStart = pos
+                val lineEndOffset = pos + line.length
+                display.highlighters.add(
+                    markup.addRangeHighlighter(
+                        lineStart, lineEndOffset,
+                        HighlighterLayer.LAST,
+                        subLineAttrs,
+                        HighlighterTargetArea.EXACT_RANGE
+                    )
+                )
+                pos = lineEndOffset + 1
             }
         }
     }
@@ -335,14 +413,12 @@ class Order89Action : AnAction() {
         val lineEnd = editor.document.getLineEndOffset(editor.document.getLineNumber(offset))
         val lineText = editor.document.getText(TextRange(offset, lineEnd))
         val indent = lineText.takeWhile { it == ' ' || it == '\t' }
-        val statusLine1 = "$indent\u2726 Executing..."
-        val promptPrefix = "$indent \u23BF "
-        val continuationPrefix = "$indent   "
+        val statusLine1 = "$indent\u2726 Executing\u2026"
         val statusText = buildString {
             append(statusLine1).append('\n')
             promptLines.forEachIndexed { i, line ->
-                val prefix = if (i == 0) promptPrefix else continuationPrefix
-                append(prefix).append(line).append('\n')
+                val treeChar = if (i == promptLines.lastIndex) "\u2514" else "\u251C"
+                append("$indent  $treeChar\u2500 ").append(line).append('\n')
             }
         }
 
@@ -361,30 +437,75 @@ class Order89Action : AnAction() {
         val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
         var symbolIndex = 0
 
-        val (popColor, defaultFg) = statusLineColors(editor)
+        val (_, defaultFg) = statusLineColors(editor)
+        val (shimmerBase, shimmerPeak) = shimmerColors(editor)
 
         val markup = editor.markupModel
         val highlighters = mutableListOf<RangeHighlighter>()
+        val shimmerHighlighters = mutableListOf<RangeHighlighter>()
+        val shimmerAttrs = mutableListOf<TextAttributes>()
         var pos = offset
         val lines = statusText.split('\n').dropLast(1) // drop trailing empty from final '\n'
         for ((index, line) in lines.withIndex()) {
             val lineStart = pos
             val lineEndOffset = pos + line.length
-            val attrs = TextAttributes().apply {
-                foregroundColor = if (index == 0) popColor else defaultFg
-                fontType = Font.ITALIC
-            }
-            // LAST ensures status text styling takes priority over editor default colors.
-            highlighters.add(
-                markup.addRangeHighlighter(
-                    lineStart, lineEndOffset,
-                    HighlighterLayer.LAST,
-                    attrs,
-                    HighlighterTargetArea.EXACT_RANGE
+            if (index == 0) {
+                // Per-character highlighters for shimmer effect on the first line
+                for (charIdx in 0 until line.length) {
+                    val charStart = lineStart + charIdx
+                    val charEnd = charStart + 1
+                    val attrs = TextAttributes().apply {
+                        foregroundColor = shimmerBase
+                        fontType = Font.ITALIC
+                    }
+                    shimmerAttrs.add(attrs)
+                    shimmerHighlighters.add(
+                        markup.addRangeHighlighter(
+                            charStart, charEnd,
+                            HighlighterLayer.LAST,
+                            attrs,
+                            HighlighterTargetArea.EXACT_RANGE
+                        )
+                    )
+                }
+            } else {
+                val attrs = TextAttributes().apply {
+                    foregroundColor = defaultFg
+                    fontType = Font.ITALIC
+                }
+                highlighters.add(
+                    markup.addRangeHighlighter(
+                        lineStart, lineEndOffset,
+                        HighlighterLayer.LAST,
+                        attrs,
+                        HighlighterTargetArea.EXACT_RANGE
+                    )
                 )
-            )
+            }
             pos = lineEndOffset + 1 // +1 skips the newline
         }
+
+        val firstLineLength = lines.firstOrNull()?.length ?: 0
+        var shimmerPhase = 0f
+
+        val shimmerTimer = Timer(100) {
+            shimmerPhase = (shimmerPhase + 1f / 20f) % 1f
+            for ((i, attrs) in shimmerAttrs.withIndex()) {
+                val charPos = if (firstLineLength > 0) i.toFloat() / firstLineLength else 0f
+                val dist = Math.min(
+                    Math.abs(charPos - shimmerPhase),
+                    Math.min(Math.abs(charPos - shimmerPhase + 1f), Math.abs(charPos - shimmerPhase - 1f))
+                )
+                val factor = if (dist < 4f / firstLineLength.coerceAtLeast(1)) {
+                    ((Math.cos(dist * firstLineLength.coerceAtLeast(1) * Math.PI / 4.0) + 1.0) / 2.0).toFloat()
+                } else {
+                    0f
+                }
+                attrs.foregroundColor = interpolateColor(shimmerBase, shimmerPeak, factor)
+            }
+            if (!editor.isDisposed) editor.contentComponent.repaint()
+        }
+        shimmerTimer.start()
 
         val timer = Timer(300) {
             if (symbolRange.isValid) {
@@ -408,7 +529,7 @@ class Order89Action : AnAction() {
         }
         timer.start()
 
-        return Order89StatusDisplay(statusRange, symbolRange, highlighters, timer)
+        return Order89StatusDisplay(statusRange, symbolRange, highlighters, shimmerHighlighters, timer, shimmerTimer)
     }
 }
 
