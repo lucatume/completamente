@@ -234,32 +234,32 @@ class contextTest : BaseCompletionTest() {
 
     // --- CRLF handling: produces same result as LF ---
     fun testBuildFileContextCRLF() {
-        val lfContent = "line0\nline1\nline2"
         val crlfContent = "line0\r\nline1\r\nline2"
-        val lfResult = buildFileContext(lfContent, cursorLine = 1, cursorColumn = 3)
         val crlfResult = buildFileContext(crlfContent, cursorLine = 1, cursorColumn = 3)
-        assertEquals(lfResult, crlfResult)
-        // Also verify concrete values
         assertEquals("line0\n", crlfResult.inputPrefix)
         assertEquals("e1\nline2", crlfResult.inputSuffix)
         assertEquals("lin", crlfResult.prompt)
         assertEquals(0, crlfResult.nIndent)
     }
 
-    // --- buildFileContext: negative cursor line produces same result as cursorLine = 0 ---
+    // --- buildFileContext: negative cursor line clamps to 0 ---
     fun testBuildFileContextNegativeCursorLine() {
         val content = "line0\nline1\nline2"
-        val negResult = buildFileContext(content, cursorLine = -1, cursorColumn = 3)
-        val zeroResult = buildFileContext(content, cursorLine = 0, cursorColumn = 3)
-        assertEquals(zeroResult, negResult)
+        val result = buildFileContext(content, cursorLine = -1, cursorColumn = 3)
+        assertEquals("", result.inputPrefix)
+        assertEquals("e0\nline1\nline2", result.inputSuffix)
+        assertEquals("lin", result.prompt)
+        assertEquals(0, result.nIndent)
     }
 
-    // --- buildFileContext: negative cursor column produces same result as cursorColumn = 0 ---
+    // --- buildFileContext: negative cursor column clamps to 0 ---
     fun testBuildFileContextNegativeCursorColumn() {
         val content = "line0\nline1\nline2"
-        val negResult = buildFileContext(content, cursorLine = 1, cursorColumn = -1)
-        val zeroResult = buildFileContext(content, cursorLine = 1, cursorColumn = 0)
-        assertEquals(zeroResult, negResult)
+        val result = buildFileContext(content, cursorLine = 1, cursorColumn = -1)
+        assertEquals("line0\n", result.inputPrefix)
+        assertEquals("line1\nline2", result.inputSuffix)
+        assertEquals("", result.prompt)
+        assertEquals(0, result.nIndent)
     }
 
     // --- buildWindowedFileContext: OOB cursor line on small file ---
@@ -310,8 +310,10 @@ class contextTest : BaseCompletionTest() {
         assertTrue("file should exceed token limit", estimateTokens(content) > 6)
         // At threshold + 1, should use windowed path
         val result = buildContext(content, cursorLine = 1, cursorColumn = 2, maxFileTokens = 6)
-        val windowedResult = buildWindowedFileContext(content, cursorLine = 1, cursorColumn = 2)
-        assertEquals(windowedResult, result)
+        assertEquals("abcd\n", result.inputPrefix)
+        assertEquals("gh\nijklmnopqrs", result.inputSuffix)
+        assertEquals("ef", result.prompt)
+        assertEquals(0, result.nIndent)
     }
 
     // --- buildContext: file exactly at maxFileTokens threshold uses whole file ---
@@ -323,9 +325,6 @@ class contextTest : BaseCompletionTest() {
         assertEquals(6, estimateTokens(content))
         // At threshold (<=), should use whole file
         val result = buildContext(content, cursorLine = 1, cursorColumn = 2, maxFileTokens = 6)
-        val wholeResult = buildFileContext(content, cursorLine = 1, cursorColumn = 2)
-        assertEquals(wholeResult, result)
-        // Verify concrete values
         assertEquals("abcd\n", result.inputPrefix)
         assertEquals("gh\nijklmn", result.inputSuffix)
         assertEquals("ef", result.prompt)

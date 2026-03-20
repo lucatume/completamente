@@ -48,6 +48,22 @@ class CacheWarmingServiceTest : BaseCompletionTest() {
         assertEquals(third, svc.getLastWarmedExtras())
     }
 
+    fun testScheduleWarmupWithEmptyExtras() {
+        val svc = createService()
+        // First schedule non-empty to move away from initial state
+        svc.scheduleWarmup(listOf(InfillExtraChunk(filename = "A.kt", text = "a")))
+        // Then schedule empty list — should accept it and update state
+        svc.scheduleWarmup(emptyList())
+        assertTrue(svc.getLastWarmedExtras().isEmpty())
+    }
+
+    fun testScheduleWarmupAfterDisposeDoesNotThrow() {
+        val svc = CacheWarmingService(project)
+        svc.dispose()
+        // Scheduling after dispose should not crash
+        svc.scheduleWarmup(listOf(InfillExtraChunk(filename = "A.kt", text = "a")))
+    }
+
     fun testDeduplicationSkipsSameExtras() {
         val svc = createService()
         val extras = listOf(

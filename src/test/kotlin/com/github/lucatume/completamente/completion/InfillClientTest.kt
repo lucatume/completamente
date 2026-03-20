@@ -11,13 +11,6 @@ class InfillClientTest : BaseCompletionTest() {
 
     private val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
 
-    // --- Constructor ---
-
-    fun testConstructorAcceptsUrlString() {
-        val client = InfillClient("http://localhost:8080")
-        assertNotNull(client)
-    }
-
     // --- Serialization of request body ---
 
     fun testRequestBodySerializationIsCorrectJson() {
@@ -71,7 +64,7 @@ class InfillClientTest : BaseCompletionTest() {
             client.sendCompletion(request)
             fail("Expected InfillClientException")
         } catch (e: InfillClientException) {
-            assertNotNull(e.message)
+            assertTrue("Exception message should describe the failure", e.message!!.startsWith("Failed to send completion request:"))
         }
     }
 

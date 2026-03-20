@@ -13,10 +13,22 @@ class FimInlineCompletionProviderTest : BaseCompletionTest() {
         assertEquals("completamente.fim", provider.id.id)
     }
 
-    fun testInstantiationDoesNotCrash() {
-        // Smoke test: constructing the provider should not throw.
+    fun testIsEnabledReturnsFalseWhenAutoSuggestionsOff() {
+        val settings = SettingsState.getInstance()
+        settings.autoSuggestions = false
+
+        myFixture.configureByText("Test.kt", "fun main() {<caret>}")
+        val editor = myFixture.editor
+        val offset = editor.caretModel.offset
+
+        val typingEvent = TypingEvent.OneSymbol('x', offset)
+        val event = InlineCompletionEvent.DocumentChange(typingEvent, editor)
+
         val provider = FimInlineCompletionProvider()
-        assertNotNull(provider)
+        assertFalse("isEnabled should return false when autoSuggestions is off", provider.isEnabled(event))
+
+        // Restore default
+        settings.autoSuggestions = true
     }
 
     fun testIsEnabledReturnsTrueForDocumentChangeWhenAutoSuggestionsOn() {

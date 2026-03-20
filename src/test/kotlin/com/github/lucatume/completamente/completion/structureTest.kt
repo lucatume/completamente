@@ -56,17 +56,17 @@ class structureTest : BaseCompletionTest() {
     fun testCollectReferencedFilesNegativeStartLineClamped() {
         myFixture.configureByText("Clamp.kt", "val x = 1\nval y = 2\n")
         val psiFile = myFixture.file
-        // Should not crash with negative start line
+        // Negative start line clamped to 0; no external references in this file
         val result = collectReferencedFiles(psiFile, -5, 2)
-        assertNotNull(result)
+        assertTrue("Simple file with no imports should have no references", result.isEmpty())
     }
 
     fun testCollectReferencedFilesEndLineBeyondFileLength() {
         myFixture.configureByText("Beyond.kt", "val x = 1\nval y = 2\n")
         val psiFile = myFixture.file
-        // Should not crash with end line beyond file
+        // End line beyond file clamped to file length; no external references
         val result = collectReferencedFiles(psiFile, 0, 100)
-        assertNotNull(result)
+        assertTrue("Simple file with no imports should have no references", result.isEmpty())
     }
 
     // --- surfaceExtract tests ---
@@ -401,8 +401,11 @@ class structureTest : BaseCompletionTest() {
         myFixture.configureByText("Main.kt", "import foo.Helper\n\nfun main() {\n    val h = Helper()\n}\n")
         val psiFile = myFixture.file
         val result = buildStructureChunks(psiFile, wholeFile = true)
-        // Result depends on PSI resolution. At minimum, should not crash.
-        assertNotNull(result)
+        // All chunks should have non-blank text and relative filenames
+        for (chunk in result) {
+            assertTrue("Chunk text should not be blank", chunk.text.isNotBlank())
+            assertFalse("Filename should be relative", chunk.filename.startsWith("/"))
+        }
     }
 
     fun testBuildStructureChunksWindowedMode() {
@@ -416,8 +419,11 @@ class structureTest : BaseCompletionTest() {
             windowEndLine = 4,
             headerLines = 2
         )
-        // Result depends on PSI resolution. At minimum, should not crash.
-        assertNotNull(result)
+        // All chunks should have non-blank text and relative filenames
+        for (chunk in result) {
+            assertTrue("Chunk text should not be blank", chunk.text.isNotBlank())
+            assertFalse("Filename should be relative", chunk.filename.startsWith("/"))
+        }
     }
 
     fun testBuildStructureChunksResultsSortedByFilename() {
@@ -447,8 +453,8 @@ class structureTest : BaseCompletionTest() {
             windowEndLine = 0,
             headerLines = 32
         )
-        // Window start == end, so window contributes nothing; only header scanned
-        assertNotNull(result)
+        // Window start == end, so window contributes nothing; simple file has no external refs
+        assertTrue("Simple file with zero window should produce no chunks", result.isEmpty())
     }
 
     fun testBuildStructureChunksReturnsInfillExtraChunks() {
@@ -581,7 +587,7 @@ class structureTest : BaseCompletionTest() {
     fun testBuildStructureChunksWindowStartGreaterThanWindowEnd() {
         myFixture.configureByText("Inverted.kt", "val x = 1\nval y = 2\n")
         val psiFile = myFixture.file
-        // windowStartLine > windowEndLine should not crash
+        // windowStartLine > windowEndLine: window contributes nothing; simple file has no refs
         val result = buildStructureChunks(
             psiFile,
             wholeFile = false,
@@ -589,13 +595,13 @@ class structureTest : BaseCompletionTest() {
             windowEndLine = 2,
             headerLines = 32
         )
-        assertNotNull(result)
+        assertTrue("Inverted window on simple file should produce no chunks", result.isEmpty())
     }
 
     fun testBuildStructureChunksHeaderLinesClamped() {
         myFixture.configureByText("Short.kt", "val x = 1\n")
         val psiFile = myFixture.file
-        // headerLines=100 on a 1-line file should not crash
+        // headerLines=100 on a 1-line file: clamped to file length; no external refs
         val result = buildStructureChunks(
             psiFile,
             wholeFile = false,
@@ -603,7 +609,7 @@ class structureTest : BaseCompletionTest() {
             windowEndLine = 1,
             headerLines = 100
         )
-        assertNotNull(result)
+        assertTrue("Simple 1-line file should produce no chunks", result.isEmpty())
     }
 
     fun testSurfaceExtractDataClass() {
