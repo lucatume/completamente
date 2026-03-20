@@ -6,11 +6,14 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComboBox
 import javax.swing.JComponent
 
 class SettingsConfigurable : Configurable {
     private var dialogPanel: DialogPanel? = null
     private val state = SettingsState.getInstance()
+    private var toolUsageCombo: JComboBox<String>? = null
 
     // Current field values — kept in sync with the UI via bind*() on apply/reset
     private var serverUrl = ""
@@ -26,6 +29,7 @@ class SettingsConfigurable : Configurable {
     private var order89TopK = ""
     private var order89RepeatPenalty = ""
     private var order89NPredict = ""
+    private var order89MaxToolRounds = ""
 
     override fun getDisplayName(): String = "completamente"
 
@@ -102,6 +106,18 @@ class SettingsConfigurable : Configurable {
                         .bindText(::order89NPredict)
                         .comment("Maximum number of tokens to predict")
                 }
+                row("Tool usage:") {
+                    val combo = JComboBox(DefaultComboBoxModel(arrayOf("OFF", "MANUAL", "AUTO")))
+                    combo.selectedItem = state.order89ToolUsage
+                    toolUsageCombo = combo
+                    cell(combo)
+                        .comment("OFF = no tools, MANUAL = /tools prefix, AUTO = always")
+                }
+                row("Max tool rounds:") {
+                    textField()
+                        .bindText(::order89MaxToolRounds)
+                        .comment("Maximum rounds of tool calls before generating code (1-10)")
+                }
             }
         }
 
@@ -122,10 +138,14 @@ class SettingsConfigurable : Configurable {
         order89TopK = state.order89TopK.toString()
         order89RepeatPenalty = state.order89RepeatPenalty.toString()
         order89NPredict = state.order89NPredict.toString()
+        order89MaxToolRounds = state.order89MaxToolRounds.toString()
+        toolUsageCombo?.selectedItem = state.order89ToolUsage
     }
 
     override fun isModified(): Boolean {
-        return dialogPanel?.isModified() ?: false
+        if (dialogPanel?.isModified() == true) return true
+        val comboValue = toolUsageCombo?.selectedItem as? String ?: "OFF"
+        return comboValue != state.order89ToolUsage
     }
 
     override fun apply() {
@@ -148,6 +168,8 @@ class SettingsConfigurable : Configurable {
         state.order89TopK = order89TopK.toIntOrNull() ?: defaults.order89TopK
         state.order89RepeatPenalty = order89RepeatPenalty.toDoubleOrNull() ?: defaults.order89RepeatPenalty
         state.order89NPredict = order89NPredict.toIntOrNull() ?: defaults.order89NPredict
+        state.order89ToolUsage = toolUsageCombo?.selectedItem as? String ?: defaults.order89ToolUsage
+        state.order89MaxToolRounds = order89MaxToolRounds.toIntOrNull() ?: defaults.order89MaxToolRounds
     }
 
     override fun reset() {

@@ -17,6 +17,8 @@ class SettingsConfigurableTest : BaseCompletionTest() {
             state.ringChunkSize = defaults.ringChunkSize
             state.maxQueuedChunks = defaults.maxQueuedChunks
             state.order89ServerUrl = defaults.order89ServerUrl
+            state.order89ToolUsage = defaults.order89ToolUsage
+            state.order89MaxToolRounds = defaults.order89MaxToolRounds
         } finally {
             super.tearDown()
         }
@@ -147,5 +149,38 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         field.set(configurable, "http://changed:9999")
 
         assertTrue(configurable.isModified)
+    }
+
+    fun testApplyWithValidToolUsageMode() {
+        val configurable = SettingsConfigurable()
+        configurable.createComponent()
+        val state = SettingsState.getInstance()
+
+        val comboField = SettingsConfigurable::class.java.getDeclaredField("toolUsageCombo")
+        comboField.isAccessible = true
+        val combo = comboField.get(configurable) as javax.swing.JComboBox<*>
+        combo.selectedItem = "AUTO"
+
+        val method = SettingsConfigurable::class.java.getDeclaredMethod("applyToState")
+        method.isAccessible = true
+        method.invoke(configurable)
+
+        assertEquals("AUTO", state.order89ToolUsage)
+    }
+
+    fun testApplyWithNonNumericMaxToolRoundsUsesDefault() {
+        val configurable = SettingsConfigurable()
+        configurable.createComponent()
+        val state = SettingsState.getInstance()
+
+        val field = SettingsConfigurable::class.java.getDeclaredField("order89MaxToolRounds")
+        field.isAccessible = true
+        field.set(configurable, "not_a_number")
+
+        val method = SettingsConfigurable::class.java.getDeclaredMethod("applyToState")
+        method.isAccessible = true
+        method.invoke(configurable)
+
+        assertEquals(3, state.order89MaxToolRounds)
     }
 }

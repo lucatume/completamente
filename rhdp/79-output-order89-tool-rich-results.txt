@@ -1,0 +1,519 @@
+Order 89 Tool Integration — Rich Results + Multi-Turn
+Model: Qwen3-Coder-30B-A3B-Instruct @ http://localhost:8017
+Date: 2026-03-20 14:10
+======================================================================
+
+SUMMARY
+Variant                Tokens  Perfect  Code  Loop  AvgMatch
+--------------------------------------------------------------
+V9_inline_no_tools        527   15/15     15     0    2.3/2
+V8_multi_round            900   15/15     15     0    2.3/2
+V6_two_system             901   12/15     12     3    1.7/2
+V2_inline                 702    5/15      5    10    0.7/2
+
+
+PER-PROMPT BREAKDOWN
+----------------------------------------------------------------------
+V2_inline              T1_find_method_signature  perf=5/5 code=5 loop=0 match=2.0/2
+V2_inline              T3_find_error_pattern     perf=0/5 code=0 loop=5 match=0.0/3
+V2_inline              T5_find_api_method        perf=0/5 code=0 loop=5 match=0.0/2
+V6_two_system          T1_find_method_signature  perf=5/5 code=5 loop=0 match=2.0/2
+V6_two_system          T3_find_error_pattern     perf=2/5 code=2 loop=3 match=1.2/3
+V6_two_system          T5_find_api_method        perf=5/5 code=5 loop=0 match=2.0/2
+V8_multi_round         T1_find_method_signature  perf=5/5 code=5 loop=0 match=2.0/2
+V8_multi_round         T3_find_error_pattern     perf=5/5 code=5 loop=0 match=3.0/3
+V8_multi_round         T5_find_api_method        perf=5/5 code=5 loop=0 match=2.0/2
+V9_inline_no_tools     T1_find_method_signature  perf=5/5 code=5 loop=0 match=2.0/2
+V9_inline_no_tools     T3_find_error_pattern     perf=5/5 code=5 loop=0 match=3.0/3
+V9_inline_no_tools     T5_find_api_method        perf=5/5 code=5 loop=0 match=2.0/2
+
+
+DETAILED LOG
+======================================================================
+
+--- V2_inline | T1_find_method_signature | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V2_inline | T1_find_method_signature | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V2_inline | T1_find_method_signature | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V2_inline | T1_find_method_signature | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V2_inline | T1_find_method_signature | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V2_inline | T3_find_error_pattern | Run 1 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "LoggerFactory"}}\n<tool_call>
+
+--- V2_inline | T3_find_error_pattern | Run 2 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentResult"}}\n</tool_call>
+
+--- V2_inline | T3_find_error_pattern | Run 3 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "OrderService"}}\n<tool_call>
+
+--- V2_inline | T3_find_error_pattern | Run 4 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "LoggerFactory"}}\n<tool_call>
+
+--- V2_inline | T3_find_error_pattern | Run 5 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "LoggerFactory"}}\n<tool_call>
+
+--- V2_inline | T5_find_api_method | Run 1 ---
+  perfect=False has_code=False called_tool=True matches=0/2
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</ToolResult>\n</tool_call>
+
+--- V2_inline | T5_find_api_method | Run 2 ---
+  perfect=False has_code=False called_tool=True matches=0/2
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</ToolResult>\n</tool_call>
+
+--- V2_inline | T5_find_api_method | Run 3 ---
+  perfect=False has_code=False called_tool=True matches=0/2
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "processPayment"}}\n</tool_call>
+
+--- V2_inline | T5_find_api_method | Run 4 ---
+  perfect=False has_code=False called_tool=True matches=0/2
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</ToolResult>\n</tool_call>
+
+--- V2_inline | T5_find_api_method | Run 5 ---
+  perfect=False has_code=False called_tool=True matches=0/2
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "processPayment"}}\n</tool_call>
+
+--- V6_two_system | T1_find_method_signature | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V6_two_system | T1_find_method_signature | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V6_two_system | T1_find_method_signature | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V6_two_system | T1_find_method_signature | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V6_two_system | T1_find_method_signature | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V6_two_system | T3_find_error_pattern | Run 1 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentResult"}}\n</tool_call>
+
+--- V6_two_system | T3_find_error_pattern | Run 2 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentResult"}}\n</tool_call>
+
+--- V6_two_system | T3_find_error_pattern | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    if (!paymentResult.success) {
+                        logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")
+                        throw PaymentException("Payment failed: ${paymentResult.errorMessage}")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Payment processing erro
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            if (!paymentResult.success) {\n                logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")\n                throw PaymentException("Payment failed: ${paymentResult.errorMessage}")\n            }\n        } catch (e: Exception) {\n            logger.erro
+
+--- V6_two_system | T3_find_error_pattern | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    if (!paymentResult.success) {
+                        logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")
+                        throw PaymentException(paymentResult.errorMessage ?: "Payment failed")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Payment processing error
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            if (!paymentResult.success) {\n                logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")\n                throw PaymentException(paymentResult.errorMessage ?: "Payment failed")\n            }\n        } catch (e: Exception) {\n            logger.error
+
+--- V6_two_system | T3_find_error_pattern | Run 5 ---
+  perfect=False has_code=False called_tool=True matches=0/3
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentResult"}}\n</tool_call>
+
+--- V6_two_system | T5_find_api_method | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V6_two_system | T5_find_api_method | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V6_two_system | T5_find_api_method | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V6_two_system | T5_find_api_method | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V6_two_system | T5_find_api_method | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V8_multi_round | T1_find_method_signature | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V8_multi_round | T1_find_method_signature | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V8_multi_round | T1_find_method_signature | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V8_multi_round | T1_find_method_signature | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V8_multi_round | T1_find_method_signature | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V8_multi_round | T3_find_error_pattern | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    if (!paymentResult.success) {
+                        logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")
+                        throw PaymentException("Payment failed: ${paymentResult.errorMessage}")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Payment processing erro
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            if (!paymentResult.success) {\n                logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")\n                throw PaymentException("Payment failed: ${paymentResult.errorMessage}")\n            }\n        } catch (e: Exception) {\n            logger.erro
+
+--- V8_multi_round | T3_find_error_pattern | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    if (!paymentResult.success) {
+                        logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")
+                        throw PaymentException("Payment failed: ${paymentResult.errorMessage}")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Payment processing erro
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            if (!paymentResult.success) {\n                logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")\n                throw PaymentException("Payment failed: ${paymentResult.errorMessage}")\n            }\n        } catch (e: Exception) {\n            logger.erro
+
+--- V8_multi_round | T3_find_error_pattern | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    if (!paymentResult.success) {
+                        logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")
+                        throw PaymentException("Payment failed: ${paymentResult.errorMessage}")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Payment processing erro
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            if (!paymentResult.success) {\n                logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")\n                throw PaymentException("Payment failed: ${paymentResult.errorMessage}")\n            }\n        } catch (e: Exception) {\n            logger.erro
+
+--- V8_multi_round | T3_find_error_pattern | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    if (!paymentResult.success) {
+                        logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")
+                        throw PaymentException("Payment failed: ${paymentResult.errorMessage}")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Payment processing erro
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            if (!paymentResult.success) {\n                logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")\n                throw PaymentException("Payment failed: ${paymentResult.errorMessage}")\n            }\n        } catch (e: Exception) {\n            logger.erro
+
+--- V8_multi_round | T3_find_error_pattern | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    if (!paymentResult.success) {
+                        logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")
+                        throw PaymentException("Payment failed: ${paymentResult.errorMessage}")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Payment processing erro
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            if (!paymentResult.success) {\n                logger.warn("Payment failed for order ${order.id}: ${paymentResult.errorMessage}")\n                throw PaymentException("Payment failed: ${paymentResult.errorMessage}")\n            }\n        } catch (e: Exception) {\n            logger.erro
+
+--- V8_multi_round | T5_find_api_method | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V8_multi_round | T5_find_api_method | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V8_multi_round | T5_find_api_method | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V8_multi_round | T5_find_api_method | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V8_multi_round | T5_find_api_method | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V9_inline_no_tools | T1_find_method_signature | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V9_inline_no_tools | T1_find_method_signature | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V9_inline_no_tools | T1_find_method_signature | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V9_inline_no_tools | T1_find_method_signature | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V9_inline_no_tools | T1_find_method_signature | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        @GetMapping("/{id}")
+            fun getUserById(@PathVariable id: Long): User? {
+                return userService.getById(id)
+            }
+  raw: ```kotlin\n    @GetMapping("/{id}")\n    fun getUserById(@PathVariable id: Long): User? {\n        return userService.getById(id)\n    }\n```
+
+--- V9_inline_no_tools | T3_find_error_pattern | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }
+                } catch (e: IllegalArgumentException) {
+                    logger.warn("Payment processing failed for order ${order.id}: ${e.message}")
+                    throw OrderProcessingException("Payment processing failed: ${e.message}")
+               
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }\n        } catch (e: IllegalArgumentException) {\n            logger.warn("Payment processing failed for order ${order.id}: ${e.message}")\n            throw OrderProcessingException("Payment processing failed
+
+--- V9_inline_no_tools | T3_find_error_pattern | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }
+                } catch (e: IllegalArgumentException) {
+                    logger.warn("Payment processing failed for order ${order.id}: ${e.message}")
+                    throw IllegalStateException("Failed to process payment for order ${order.id}", e)
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }\n        } catch (e: IllegalArgumentException) {\n            logger.warn("Payment processing failed for order ${order.id}: ${e.message}")\n            throw IllegalStateException("Failed to process payment fo
+
+--- V9_inline_no_tools | T3_find_error_pattern | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }
+                } catch (e: IllegalArgumentException) {
+                    logger.warn("Payment processing failed for order ${order.id}: ${e.message}")
+                    throw e
+                }
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }\n        } catch (e: IllegalArgumentException) {\n            logger.warn("Payment processing failed for order ${order.id}: ${e.message}")\n            throw e\n        }\n```
+
+--- V9_inline_no_tools | T3_find_error_pattern | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }
+                } catch (e: IllegalArgumentException) {
+                    logger.warn("Payment processing failed for order ${order.id}: ${e.message}")
+                    throw e
+                }
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }\n        } catch (e: IllegalArgumentException) {\n            logger.warn("Payment processing failed for order ${order.id}: ${e.message}")\n            throw e\n        }\n```
+
+--- V9_inline_no_tools | T3_find_error_pattern | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=3/3
+  code:
+        try {
+                    val paymentResult = paymentGateway.processPayment(total)
+                    require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }
+                } catch (e: IllegalArgumentException) {
+                    logger.warn("Payment processing failed for order ${order.id}: ${e.message}")
+                    throw OrderProcessingException("Failed to process payment: ${e.message}")
+               
+  raw: ```kotlin\n        try {\n            val paymentResult = paymentGateway.processPayment(total)\n            require(paymentResult.success) { "Payment failed: ${paymentResult.errorMessage}" }\n        } catch (e: IllegalArgumentException) {\n            logger.warn("Payment processing failed for order ${order.id}: ${e.message}")\n            throw OrderProcessingException("Failed to process payment
+
+--- V9_inline_no_tools | T5_find_api_method | Run 1 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V9_inline_no_tools | T5_find_api_method | Run 2 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V9_inline_no_tools | T5_find_api_method | Run 3 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V9_inline_no_tools | T5_find_api_method | Run 4 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```
+
+--- V9_inline_no_tools | T5_find_api_method | Run 5 ---
+  perfect=True has_code=True called_tool=False matches=2/2
+  code:
+        val paymentResult = paymentGateway.processPayment(total)
+                order.transactionId = paymentResult.transactionId
+  raw: ```kotlin\n        val paymentResult = paymentGateway.processPayment(total)\n        order.transactionId = paymentResult.transactionId\n```

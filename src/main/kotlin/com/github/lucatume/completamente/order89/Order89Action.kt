@@ -29,11 +29,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.openapi.editor.colors.EditorColors
+import kotlinx.serialization.json.jsonPrimitive
 import java.awt.Color
 import java.awt.Font
 import java.awt.event.KeyEvent
 import java.util.ArrayDeque
+import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
+import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import javax.swing.KeyStroke
 import javax.swing.Timer
@@ -133,6 +136,16 @@ class Order89Action : AnAction() {
             contextChunks = contextChunks
         )
 
+        // Parse tool mode and strip /tools prefix if applicable
+        val (cleanPrompt, toolsEnabled) = parseToolsPrefix(dialog.promptText, settings.order89ToolUsage)
+
+        // Rebuild request with cleaned prompt if tools stripped the prefix
+        val effectiveRequest = if (cleanPrompt != request.prompt) {
+            request.copy(prompt = cleanPrompt)
+        } else {
+            request
+        }
+
         // Create selection range marker BEFORE inserting status lines.
         val rangeMarker = editor.document.createRangeMarker(selectionStart, selectionEnd)
         rangeMarker.isGreedyToRight = true
@@ -141,7 +154,55 @@ class Order89Action : AnAction() {
         val insertionOffset = editor.document.getLineStartOffset(targetLine)
         val statusDisplay = insertStatusLines(editor, insertionOffset, dialog.promptText)
 
-        val future = Order89Executor.execute(request, settings)
+        val future: Future<Order89Result> = if (toolsEnabled) {
+            val toolExecutor: (ToolCall) -> String = { call ->
+                when (call.name) {
+                    "FileSearch" -> {
+                        val query = call.arguments["query"]?.jsonPrimitive?.content ?: ""
+                        val caseSensitive = call.arguments["case_sensitive"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
+                        val path = call.arguments["path"]?.jsonPrimitive?.content
+                        runReadAction { FileSearchTool.execute(project, query, caseSensitive, path) }
+                    }
+                    "WebSearch" -> {
+                        val query = call.arguments["query"]?.jsonPrimitive?.content ?: ""
+                        WebSearchTool.execute(query)
+                    }
+                    else -> "Unknown tool: ${call.name}"
+                }
+            }
+            val completionFn: (String, String) -> String = { body, serverUrl ->
+                val httpClient = java.net.http.HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(5))
+                    .build()
+                val httpRequest = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create("$serverUrl/completion"))
+                    .header("Content-Type", "application/json")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+                    .build()
+                val response = httpClient.send(httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString())
+                if (response.statusCode() != 200) {
+                    throw RuntimeException("HTTP ${response.statusCode()}: ${response.body()}")
+                }
+                response.body()
+            }
+            val executor = Executors.newSingleThreadExecutor()
+            val f = executor.submit(Callable {
+                Order89Executor.executeWithTools(
+                    effectiveRequest, settings, toolExecutor, completionFn,
+                    onStatusUpdate = { text ->
+                        ApplicationManager.getApplication().invokeLater({
+                            if (!editor.isDisposed) {
+                                updateStatusText(editor, statusDisplay, text)
+                            }
+                        }, ModalityState.defaultModalityState())
+                    }
+                )
+            })
+            executor.shutdown()
+            f
+        } else {
+            Order89Executor.execute(effectiveRequest, settings)
+        }
 
         val session = Order89Session(future, statusDisplay, rangeMarker)
         val sessions = editor.getUserData(SESSIONS_KEY) ?: ArrayDeque<Order89Session>().also {
@@ -245,6 +306,28 @@ class Order89Action : AnAction() {
             }
         }
         display.range.dispose()
+    }
+
+    internal fun updateStatusText(editor: Editor, display: Order89StatusDisplay?, newText: String) {
+        if (display == null || !display.range.isValid) return
+        val doc = editor.document
+        val startOffset = display.range.startOffset
+        val startLine = doc.getLineNumber(startOffset)
+        val lineStart = doc.getLineStartOffset(startLine)
+        val lineEnd = doc.getLineEndOffset(startLine)
+        val currentLine = doc.getText(TextRange(lineStart, lineEnd))
+        val indent = currentLine.takeWhile { it == ' ' || it == '\t' }
+        val symbol = currentLine.trimStart().firstOrNull() ?: '\u2726'
+        val replacement = "$indent$symbol $newText"
+        ApplicationManager.getApplication().runWriteAction {
+            CommandProcessor.getInstance().runUndoTransparentAction {
+                UndoUtil.disableUndoIn(doc) {
+                    if (display.range.isValid) {
+                        doc.replaceString(lineStart, lineEnd, replacement)
+                    }
+                }
+            }
+        }
     }
 
     private fun insertStatusLines(editor: Editor, offset: Int, prompt: String): Order89StatusDisplay? {

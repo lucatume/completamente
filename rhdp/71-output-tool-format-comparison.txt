@@ -1,0 +1,507 @@
+Tool Specification Format Comparison — Detailed Results
+Model: Qwen3-Coder-30B-A3B-Instruct @ http://localhost:8017
+Date: 2026-03-20 10:22
+======================================================================
+
+TOKEN COUNTS
+----------------------------------------
+  A_native_qwen3            →  286 tokens
+  B_xml_full                →  213 tokens
+  C_xml_terse               →  138 tokens
+  D_xml_typehints           →   93 tokens
+  E_markdown                →  172 tokens
+  F_json_compact            →  110 tokens
+  G_plaintext               →  107 tokens
+  H_xml_funcdef             →  132 tokens
+
+
+SUMMARY TABLE
+----------------------------------------------------------------------
+Format                    Tokens   Avg  Perfect  Parse  Tool    Eff
+G_plaintext                  107  3.00  15/15      15    15  28.04
+F_json_compact               110  3.00  15/15      15    15  27.27
+C_xml_terse                  138  3.00  15/15      15    15  21.74
+B_xml_full                   213  3.00  15/15      15    15  14.08
+A_native_qwen3               286  3.00  15/15      15    15  10.49
+D_xml_typehints               93  2.83  14/15      14    14  30.47
+H_xml_funcdef                132  2.83  14/15      14    14  21.46
+E_markdown                   172  2.80  14/15      14    14  16.28
+
+
+DETAILED RESULTS PER FORMAT
+======================================================================
+
+──────────────────────────────────────────────────
+Format: A_native_qwen3
+Tokens: 286
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+
+  Prompt: P3_web_search (avg 3.0/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 2: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 5: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+
+──────────────────────────────────────────────────
+Format: B_xml_full
+Tokens: 213
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n{"name": "FileSearch", "arguments": {"query": "TODO"}}
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n{"name": "FileSearch", "arguments": {"query": "TODO"}}
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n{"name": "FileSearch", "arguments": {"query": "TODO"}}
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n{"name": "FileSearch", "arguments": {"query": "TODO"}}
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n{"name": "FileSearch", "arguments": {"query": "import 
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n{"name": "FileSearch", "arguments": {"query": "import 
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n{"name": "FileSearch", "arguments": {"query": "import 
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n{"name": "FileSearch", "arguments": {"query": "import 
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n{"name": "FileSearch", "arguments": {"query": "import 
+
+  Prompt: P3_web_search (avg 3.0/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: {"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}
+    Run 2: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for the most current Kotlin coroutines best practices for 2024.\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin corouti
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search the web for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n<tool_call>\n{"name": "WebSearch"
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: {"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}
+    Run 5: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search the web for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n<tool_call>\n{"name": "WebSearch"
+
+──────────────────────────────────────────────────
+Format: C_xml_terse
+Tokens: 138
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me use the FileSearch tool for this.\n\n{"name":"FileSearch","arguments":{"query":"
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me use the FileSearch tool to look for this pattern.\n\n<tool_call>{"name":"FileSea
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me use the FileSearch tool for this.\n\n<tool_call>{"name":"FileSearch","arguments"
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me use the FileSearch tool for this.\n\n{"name":"FileSearch","arguments":{"query":"
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+
+  Prompt: P3_web_search (avg 3.0/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for the latest Kotlin coroutines best practices for 2024.\n\n<tools>\n{"name":"WebSearch","arguments":{"query":"Kotlin coroutines best pra
+    Run 2: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for the latest Kotlin coroutines best practices for 2024.\n\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines 
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for the latest Kotlin coroutines best practices from 2024.\n\n<tools>\n{"name":"WebSearch","arguments":{"query":"Kotlin coroutines best pr
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for the latest Kotlin coroutines best practices from 2024.\n\n<tool_call>{"name":"WebSearch","arguments":{"query":"Kotlin coroutines best 
+    Run 5: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for the latest Kotlin coroutines best practices from 2024.\n\n<tool_call>{"name":"WebSearch","arguments":{"query":"Kotlin coroutines best 
+
+──────────────────────────────────────────────────
+Format: D_xml_typehints
+Tokens: 93
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n<tool_call>{"name":"FileSearch","arguments":{"query":"T
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n<tool_call>{"name":"FileSearch","arguments":{"query":"T
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n<tool_call>{"name":"FileSearch","arguments":{"query":"T
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n[{"name":"FileSearch","arguments":{"query":"import Rea
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n[{"name":"FileSearch","arguments":{"query":"import Rea
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+
+  Prompt: P3_web_search (avg 2.5/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+    Run 2: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n<tool_call>{"name":"WebSearch","arguments
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n<tool_call>{"name":"WebSearch","arguments
+    Run 5: score=0.5 tool=None params_ok=False parseable=False
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool name="WebSearch">{"query": "Kotli
+
+──────────────────────────────────────────────────
+Format: E_markdown
+Tokens: 172
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 2.4/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 2: score=0.0 tool=None params_ok=False parseable=False
+           raw: I'll search for all files containing 'TODO' in the project.\n\n```
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I need to search for 'import React' in the src/components directory with case-sensitive matching.\n\n```\n<tool_call>\n{"name": "FileSearch", "argumen
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n```\n<tool_call>\n{"name": "FileSearch", "arguments": 
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I need to search for 'import React' in the src/components directory with case-sensitive matching.\n\n```\n<tool_call>\n{"name": "FileSearch", "argumen
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+
+  Prompt: P3_web_search (avg 3.0/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 2: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 5: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+
+──────────────────────────────────────────────────
+Format: F_json_compact
+Tokens: 110
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO"}}<tool_call>
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO"}}<tool_call>
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO"}}
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me use the FileSearch tool to look for this pattern.\n\n<tool_call>{"name":"FileSea
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me use the FileSearch tool to look for this pattern.\n\n<tool_call>{"name":"FileSea
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>{"name":"FileSearch","arguments":{"query":"import React","case_sensitive":true,"path":"src/components"}}
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>{"name":"FileSearch","arguments":{"query":"import React","case_sensitive":true,"path":"src/components"}}
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>{"name":"FileSearch","arguments":{"query":"import React","case_sensitive":true,"path":"src/components"}}
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>{"name":"FileSearch","arguments":{"query":"import React","case_sensitive":true,"path":"src/components"}}
+
+  Prompt: P3_web_search (avg 3.0/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+    Run 2: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n<tool_call>{"name":"WebSearch","arguments
+    Run 5: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+
+──────────────────────────────────────────────────
+Format: G_plaintext
+Tokens: 107
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: {"name": "FileSearch", "arguments": {"query": "TODO"}}
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "import React", "case_sensitive": true, "path": "src/components"}}\n
+
+  Prompt: P3_web_search (avg 3.0/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 2: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+    Run 5: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin coroutines best practices 2024"}}\n
+
+──────────────────────────────────────────────────
+Format: H_xml_funcdef
+Tokens: 132
+──────────────────────────────────────────────────
+
+  Prompt: P1_file_search_simple (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for all files containing 'TODO' in the project.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll help you find all files containing 'TODO' in the project. Let me search for those files.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":
+
+  Prompt: P2_file_search_with_path (avg 3.0/3)
+    Run 1: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 2: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 3: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+    Run 4: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: <tool_call>{"name":"FileSearch","arguments":{"query":"import React","case_sensitive":true,"path":"src/components"}}
+    Run 5: score=3.0 tool=FileSearch params_ok=True parseable=True
+           raw: I'll search for 'import React' in the src/components directory with case-sensitive matching.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"
+
+  Prompt: P3_web_search (avg 2.5/3)
+    Run 1: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+    Run 2: score=0.5 tool=None params_ok=False parseable=False
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<fn name="WebSearch" arguments={"query"
+    Run 3: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n<tool_call>{"name":"WebSearch","arguments
+    Run 4: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n<tool_call>{"name":"WebSearch","arguments
+    Run 5: score=3.0 tool=WebSearch params_ok=True parseable=True
+           raw: I'll search for Kotlin coroutines best practices for 2024 to provide you with the most current information.\n\n<tool_call>{"name":"WebSearch","argumen
+
+
+FORMAT SPECIFICATIONS (for reference)
+======================================================================
+
+──────────────────────────────────────────────────
+Format: A_native_qwen3
+──────────────────────────────────────────────────
+# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{"type": "function", "function": {"name": "FileSearch", "description": "Find files in the project that contain a certain string. Returns file:line pairs. Case-insensitive by default.", "parameters": {"type": "object", "required": ["query"], "properties": {"query": {"type": "string", "description": "The search string to find in files"}, "case_sensitive": {"type": "boolean", "description": "If true, search is case-sensitive. Default: false"}, "path": {"type": "string", "description": "File or directory path to search in. Directories are searched recursively. If omitted, searches entire project."}}}}}
+{"type": "function", "function": {"name": "WebSearch", "description": "Search the web and return results.", "parameters": {"type": "object", "required": ["query"], "properties": {"query": {"type": "string", "description": "The search query"}}}}}
+</tools>
+
+For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{"name": <function-name>, "arguments": <args-json-object>}
+</tool_call>
+
+──────────────────────────────────────────────────
+Format: B_xml_full
+──────────────────────────────────────────────────
+<tools>
+<tool name="FileSearch">
+<description>Find files in the project that contain a certain string. Returns file:line pairs. Case-insensitive by default.</description>
+<parameters>
+<param name="query" type="string" required="true">The search string to find in files</param>
+<param name="case_sensitive" type="boolean" required="false">If true, search is case-sensitive. Default: false</param>
+<param name="path" type="string" required="false">File or directory path to search in. Directories are searched recursively. If omitted, searches entire project.</param>
+</parameters>
+</tool>
+<tool name="WebSearch">
+<description>Search the web and return results.</description>
+<parameters>
+<param name="query" type="string" required="true">The search query</param>
+</parameters>
+</tool>
+</tools>
+
+To call a tool, use:
+<tool_call>
+{"name": "<tool-name>", "arguments": {<args>}}
+</tool_call>
+
+──────────────────────────────────────────────────
+Format: C_xml_terse
+──────────────────────────────────────────────────
+<tools>
+<t n="FileSearch" d="Find files containing a string, returns file:line. Case-insensitive by default.">
+<p n="query" t="str" r="1">search string</p>
+<p n="case_sensitive" t="bool">case-sensitive search</p>
+<p n="path" t="str">file/dir to search (recursive)</p>
+</t>
+<t n="WebSearch" d="Search the web.">
+<p n="query" t="str" r="1">search query</p>
+</t>
+</tools>
+
+Call: <tool_call>{"name":"<tool>","arguments":{...}}</tool_call>
+
+──────────────────────────────────────────────────
+Format: D_xml_typehints
+──────────────────────────────────────────────────
+<tools>
+<tool name="FileSearch">FileSearch(query: str, case_sensitive?: bool = false, path?: str) -> list[file:line]
+Find files containing a string. Searches recursively. Case-insensitive by default.</tool>
+<tool name="WebSearch">WebSearch(query: str) -> list[result]
+Search the web.</tool>
+</tools>
+
+Call: <tool_call>{"name":"<tool>","arguments":{...}}</tool_call>
+
+──────────────────────────────────────────────────
+Format: E_markdown
+──────────────────────────────────────────────────
+## Available Tools
+
+### FileSearch
+Find files in the project that contain a certain string. Returns file:line pairs. Case-insensitive by default.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| query | string | yes | The search string to find in files |
+| case_sensitive | boolean | no | If true, search is case-sensitive. Default: false |
+| path | string | no | File or directory path to search in (recursive) |
+
+### WebSearch
+Search the web and return results.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| query | string | yes | The search query |
+
+To call a tool, respond with:
+```
+<tool_call>
+{"name": "<tool-name>", "arguments": {<args>}}
+</tool_call>
+```
+
+──────────────────────────────────────────────────
+Format: F_json_compact
+──────────────────────────────────────────────────
+Available tools (call via <tool_call>{"name":"<name>","arguments":{...}}</tool_call>):
+[{"name":"FileSearch","desc":"Find files containing a string, returns file:line pairs. Case-insensitive by default.","params":{"query":{"type":"str","req":true},"case_sensitive":{"type":"bool","default":false},"path":{"type":"str","desc":"file/dir to search recursively"}}},{"name":"WebSearch","desc":"Search the web.","params":{"query":{"type":"str","req":true}}}]
+
+──────────────────────────────────────────────────
+Format: G_plaintext
+──────────────────────────────────────────────────
+You have two tools:
+
+1. FileSearch — Finds files in the project containing a string. Returns file:line pairs. Case-insensitive by default.
+   Parameters: query (required, string), case_sensitive (optional, boolean, default false), path (optional, string, file or directory to search recursively)
+
+2. WebSearch — Searches the web.
+   Parameters: query (required, string)
+
+To use a tool, respond with:
+<tool_call>
+{"name": "<tool-name>", "arguments": {<args>}}
+</tool_call>
+
+──────────────────────────────────────────────────
+Format: H_xml_funcdef
+──────────────────────────────────────────────────
+<tools>
+<fn name="FileSearch" returns="list[file:line]">
+Find files containing a string. Case-insensitive by default. Directories searched recursively.
+<args>
+  query: str          # search string (required)
+  case_sensitive: bool # default false
+  path: str           # file/dir to search
+</args>
+</fn>
+<fn name="WebSearch" returns="list[result]">
+Search the web.
+<args>
+  query: str  # search query (required)
+</args>
+</fn>
+</tools>
+
+Call: <tool_call>{"name":"<tool>","arguments":{...}}</tool_call>

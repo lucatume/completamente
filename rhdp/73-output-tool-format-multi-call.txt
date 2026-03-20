@@ -1,0 +1,436 @@
+Multi-Tool Call Format Test — Detailed Results
+Model: Qwen3-Coder-30B-A3B-Instruct @ http://localhost:8017
+Date: 2026-03-20 10:50
+======================================================================
+
+SUMMARY
+Format               Tokens  AvgFound  AvgMatch  Perfect
+-------------------------------------------------------
+A_native_qwen3          286      2.27      2.27   14/15
+C_xml_terse             138      1.47      1.47    7/15
+F_json_compact          110      1.93      1.93   12/15
+G_plaintext             107      2.33      2.33   15/15
+
+
+DETAILED LOG
+======================================================================
+
+--- A_native_qwen3 | M1_two_file_searches | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- A_native_qwen3 | M1_two_file_searches | Run 2 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll search for files containing 'useState' in src/components and 'useEffect' in src/hooks.\n\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- A_native_qwen3 | M1_two_file_searches | Run 3 ---
+Expected: 2 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll search for files containing 'useState' in the src/components directory and 'useEffect' in the src/hooks directory.\n\n<tools>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tools>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- A_native_qwen3 | M1_two_file_searches | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks.\n\nFirst, let me search for files containing 'useState' in the src/components directory:\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- A_native_qwen3 | M1_two_file_searches | Run 5 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- A_native_qwen3 | M2_file_and_web | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- A_native_qwen3 | M2_file_and_web | Run 2 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- A_native_qwen3 | M2_file_and_web | Run 3 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- A_native_qwen3 | M2_file_and_web | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- A_native_qwen3 | M2_file_and_web | Run 5 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- A_native_qwen3 | M3_three_calls | Run 1 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- A_native_qwen3 | M3_three_calls | Run 2 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in the project, and search for information about Kotlin TODO vs FIXME conventions.\n\nFirst, let's search for files containing 'TODO':\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- A_native_qwen3 | M3_three_calls | Run 3 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- A_native_qwen3 | M3_three_calls | Run 4 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in the project, and search for Kotlin conventions regarding these annotations.\n\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- A_native_qwen3 | M3_three_calls | Run 5 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in the project, and search for information about Kotlin TODO vs FIXME conventions.\n\nFirst, let me search for files containing 'TODO':\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- C_xml_terse | M1_two_file_searches | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- C_xml_terse | M1_two_file_searches | Run 2 ---
+Expected: 2 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks.\n\nLet me search for 'useState' in the src/components directory first:\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>
+
+--- C_xml_terse | M1_two_file_searches | Run 3 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks. Let me search for these patterns.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- C_xml_terse | M1_two_file_searches | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- C_xml_terse | M1_two_file_searches | Run 5 ---
+Expected: 2 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks.\n\nLet me search for files containing 'useState' in the src/components directory:\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>
+
+--- C_xml_terse | M2_file_and_web | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated", "path": "."}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated","path":"."}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- C_xml_terse | M2_file_and_web | Run 2 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated", "path": "."}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated","path":"."}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- C_xml_terse | M2_file_and_web | Run 3 ---
+Expected: 2 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated", "path": "."}}
+Raw: I'll help you search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\nFirst, let me search for files containing 'deprecated':\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated","path":"."}}</tool_call>
+
+--- C_xml_terse | M2_file_and_web | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated", "path": "."}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated","path":"."}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- C_xml_terse | M2_file_and_web | Run 5 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated", "path": "."}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated","path":"."}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- C_xml_terse | M3_three_calls | Run 1 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO", "path": "."}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for information about Kotlin conventions for these annotations.\n\nFirst, let me search for files containing 'TODO' in your project:\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}<tool_call>
+
+--- C_xml_terse | M3_three_calls | Run 2 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO", "path": "."}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for information about Kotlin conventions for these annotations.\n\nFirst, let's search for files containing 'TODO' in your project:\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}</tool_call>
+
+--- C_xml_terse | M3_three_calls | Run 3 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO", "path": "."}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for information about Kotlin TODO vs FIXME conventions.\n\nFirst, let's search for files containing 'TODO' in your project:\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}</tool_call>
+
+--- C_xml_terse | M3_three_calls | Run 4 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO", "path": "."}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for information about Kotlin TODO vs FIXME conventions.\n\nFirst, let me search for files containing 'TODO' in your project:\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}</tool_call>
+
+--- C_xml_terse | M3_three_calls | Run 5 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO", "path": "."}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for information about Kotlin conventions for these markers.\n\nFirst, let me search for files containing 'TODO' in your project:\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}</tool_call>
+
+--- F_json_compact | M1_two_file_searches | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks. Let me search for these files using the FileSearch tool.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- F_json_compact | M1_two_file_searches | Run 2 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks. Let me search for these files using the available tools.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- F_json_compact | M1_two_file_searches | Run 3 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks. Let me search for these patterns.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- F_json_compact | M1_two_file_searches | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks. Let me search for these patterns in the specified directories.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}<tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- F_json_compact | M1_two_file_searches | Run 5 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: I'll help you find files containing 'useState' in src/components and 'useEffect' in src/hooks. Let me search for these patterns.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"useState","path":"src/components"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"useEffect","path":"src/hooks"}}</tool_call>
+
+--- F_json_compact | M2_file_and_web | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated"}}<tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- F_json_compact | M2_file_and_web | Run 2 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated"}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- F_json_compact | M2_file_and_web | Run 3 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated"}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- F_json_compact | M2_file_and_web | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated"}}<tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- F_json_compact | M2_file_and_web | Run 5 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: I'll search for files containing 'deprecated' in the project and also search the web for React useEffect cleanup best practices.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"deprecated"}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"React useEffect cleanup best practices"}}</tool_call>
+
+--- F_json_compact | M3_three_calls | Run 1 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for Kotlin conventions regarding these markers.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO"}}<tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"FIXME"}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"Kotlin TODO vs FIXME conventions"}}</tool_call>
+
+--- F_json_compact | M3_three_calls | Run 2 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO", "path": "."}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME", "path": "."}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for Kotlin conventions regarding these markers.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO","path":"."}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"FIXME","path":"."}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"Kotlin TODO vs FIXME conventions"}}</tool_call>
+
+--- F_json_compact | M3_three_calls | Run 3 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for Kotlin conventions regarding these annotations.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO"}}</tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"FIXME"}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"Kotlin TODO vs FIXME conventions"}}</tool_call>
+
+--- F_json_compact | M3_three_calls | Run 4 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for Kotlin conventions regarding these annotations.\n\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO"}}<tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"FIXME"}}</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"Kotlin TODO vs FIXME conventions"}}</tool_call>
+
+--- F_json_compact | M3_three_calls | Run 5 ---
+Expected: 3 | Found: 1 | Matched: 1
+Parsed calls:
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: I'll help you find files with 'TODO' and 'FIXME' in your project, and search for Kotlin conventions regarding these markers.\n\nFirst, let me search for files containing 'TODO' in your project:\n<tool_call>{"name":"FileSearch","arguments":{"query":"TODO"}}\n<tool_call>\n<tool_call>{"name":"FileSearch","arguments":{"query":"FIXME"}}\n</tool_call>\n<tool_call>{"name":"WebSearch","arguments":{"query":"Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- G_plaintext | M1_two_file_searches | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- G_plaintext | M1_two_file_searches | Run 2 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- G_plaintext | M1_two_file_searches | Run 3 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- G_plaintext | M1_two_file_searches | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- G_plaintext | M1_two_file_searches | Run 5 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}
+  {"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "useState", "path": "src/components"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "useEffect", "path": "src/hooks"}}\n</tool_call>
+
+--- G_plaintext | M2_file_and_web | Run 1 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- G_plaintext | M2_file_and_web | Run 2 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- G_plaintext | M2_file_and_web | Run 3 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- G_plaintext | M2_file_and_web | Run 4 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- G_plaintext | M2_file_and_web | Run 5 ---
+Expected: 2 | Found: 2 | Matched: 2
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "deprecated"}}
+  {"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "deprecated"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "React useEffect cleanup best practices"}}\n</tool_call>
+
+--- G_plaintext | M3_three_calls | Run 1 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- G_plaintext | M3_three_calls | Run 2 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- G_plaintext | M3_three_calls | Run 3 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- G_plaintext | M3_three_calls | Run 4 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>
+
+--- G_plaintext | M3_three_calls | Run 5 ---
+Expected: 3 | Found: 3 | Matched: 3
+Parsed calls:
+  {"name": "FileSearch", "arguments": {"query": "TODO"}}
+  {"name": "FileSearch", "arguments": {"query": "FIXME"}}
+  {"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}
+Raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "TODO"}}\n</tool_call>\n<tool_call>\n{"name": "FileSearch", "arguments": {"query": "FIXME"}}\n</tool_call>\n<tool_call>\n{"name": "WebSearch", "arguments": {"query": "Kotlin TODO vs FIXME conventions"}}\n</tool_call>

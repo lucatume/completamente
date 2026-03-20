@@ -1,0 +1,461 @@
+Order 89 + Tool Calling Integration — Detailed Results
+Model: Qwen3-Coder-30B-A3B-Instruct @ http://localhost:8017
+Date: 2026-03-20 11:53
+======================================================================
+
+PHASE 1 SUMMARY
+--------------------------------------------------
+  T1_find_method_signature: {"type": "tool", "called": 5, "correct_tool": 5, "query_match": 5, "total": 5}
+  T2_web_search_format: {"type": "tool", "called": 0, "correct_tool": 0, "query_match": 0, "total": 5}
+  T3_find_error_pattern: {"type": "tool", "called": 5, "correct_tool": 5, "query_match": 5, "total": 5}
+  T4_web_search_pattern: {"type": "tool", "called": 2, "correct_tool": 2, "query_match": 2, "total": 5}
+  T5_find_api_method: {"type": "tool", "called": 5, "correct_tool": 5, "query_match": 5, "total": 5}
+  C1_pure_syntax: {"type": "control", "no_tool": 5, "has_code": 5, "total": 5}
+  C2_null_safety: {"type": "control", "no_tool": 4, "has_code": 4, "total": 5}
+
+PHASE 2 SUMMARY
+--------------------------------------------------
+  T1_find_method_signature: {"has_code": 0, "perfect": 0, "avg_match": 0.0, "max_total": 0, "total": 5}
+  T2_web_search_format: {"has_code": 5, "perfect": 5, "avg_match": 2.0, "max_total": 2, "total": 5}
+  T3_find_error_pattern: {"has_code": 0, "perfect": 0, "avg_match": 0.0, "max_total": 0, "total": 5}
+  T4_web_search_pattern: {"has_code": 0, "perfect": 0, "avg_match": 0.0, "max_total": 0, "total": 5}
+  T5_find_api_method: {"has_code": 0, "perfect": 0, "avg_match": 0.0, "max_total": 0, "total": 5}
+
+
+DETAILED LOG
+======================================================================
+
+--- Phase 1 | T1_find_method_signature | Run 1 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T1_find_method_signature | Run 2 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T1_find_method_signature | Run 3 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T1_find_method_signature | Run 4 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T1_find_method_signature | Run 5 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "UserService", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T2_web_search_format | Run 1 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val instant = date.toInstant()\n        val zonedDateTime = instant.atZone(ZoneId.systemDefault())\n        return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n    }\n```
+  calls: []
+
+--- Phase 1 | T2_web_search_format | Run 2 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val instant = date.toInstant()\n        val zonedDateTime = instant.atZone(ZoneId.systemDefault())\n        return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n    }\n```
+  calls: []
+
+--- Phase 1 | T2_web_search_format | Run 3 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val instant = date.toInstant()\n        val zonedDateTime = instant.atZone(ZoneId.systemDefault())\n        return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n    }\n```
+  calls: []
+
+--- Phase 1 | T2_web_search_format | Run 4 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val instant = date.toInstant()\n        val zonedDateTime = instant.atZone(ZoneId.systemDefault())\n        return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n    }\n```
+  calls: []
+
+--- Phase 1 | T2_web_search_format | Run 5 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val instant = date.toInstant()\n        val zonedDateTime = instant.atZone(ZoneId.systemDefault())\n        return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n    }\n```
+  calls: []
+
+--- Phase 1 | T3_find_error_pattern | Run 1 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T3_find_error_pattern | Run 2 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T3_find_error_pattern | Run 3 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T3_find_error_pattern | Run 4 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T3_find_error_pattern | Run 5 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "OrderValidator", "path": "src/main/kotlin/com/example/app/service"}}]
+
+--- Phase 1 | T4_web_search_pattern | Run 1 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun fetchData(url: String): String {\n        val request = HttpRequest.newBuilder().uri(URI(url)).build()\n        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())\n        return response.body()\n    }\n```
+  calls: []
+
+--- Phase 1 | T4_web_search_pattern | Run 2 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun fetchData(url: String): String {\n        val request = HttpRequest.newBuilder().uri(URI(url)).build()\n        var lastException: Exception? = null\n        var delay = 1000L // Start with 1 second\n        \n        repeat(3) { attempt ->\n            try {\n                val 
+  calls: []
+
+--- Phase 1 | T4_web_search_pattern | Run 3 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "kotlin exponential backoff retry httpclient"}}\n</tool_call>
+  calls: [{"name": "WebSearch", "arguments": {"query": "kotlin exponential backoff retry httpclient"}}]
+
+--- Phase 1 | T4_web_search_pattern | Run 4 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "WebSearch", "arguments": {"query": "kotlin exponential backoff retry httpclient"}}\n</tool_call>
+  calls: [{"name": "WebSearch", "arguments": {"query": "kotlin exponential backoff retry httpclient"}}]
+
+--- Phase 1 | T4_web_search_pattern | Run 5 ---
+  called_tool: False
+  correct_tool: False
+  query_match: False
+  raw: ```kotlin\n    fun fetchData(url: String): String {\n        val request = HttpRequest.newBuilder().uri(URI(url)).build()\n        var lastException: Exception? = null\n        var delay = 1000L // Start with 1 second\n        \n        repeat(3) { attempt ->\n            try {\n                val 
+  calls: []
+
+--- Phase 1 | T5_find_api_method | Run 1 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}]
+
+--- Phase 1 | T5_find_api_method | Run 2 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway", "path": "src/main/kotlin/com/example/app/service/OrderService.kt"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "PaymentGateway", "path": "src/main/kotlin/com/example/app/service/OrderService.kt"}}]
+
+--- Phase 1 | T5_find_api_method | Run 3 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway", "case_sensitive": true}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "PaymentGateway", "case_sensitive": true}}]
+
+--- Phase 1 | T5_find_api_method | Run 4 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}]
+
+--- Phase 1 | T5_find_api_method | Run 5 ---
+  called_tool: True
+  correct_tool: True
+  query_match: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  calls: [{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}]
+
+--- Phase 1 | C1_pure_syntax | Run 1 ---
+  called_tool: False
+  has_code: True
+  code_matches: 1
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    val results = mutableListOf<Result>()\n    when (items[0].type) {\n        "A" -> results.add(handleTypeA(items[0]))\n        "B" -> results.add(handleTypeB(items[0]))\n        "C" -> results.add(handleTypeC(items[0]))\n        else
+
+--- Phase 1 | C1_pure_syntax | Run 2 ---
+  called_tool: False
+  has_code: True
+  code_matches: 1
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    val results = mutableListOf<Result>()\n    when (items[0].type) {\n        "A" -> results.add(handleTypeA(items[0]))\n        "B" -> results.add(handleTypeB(items[0]))\n        "C" -> results.add(handleTypeC(items[0]))\n        else
+
+--- Phase 1 | C1_pure_syntax | Run 3 ---
+  called_tool: False
+  has_code: True
+  code_matches: 1
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    val results = mutableListOf<Result>()\n    when (items[0].type) {\n        "A" -> results.add(handleTypeA(items[0]))\n        "B" -> results.add(handleTypeB(items[0]))\n        "C" -> results.add(handleTypeC(items[0]))\n        else
+
+--- Phase 1 | C1_pure_syntax | Run 4 ---
+  called_tool: False
+  has_code: True
+  code_matches: 1
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    val results = mutableListOf<Result>()\n    when (items[0].type) {\n        "A" -> results.add(handleTypeA(items[0]))\n        "B" -> results.add(handleTypeB(items[0]))\n        "C" -> results.add(handleTypeC(items[0]))\n        else
+
+--- Phase 1 | C1_pure_syntax | Run 5 ---
+  called_tool: False
+  has_code: True
+  code_matches: 1
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    val results = mutableListOf<Result>()\n    when (items[0].type) {\n        "A" -> results.add(handleTypeA(items[0]))\n        "B" -> results.add(handleTypeB(items[0]))\n        "C" -> results.add(handleTypeC(items[0]))\n        else
+
+--- Phase 1 | C2_null_safety | Run 1 ---
+  called_tool: False
+  has_code: True
+  code_matches: 2
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    if (items == null || items.isEmpty()) {\n        return emptyList()\n    }\n    val results = mutableListOf<Result>()\n    if (items[0].type == "A") {\n        results.add(handleTypeA(items[0]))\n    } else if (items[0].type == "B")
+
+--- Phase 1 | C2_null_safety | Run 2 ---
+  called_tool: False
+  has_code: True
+  code_matches: 1
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    val results = mutableListOf<Result>()\n    if (items.isNotEmpty() && items[0].type == "A") {\n        results.add(handleTypeA(items[0]))\n    } else if (items.isNotEmpty() && items[0].type == "B") {\n        results.add(handleTypeB(
+
+--- Phase 1 | C2_null_safety | Run 3 ---
+  called_tool: False
+  has_code: True
+  code_matches: 2
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    if (items == null || items.isEmpty()) {\n        return emptyList()\n    }\n    val results = mutableListOf<Result>()\n    if (items[0].type == "A") {\n        results.add(handleTypeA(items[0]))\n    } else if (items[0].type == "B")
+
+--- Phase 1 | C2_null_safety | Run 4 ---
+  called_tool: True
+  has_code: False
+  code_matches: 0
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "fun processItems", "path": "src/main/kotlin/com/example/app/Processor.kt"}}\n</tool_call>
+
+--- Phase 1 | C2_null_safety | Run 5 ---
+  called_tool: False
+  has_code: True
+  code_matches: 2
+  raw: ```kotlin\nfun processItems(items: List<Item>): List<Result> {\n    if (items == null || items.isEmpty()) {\n        return emptyList()\n    }\n    val results = mutableListOf<Result>()\n    if (items[0].type == "A") {\n        results.add(handleTypeA(items[0]))\n    } else if (items[0].type == "B")
+
+--- Phase 2 | T1_find_method_signature | Run 1 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "GetMapping"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T1_find_method_signature | Run 2 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "GetMapping"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T1_find_method_signature | Run 3 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "GetMapping"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T1_find_method_signature | Run 4 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "GetMapping"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T1_find_method_signature | Run 5 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "GetMapping"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T2_web_search_format | Run 1 ---
+  has_code: True
+  code_matches: 2
+  code_total: 2
+  called_tool_again: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }\n```
+  code: fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }
+
+--- Phase 2 | T2_web_search_format | Run 2 ---
+  has_code: True
+  code_matches: 2
+  code_total: 2
+  called_tool_again: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }\n```
+  code: fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }
+
+--- Phase 2 | T2_web_search_format | Run 3 ---
+  has_code: True
+  code_matches: 2
+  code_total: 2
+  called_tool_again: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }\n```
+  code: fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }
+
+--- Phase 2 | T2_web_search_format | Run 4 ---
+  has_code: True
+  code_matches: 2
+  code_total: 2
+  called_tool_again: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }\n```
+  code: fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }
+
+--- Phase 2 | T2_web_search_format | Run 5 ---
+  has_code: True
+  code_matches: 2
+  code_total: 2
+  called_tool_again: False
+  raw: ```kotlin\n    fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }\n```
+  code: fun formatTimestamp(date: Date): String {\n        val formatted = date.toInstant().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)\n        return formatted\n    }
+
+--- Phase 2 | T3_find_error_pattern | Run 1 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentService"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T3_find_error_pattern | Run 2 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentService"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T3_find_error_pattern | Run 3 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentService"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T3_find_error_pattern | Run 4 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentService"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T3_find_error_pattern | Run 5 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentService"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T4_web_search_pattern | Run 1 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "HttpClient send retry", "path": "src/main/kotlin/com/example/app/client"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T4_web_search_pattern | Run 2 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "HttpClient", "path": "src/main/kotlin/com/example/app/client"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T4_web_search_pattern | Run 3 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "HttpClient send retry"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T4_web_search_pattern | Run 4 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "HttpClient", "path": "src/main/kotlin/com/example/app/client"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T4_web_search_pattern | Run 5 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "HttpClient send"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T5_find_api_method | Run 1 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T5_find_api_method | Run 2 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T5_find_api_method | Run 3 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T5_find_api_method | Run 4 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  code: None
+
+--- Phase 2 | T5_find_api_method | Run 5 ---
+  has_code: False
+  code_matches: 0
+  code_total: 0
+  called_tool_again: True
+  raw: <tool_call>\n{"name": "FileSearch", "arguments": {"query": "PaymentGateway"}}\n</tool_call>
+  code: None
