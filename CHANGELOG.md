@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-03-20
+
 ### Changed
 - Order 89: replaced Claude Code shell-command backend with direct HTTP calls to a local
   llama.cpp `/completion` endpoint. The prompt structure has been optimized for
@@ -20,15 +22,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   are now user-configurable in settings, defaulting to Qwen3-Coder recommended values.
 - Order 89 server URL is now a separate setting (default: `http://127.0.0.1:8017`),
   independent of the FIM completions server.
-- FIM ghost text gradient updated from neon pink→electric cyan to neon pink→violet.
+- Order 89 status display uses editor-scheme colors instead of hardcoded neon pink/electric
+  blue gradient; the "Executing..." line uses the hyperlink color, prompt lines use the
+  default foreground.
+- Order 89 dialog themed with editor-derived colors and wider padding.
+- Order 89 keyboard shortcut changed to `Ctrl+Alt+8` (`Opt+Cmd+8` on macOS).
+- FIM completions rewritten to use the llama.cpp `/infill` endpoint directly.
+- FIM completions now trim leading/trailing whitespace and reindent suggestions to match
+  project code style.
 
 ### Removed
 - Order 89 shell command setting (`order89Command`) and `{{prompt_file}}` template mechanism.
 - Order 89 temp file creation for prompt delivery.
 - Claude Code dependency for Order 89.
+- Previous FIM/NEP completion feature (replaced by `/infill`-based FIM).
 
 ### Fixed
 - FIM suggestions now only appear in main editor windows (no popups, diffs, or tool windows).
+- Order 89 status text no longer reappears on undo.
+- Order 89 status display undo suppression hardened with `UndoUtil.disableUndoIn`.
 
 ## [0.0.3] - 2026-03-12
 
