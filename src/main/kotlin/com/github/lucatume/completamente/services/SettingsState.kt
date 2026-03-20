@@ -1,5 +1,6 @@
 package com.github.lucatume.completamente.services
 
+import com.github.lucatume.completamente.order89.ToolUsageMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -31,6 +32,8 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     var order89TopK: Int = 20
     var order89RepeatPenalty: Double = 1.05
     var order89NPredict: Int = 1024
+    var order89ToolUsage: String = "OFF"
+    var order89MaxToolRounds: Int = 3
 
     override fun getState(): SettingsState = this
 
@@ -51,7 +54,9 @@ class SettingsState : PersistentStateComponent<SettingsState> {
         order89TopP = order89TopP,
         order89TopK = order89TopK,
         order89RepeatPenalty = order89RepeatPenalty,
-        order89NPredict = order89NPredict
+        order89NPredict = order89NPredict,
+        order89ToolUsage = try { ToolUsageMode.valueOf(order89ToolUsage) } catch (_: Exception) { ToolUsageMode.OFF },
+        order89MaxToolRounds = order89MaxToolRounds
     )
 
     companion object {

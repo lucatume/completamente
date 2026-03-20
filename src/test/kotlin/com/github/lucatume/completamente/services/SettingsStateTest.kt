@@ -1,6 +1,7 @@
 package com.github.lucatume.completamente.services
 
 import com.github.lucatume.completamente.BaseCompletionTest
+import com.github.lucatume.completamente.order89.ToolUsageMode
 
 class SettingsStateTest : BaseCompletionTest() {
 
@@ -172,6 +173,8 @@ class SettingsStateTest : BaseCompletionTest() {
         state.ringChunkSize = 32
         state.maxQueuedChunks = 2
         state.order89ServerUrl = "http://order89:8017"
+        state.order89ToolUsage = "MANUAL"
+        state.order89MaxToolRounds = 5
 
         val settings = state.toSettings()
 
@@ -183,6 +186,8 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals(32, settings.ringChunkSize)
         assertEquals(2, settings.maxQueuedChunks)
         assertEquals("http://order89:8017", settings.order89ServerUrl)
+        assertEquals(ToolUsageMode.MANUAL, settings.order89ToolUsage)
+        assertEquals(5, settings.order89MaxToolRounds)
     }
 
     fun testLoadStateCopiesAllFields() {
@@ -196,6 +201,8 @@ class SettingsStateTest : BaseCompletionTest() {
         source.ringChunkSize = 200
         source.maxQueuedChunks = 50
         source.order89ServerUrl = "http://custom:8017"
+        source.order89ToolUsage = "AUTO"
+        source.order89MaxToolRounds = 7
 
         state.loadState(source)
 
@@ -207,5 +214,61 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals(200, state.ringChunkSize)
         assertEquals(50, state.maxQueuedChunks)
         assertEquals("http://custom:8017", state.order89ServerUrl)
+        assertEquals("AUTO", state.order89ToolUsage)
+        assertEquals(7, state.order89MaxToolRounds)
+    }
+
+    // -- Tool usage settings tests --
+
+    fun testToolUsageDefaultIsOff() {
+        val state = SettingsState()
+        val settings = state.toSettings()
+        assertEquals(ToolUsageMode.OFF, settings.order89ToolUsage)
+    }
+
+    fun testToolUsageManualRoundTrips() {
+        val state = SettingsState()
+        state.order89ToolUsage = "MANUAL"
+        val settings = state.toSettings()
+        assertEquals(ToolUsageMode.MANUAL, settings.order89ToolUsage)
+    }
+
+    fun testToolUsageAutoRoundTrips() {
+        val state = SettingsState()
+        state.order89ToolUsage = "AUTO"
+        val settings = state.toSettings()
+        assertEquals(ToolUsageMode.AUTO, settings.order89ToolUsage)
+    }
+
+    fun testToolUsageInvalidStringFallsBackToOff() {
+        val state = SettingsState()
+        state.order89ToolUsage = "INVALID_VALUE"
+        val settings = state.toSettings()
+        assertEquals(ToolUsageMode.OFF, settings.order89ToolUsage)
+    }
+
+    fun testMaxToolRoundsDefault() {
+        val state = SettingsState()
+        val settings = state.toSettings()
+        assertEquals(3, settings.order89MaxToolRounds)
+    }
+
+    fun testMaxToolRoundsCustomValueRoundTrips() {
+        val state = SettingsState()
+        state.order89MaxToolRounds = 5
+        val settings = state.toSettings()
+        assertEquals(5, settings.order89MaxToolRounds)
+    }
+
+    fun testLoadStateCopiesToolFields() {
+        val state = SettingsState()
+        val source = SettingsState()
+        source.order89ToolUsage = "MANUAL"
+        source.order89MaxToolRounds = 10
+
+        state.loadState(source)
+
+        assertEquals("MANUAL", state.order89ToolUsage)
+        assertEquals(10, state.order89MaxToolRounds)
     }
 }

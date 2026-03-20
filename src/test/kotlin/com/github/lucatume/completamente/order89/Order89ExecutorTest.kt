@@ -1,6 +1,7 @@
 package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.BaseCompletionTest
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -477,5 +478,117 @@ class Order89ExecutorTest : BaseCompletionTest() {
 
     fun testLooksLikeCodeEmptyString() {
         assertFalse(Order89Executor.looksLikeCode(""))
+    }
+
+    // -- buildChatPrompt tests --
+
+    fun testBuildChatPromptPhase1ContainsChatTokens() {
+        val request = makeRequest(prompt = "add a method", fileContent = "class Foo {}", selectionStart = 10, selectionEnd = 10)
+        val result = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = true)
+        assertTrue(result.contains("<|im_start|>system"))
+        assertTrue(result.contains("<|im_end|>"))
+        assertTrue(result.contains("<|im_start|>user"))
+        assertTrue(result.contains("<|im_start|>assistant"))
+    }
+
+    fun testBuildChatPromptPhase1ContainsToolSpec() {
+        val request = makeRequest(prompt = "add a method", fileContent = "class Foo {}", selectionStart = 10, selectionEnd = 10)
+        val result = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = true)
+        assertTrue(result.contains("FileSearch"))
+        assertTrue(result.contains("WebSearch"))
+        assertTrue(result.contains("<tool_call>"))
+    }
+
+    fun testBuildChatPromptPhase1ContainsToolCallingRule() {
+        val request = makeRequest(prompt = "add a method", fileContent = "class Foo {}", selectionStart = 10, selectionEnd = 10)
+        val result = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = true)
+        assertTrue(result.contains("call the appropriate tool FIRST"))
+    }
+
+    fun testBuildChatPromptPhase1ContainsAllSections() {
+        val request = makeRequest(
+            prompt = "add a method", fileContent = "class Foo {}", language = "kotlin",
+            filePath = "/src/Foo.kt", selectionStart = 10, selectionEnd = 10
+        )
+        val result = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = true)
+        assertTrue(result.contains("<Order89Rules>"))
+        assertTrue(result.contains("<Order89Context>"))
+        assertTrue(result.contains("<Order89Instruction>"))
+        assertTrue(result.contains("<Order89FileContent>"))
+        assertTrue(result.contains("Language: kotlin"))
+        assertTrue(result.contains("File: /src/Foo.kt"))
+    }
+
+    fun testBuildChatPromptPhase2NoToolSpec() {
+        val request = makeRequest(prompt = "add a method", fileContent = "class Foo {}", selectionStart = 10, selectionEnd = 10)
+        val result = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = false)
+        assertFalse(result.contains("To use a tool, respond with:"))
+        assertFalse(result.contains("call the appropriate tool FIRST"))
+    }
+
+    fun testBuildChatPromptPhase2ContainsReferenceCode() {
+        val request = makeRequest(prompt = "add a method", fileContent = "class Foo {}", selectionStart = 10, selectionEnd = 10)
+        val toolResults = listOf(
+            ToolResult(
+                ToolCall("FileSearch", mapOf("query" to JsonPrimitive("processPayment"))),
+                "src/Pay.kt:10: fun processPayment()"
+            )
+        )
+        val result = Order89Executor.buildChatPrompt(request, toolResults, includeTools = false)
+        assertTrue(result.contains("<ReferenceCode source=\"FileSearch: processPayment\">"))
+        assertTrue(result.contains("src/Pay.kt:10: fun processPayment()"))
+        assertTrue(result.contains("</ReferenceCode>"))
+    }
+
+    fun testBuildChatPromptPhase2MultipleResults() {
+        val request = makeRequest(prompt = "test", fileContent = "code", selectionStart = 0, selectionEnd = 4)
+        val toolResults = listOf(
+            ToolResult(ToolCall("FileSearch", mapOf("query" to JsonPrimitive("foo"))), "result1"),
+            ToolResult(ToolCall("FileSearch", mapOf("query" to JsonPrimitive("bar"))), "result2")
+        )
+        val result = Order89Executor.buildChatPrompt(request, toolResults, includeTools = false)
+        assertTrue(result.contains("<ReferenceCode source=\"FileSearch: foo\">"))
+        assertTrue(result.contains("<ReferenceCode source=\"FileSearch: bar\">"))
+    }
+
+    fun testBuildChatPromptPhase2EmptyResultsNoReferenceCode() {
+        val request = makeRequest(prompt = "test", fileContent = "code", selectionStart = 0, selectionEnd = 4)
+        val result = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = false)
+        assertFalse(result.contains("<ReferenceCode"))
+    }
+
+    fun testBuildChatPromptContextChunksAppearInBothPhases() {
+        val chunks = listOf(ContextChunk("src/Helper.kt", "class Helper {}"))
+        val request = makeRequest(prompt = "test", fileContent = "code", selectionStart = 0, selectionEnd = 4, contextChunks = chunks)
+        val phase1 = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = true)
+        val phase2 = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = false)
+        assertTrue(phase1.contains("<Order89ContextFile path=\"src/Helper.kt\">"))
+        assertTrue(phase2.contains("<Order89ContextFile path=\"src/Helper.kt\">"))
+    }
+
+    // -- buildChatRequestBody tests --
+
+    fun testBuildChatRequestBodyHasChatStopSequences() {
+        val settings = com.github.lucatume.completamente.services.Settings()
+        val result = Order89Executor.buildChatRequestBody("test", settings)
+        val json = kotlinx.serialization.json.Json.parseToJsonElement(result).jsonObject
+        val stopArray = json["stop"]!!.jsonArray
+        assertEquals(2, stopArray.size)
+        assertEquals("<|im_end|>", stopArray[0].jsonPrimitive.content)
+        assertEquals("<|im_start|>", stopArray[1].jsonPrimitive.content)
+    }
+
+    fun testBuildChatRequestBodyPreservesParameters() {
+        val settings = com.github.lucatume.completamente.services.Settings(
+            order89Temperature = 0.5,
+            order89TopP = 0.9,
+            order89TopK = 30
+        )
+        val result = Order89Executor.buildChatRequestBody("test prompt", settings)
+        val json = kotlinx.serialization.json.Json.parseToJsonElement(result).jsonObject
+        assertEquals("test prompt", json["prompt"]!!.jsonPrimitive.content)
+        assertEquals(0.5, json["temperature"]!!.jsonPrimitive.content.toDouble(), 0.001)
+        assertEquals(0.9, json["top_p"]!!.jsonPrimitive.content.toDouble(), 0.001)
+        assertEquals("30", json["top_k"]!!.jsonPrimitive.content)
     }
 }

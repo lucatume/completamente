@@ -117,3 +117,14 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 67 | 67-output-order89-e2-ablation.txt | output | Results from harness 66: pre-file reminder is the key position — terse_reminder (49 chars) achieves perfect 13.0 |
 | 68 | 68-design-order89-local-model.md | design | Replace Claude Code with local llama.cpp model for Order 89: prompt structure, HTTP client, settings, context assembly |
 | 69 | 69-plan-order89-local-model.md | plan | 7-step implementation plan for Order 89 local model: settings, UI, executor rewrite, action update, tests, cleanup |
+| 70 | 70-harness-tool-format-comparison.py | harness | Test 8 tool specification formats (native Qwen3, XML variants, JSON, markdown, plaintext) for token efficiency and correctness |
+| 71 | 71-output-tool-format-comparison.txt | output | Results from harness 70: G_plaintext (107 tok, 3.00/3) and F_json_compact (110 tok, 3.00/3) best balance of quality and terseness |
+| 72 | 72-harness-tool-format-multi-call.py | harness | Test multi-tool call capability: 2-call and 3-call prompts across top 4 formats |
+| 73 | 73-output-tool-format-multi-call.txt | output | Results from harness 72: G_plaintext perfect 15/15 multi-call, F_json_compact 12/15, C_xml_terse 7/15 |
+| 74 | 74-harness-order89-tool-integration.py | harness | Test tool calling within Order 89 prompts: Phase 1 (tool decision) and Phase 2 (code after result) |
+| 75 | 75-output-order89-tool-integration.txt | output | Results from harness 74: Phase 1 68% tool calling, Phase 2 20% — model loops calling more tools |
+| 76 | 76-harness-order89-tool-loop-fix.py | harness | Test 7 prompt structure variants to break the tool-calling loop after receiving results |
+| 77 | 77-output-order89-tool-loop-fix.txt | output | Results from harness 76: V6_two_system best (7/15), T3/T5 loop across all variants — model needs more context |
+| 78 | 78-harness-order89-tool-rich-results.py | harness | Test rich tool results + multi-turn + no-tools variants for complete Order 89 tool integration |
+| 79 | 79-output-order89-tool-rich-results.txt | output | Results from harness 78: V9_inline_no_tools perfect 15/15 at 527 tokens, V8_multi_round also 15/15 |
+| 80 | 80-design-order89-tool-usage.md | design | Order 89 tool usage: setting (off/manual/auto), two-phase execution, FileSearch/WebSearch, parallel calls |
