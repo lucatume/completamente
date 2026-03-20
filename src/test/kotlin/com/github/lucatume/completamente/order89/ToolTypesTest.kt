@@ -2,6 +2,9 @@ package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.BaseCompletionTest
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ToolTypesTest : BaseCompletionTest() {
 
@@ -160,15 +163,53 @@ And also:
         assertFalse(enabled)
     }
 
-    // -- ToolUsageMode tests --
+    // -- formatToolCallDisplay tests --
 
-    fun testToolUsageModeValuesCount() {
-        assertEquals(3, ToolUsageMode.entries.size)
+    fun testFormatToolCallDisplaySingleArg() {
+        val call = ToolCall("FileSearch", mapOf("query" to JsonPrimitive("TODO")))
+        assertEquals("FileSearch( query: \"TODO\")", formatToolCallDisplay(call))
     }
 
-    fun testToolUsageModeValueOfRoundTrip() {
-        for (mode in ToolUsageMode.entries) {
-            assertEquals(mode, ToolUsageMode.valueOf(mode.name))
-        }
+    fun testFormatToolCallDisplayMultipleArgs() {
+        val call = ToolCall("FileSearch", mapOf(
+            "query" to JsonPrimitive("TODO"),
+            "path" to JsonPrimitive("src/")
+        ))
+        assertEquals("FileSearch( query: \"TODO\", path: \"src/\")", formatToolCallDisplay(call))
+    }
+
+    fun testFormatToolCallDisplayNoArgs() {
+        val call = ToolCall("FileSearch", emptyMap())
+        assertEquals("FileSearch( )", formatToolCallDisplay(call))
+    }
+
+    fun testFormatToolCallDisplayWebSearch() {
+        val call = ToolCall("WebSearch", mapOf("query" to JsonPrimitive("kotlin sealed class")))
+        assertEquals("WebSearch( query: \"kotlin sealed class\")", formatToolCallDisplay(call))
+    }
+
+    fun testFormatToolCallDisplayNonPrimitiveObjectArg() {
+        val objArg = buildJsonObject { put("type", "kt") }
+        val call = ToolCall("FileSearch", mapOf("filters" to objArg))
+        assertEquals("FileSearch( filters: {\"type\":\"kt\"})", formatToolCallDisplay(call))
+    }
+
+    fun testFormatToolCallDisplayNonPrimitiveArrayArg() {
+        val arrArg = buildJsonArray { add(JsonPrimitive(1)); add(JsonPrimitive(2)) }
+        val call = ToolCall("FileSearch", mapOf("ids" to arrArg))
+        assertEquals("FileSearch( ids: [1,2])", formatToolCallDisplay(call))
+    }
+
+    fun testFormatToolCallDisplayNumericArg() {
+        val call = ToolCall("FileSearch", mapOf("limit" to JsonPrimitive(42)))
+        assertEquals("FileSearch( limit: 42)", formatToolCallDisplay(call))
+    }
+
+    fun testFormatToolCallDisplayBooleanArg() {
+        val call = ToolCall("FileSearch", mapOf(
+            "query" to JsonPrimitive("TODO"),
+            "case_sensitive" to JsonPrimitive(true)
+        ))
+        assertEquals("FileSearch( query: \"TODO\", case_sensitive: true)", formatToolCallDisplay(call))
     }
 }

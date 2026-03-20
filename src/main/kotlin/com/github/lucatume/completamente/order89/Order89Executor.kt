@@ -32,6 +32,9 @@ data class Order89Result(
     val output: String
 )
 
+internal fun escapeXmlAttr(value: String): String =
+    value.replace("&", "&amp;").replace("\"", "&quot;").replace("'", "&apos;").replace("<", "&lt;").replace(">", "&gt;")
+
 object Order89Executor {
 
     private val httpClient: HttpClient = HttpClient.newBuilder()
@@ -66,7 +69,7 @@ object Order89Executor {
             appendLine("the APIs and types available, so your generated code calls real methods with correct signatures.")
             for (chunk in request.contextChunks) {
                 appendLine()
-                appendLine("<Order89ContextFile path=\"${chunk.path}\">")
+                appendLine("<Order89ContextFile path=\"${escapeXmlAttr(chunk.path)}\">")
                 appendLine(chunk.content)
                 appendLine("</Order89ContextFile>")
             }
@@ -151,9 +154,10 @@ When you have gathered the information you need, produce your code output as spe
             // Inject tool results as ReferenceCode blocks (Phase 2)
             if (!includeTools && toolResults.isNotEmpty()) {
                 for (result in toolResults) {
-                    val source = "${result.call.name}: ${result.call.arguments["query"]?.let {
+                    val rawSource = "${result.call.name}: ${result.call.arguments["query"]?.let {
                         it.jsonPrimitive.content
                     } ?: ""}"
+                    val source = escapeXmlAttr(rawSource)
                     appendLine("<ReferenceCode source=\"$source\">")
                     appendLine(result.output)
                     appendLine("</ReferenceCode>")
@@ -166,7 +170,7 @@ When you have gathered the information you need, produce your code output as spe
             appendLine("the APIs and types available, so your generated code calls real methods with correct signatures.")
             for (chunk in request.contextChunks) {
                 appendLine()
-                appendLine("<Order89ContextFile path=\"${chunk.path}\">")
+                appendLine("<Order89ContextFile path=\"${escapeXmlAttr(chunk.path)}\">")
                 appendLine(chunk.content)
                 appendLine("</Order89ContextFile>")
             }
@@ -308,13 +312,13 @@ When you have gathered the information you need, produce your code output as spe
         settings: Settings,
         toolExecutor: (ToolCall) -> String,
         completionFn: (String, String) -> String,
-        onStatusUpdate: (String) -> Unit = {}
+        onStatusUpdate: (StatusUpdate) -> Unit = {}
     ): Order89Result {
         val maxRounds = settings.order89MaxToolRounds
         val allResults = mutableListOf<ToolResult>()
 
         for (round in 1..maxRounds) {
-            onStatusUpdate("Gathering info... (round $round/$maxRounds)")
+            onStatusUpdate(StatusUpdate.WaitingForModel)
 
             val prompt = buildChatPrompt(request, allResults, includeTools = true)
             val body = buildChatRequestBody(prompt, settings)
@@ -345,10 +349,10 @@ When you have gathered the information you need, produce your code output as spe
                 return Order89Result(success = true, output = cleaned)
             }
 
-            // Execute tool calls in parallel
+            // Show tool calls in status display, then execute in parallel
+            onStatusUpdate(StatusUpdate.ToolCalls(toolCalls))
             val futures = toolCalls.map { call ->
                 CompletableFuture.supplyAsync {
-                    onStatusUpdate("Searching: \"${call.arguments["query"]?.jsonPrimitive?.content ?: call.name}\"...")
                     try {
                         ToolResult(call, toolExecutor(call))
                     } catch (e: Exception) {
@@ -362,7 +366,7 @@ When you have gathered the information you need, produce your code output as spe
         }
 
         // Max rounds reached or all rounds done with results — Phase 2
-        onStatusUpdate("Generating code...")
+        onStatusUpdate(StatusUpdate.WaitingForModel)
         val phase2Prompt = buildChatPrompt(request, allResults, includeTools = false)
         val phase2Body = buildChatRequestBody(phase2Prompt, settings)
 

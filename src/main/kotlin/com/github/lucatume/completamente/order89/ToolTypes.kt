@@ -8,6 +8,23 @@ data class ToolCall(val name: String, val arguments: Map<String, JsonElement>)
 
 data class ToolResult(val call: ToolCall, val output: String)
 
+sealed class StatusUpdate {
+    data class ToolCalls(val calls: List<ToolCall>) : StatusUpdate()
+    object WaitingForModel : StatusUpdate()
+}
+
+fun formatToolCallDisplay(call: ToolCall): String {
+    val args = call.arguments.entries.joinToString(", ") { (k, v) ->
+        val display = when {
+            v is JsonPrimitive && v.isString -> "\"${v.content}\""
+            v is JsonPrimitive -> v.content
+            else -> v.toString()
+        }
+        "$k: $display"
+    }
+    return "${call.name}( $args)"
+}
+
 private val TOOL_CALL_REGEX = Regex("""<tool_call>\s*(\{.*?})\s*</tool_call>""", RegexOption.DOT_MATCHES_ALL)
 
 fun extractToolCalls(response: String): List<ToolCall> {
