@@ -104,8 +104,11 @@ object Order89Executor {
    Parameters: query (required, string), case_sensitive (optional, boolean, default false),
    path (optional, string, file or directory to search recursively)
 
-2. WebSearch — Searches the web.
-   Parameters: query (required, string)
+2. DocSearch — Searches installed documentation (Dash docsets).
+   Returns the text content of the top matching documentation pages.
+   Parameters: query (required, string),
+               docsets (optional, string, comma-separated: php, wordpress, wp,
+                        laravel, react, javascript, js, typescript, ts, node, nodejs, kotlin, kt)
 
 To use a tool, respond with:
 <tool_call>
@@ -114,8 +117,8 @@ To use a tool, respond with:
 
 When you have gathered the information you need, produce your code output as specified in the rules."""
 
-    private const val TOOL_CALLING_RULE = "- If you need information from project files or the web to correctly implement the instruction,\n" +
-        "  call the appropriate tool FIRST. Once you have the information, produce the code."
+    private const val TOOL_CALLING_RULE = "- If you need information from project files or API documentation to correctly implement the\n" +
+        "  instruction, call the appropriate tool FIRST. Once you have the information, produce the code."
 
     fun buildChatPrompt(
         request: Order89Request,

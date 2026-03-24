@@ -25,12 +25,12 @@ class ToolTypesTest : BaseCompletionTest() {
 {"name": "FileSearch", "arguments": {"query": "foo"}}
 </tool_call>
 <tool_call>
-{"name": "WebSearch", "arguments": {"query": "bar"}}
+{"name": "DocSearch", "arguments": {"query": "bar", "docsets": "php"}}
 </tool_call>"""
         val calls = extractToolCalls(response)
         assertEquals(2, calls.size)
         assertEquals("FileSearch", calls[0].name)
-        assertEquals("WebSearch", calls[1].name)
+        assertEquals("DocSearch", calls[1].name)
     }
 
     fun testExtractToolCallsNoCalls() {
@@ -79,14 +79,15 @@ And also:
         assertEquals(JsonPrimitive("src/"), calls[0].arguments["path"])
     }
 
-    fun testExtractToolCallsWebSearch() {
+    fun testExtractToolCallsDocSearch() {
         val response = """<tool_call>
-{"name": "WebSearch", "arguments": {"query": "kotlin coroutines tutorial"}}
+{"name": "DocSearch", "arguments": {"query": "add_action", "docsets": "wordpress"}}
 </tool_call>"""
         val calls = extractToolCalls(response)
         assertEquals(1, calls.size)
-        assertEquals("WebSearch", calls[0].name)
-        assertEquals(JsonPrimitive("kotlin coroutines tutorial"), calls[0].arguments["query"])
+        assertEquals("DocSearch", calls[0].name)
+        assertEquals(JsonPrimitive("add_action"), calls[0].arguments["query"])
+        assertEquals(JsonPrimitive("wordpress"), calls[0].arguments["docsets"])
     }
 
     fun testExtractToolCallsMissingName() {
@@ -183,9 +184,9 @@ And also:
         assertEquals("FileSearch( )", formatToolCallDisplay(call))
     }
 
-    fun testFormatToolCallDisplayWebSearch() {
-        val call = ToolCall("WebSearch", mapOf("query" to JsonPrimitive("kotlin sealed class")))
-        assertEquals("WebSearch( query: \"kotlin sealed class\")", formatToolCallDisplay(call))
+    fun testFormatToolCallDisplayDocSearch() {
+        val call = ToolCall("DocSearch", mapOf("query" to JsonPrimitive("add_action"), "docsets" to JsonPrimitive("wordpress")))
+        assertEquals("DocSearch( query: \"add_action\", docsets: \"wordpress\")", formatToolCallDisplay(call))
     }
 
     fun testFormatToolCallDisplayNonPrimitiveObjectArg() {

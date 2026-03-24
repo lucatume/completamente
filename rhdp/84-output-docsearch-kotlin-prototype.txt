@@ -1,0 +1,457 @@
+Dash API port: 49228
+Dash API healthy.
+
+Available docsets (21):
+  php -> ktfaytok
+  phpunit -> vkpwlhoq
+  wordpress -> ejiwzyca
+  javascript -> yezxscnj
+  react -> fvfuiahr
+  html -> gpkirwec
+  css -> ejfmkpdr
+  usercontribGNU_Make -> yzypxahj
+  bash -> xlddjktm
+  mysql -> zrdsdrsu
+  nodejs -> rbxvslqt
+  github -> ombgvlxn
+  markdown -> ftbwifzv
+  c -> cobxvdhp
+  sass -> lklrafri
+  jQuery -> ldbpwlts
+  sqlite -> fsrmrsbm
+  cpp -> smmsycor
+  usercontribKotlin -> ijasdglf
+  python -> egqadedg
+  laravel -> kssvzdke
+
+==================================================================
+ DocSearch: WordPress: add_action hook
+==================================================================
+query="add_action" docsets=wordpress
+
+[WordPress] add_action (Function)
+
+add_action() – Function 
+
+Skip to content 
+
+Handbook home > Article).
+-->
+
+WordPress.org 
+
+News 
+Showcase 
+Hosting 
+Extend 
+
+Themes 
+Plugins 
+Patterns 
+Blocks 
+Openverse ↗ ︎ 
+Learn 
+
+Learn WordPress 
+Documentation 
+Forums 
+Developers 
+WordPress.tv ↗ ︎ 
+Community 
+
+Make WordPress 
+Education 
+Photo Directory 
+Five for the Future 
+Events 
+Job Board ↗ ︎ 
+About 
+
+About WordPress 
+Enterprise 
+
+  [... 225 more lines truncated ...]
+
+==================================================================
+ DocSearch: PHP: array_map function
+==================================================================
+query="array_map" docsets=php
+
+[PHP] array_map (Function)
+
+array_map 
+
+update page now 
+
+Downloads 
+
+Documentation 
+
+Get Involved 
+
+Help 
+
+Search docs
+
+PHP 8.5.4 Released! 
+
+Getting Started 
+
+Introduction 
+
+A simple tutorial 
+
+Language Reference 
+
+Basic syntax 
+
+Types 
+
+Variables 
+
+Constants 
+
+Expressions 
+
+Operators 
+
+Control Structures 
+
+
+  [... 164 more lines truncated ...]
+
+==================================================================
+ DocSearch: Laravel: Route facade
+==================================================================
+query="Route::get" docsets=laravel
+
+[Laravel] get (Method)
+Illuminate\Support\Facades\Route
+
+Illuminate\Support\Facades\Route 
+
+Laravel 6.x 
+Laravel 7.x 
+Laravel 8.x 
+Laravel 9.x 
+Laravel 10.x 
+Laravel 11.x 
+Laravel 12.x 
+Laravel Dev 
+
+Toggle navigation 
+
+Laravel API 
+
+Versions  
+
+Laravel 6.x 
+
+Laravel 7.x 
+
+Laravel 8.x 
+
+Laravel 9.x 
+
+Laravel 10.x 
+
+Laravel 11.x 
+
+Laravel 12.x 
+
+Laravel Dev 
+
+Classes 
+
+Namespaces 
+
+
+  [... 531 more lines truncated ...]
+
+==================================================================
+ DocSearch: React: useState hook
+==================================================================
+query="useState" docsets=react
+
+[React] useState (Guide)
+
+useState 
+
+React 
+v 19.2 
+
+Search ⌘ Ctrl K 
+
+Learn 
+Reference 
+Community 
+Blog 
+
+react@19.2 
+
+Overview 
+
+Hooks 
+
+useActionState 
+
+useCallback 
+
+useContext 
+
+useDebugValue 
+
+useDeferredValue 
+
+useEffect 
+
+useEffectEvent 
+
+useId 
+
+useImperativeHandle 
+
+useInsertionEffect 
+
+
+  [... 565 more lines truncated ...]
+
+==================================================================
+ DocSearch: JavaScript: Promise.all
+==================================================================
+query="Promise.all" docsets=javascript
+
+[JavaScript] all (Method)
+Promise
+
+Promise.all() 
+
+Skip to main content 
+
+Skip to search 
+
+MDN 
+
+HTML 
+
+HTML: Markup language 
+
+HTML reference 
+
+Elements 
+
+Global attributes 
+
+Attributes 
+
+See all… 
+
+HTML guides 
+
+Responsive images 
+
+HTML cheatsheet 
+
+Date & time formats 
+
+See all… 
+
+Markup languages 
+
+SVG 
+
+MathML 
+
+  [... 688 more lines truncated ...]
+
+==================================================================
+ DocSearch: NodeJS: fs.readFile
+==================================================================
+query="fs.readFile" docsets=nodejs
+
+[Node.js] fs.readFileSync(path[, options]) (Method)
+
+File system 
+
+Skip to content 
+
+Node.js 
+About this documentation 
+Usage and example 
+Assertion testing 
+Asynchronous context tracking 
+Async hooks 
+Buffer 
+C++ addons 
+C/C++ addons with Node-API 
+C++ embedder API 
+Child processes 
+Cluster 
+Command-line options 
+Console 
+Crypto 
+Debugger 
+Deprecated APIs 
+Diagnostics Channel 
+DNS 
+Domain 
+Environment Variables 
+Errors 
+Events 
+File system 
+Globals 
+HTTP 
+HTTP/2 
+HTTPS 
+Inspector 
+Internationalization 
+Modules: CommonJS modules 
+Modules: ECMAScript modules 
+Modules: node:module API 
+Modules: Packages 
+
+  [... 299 more lines truncated ...]
+
+==================================================================
+ DocSearch: Cross-docset: Request class
+==================================================================
+query="Request" docsets=php,wordpress,laravel
+
+[PHP] request (Method)
+SolrClient
+
+SolrClient::request 
+
+update page now 
+
+Downloads 
+
+Documentation 
+
+Get Involved 
+
+Help 
+
+Search docs
+
+PHP 8.5.4 Released! 
+
+Getting Started 
+
+Introduction 
+
+A simple tutorial 
+
+Language Reference 
+
+Basic syntax 
+
+Types 
+
+Variables 
+
+Constants 
+
+Expressions 
+
+Operators 
+
+Control Structures 
+
+  [... 449 more lines truncated ...]
+
+==================================================================
+ DocSearch: TypeScript (via React+NodeJS alias)
+==================================================================
+query="TypeScript" docsets=ts
+
+[React] TypeScript with React Components - Using TypeScript (Section)
+
+Using TypeScript 
+
+React 
+v 19.2 
+
+Search ⌘ Ctrl K 
+
+Learn 
+Reference 
+Community 
+Blog 
+
+GET STARTED 
+
+Quick Start 
+
+Tutorial: Tic-Tac-Toe 
+
+Thinking in React 
+
+Installation 
+
+Creating a React App 
+
+Build a React App from Scratch 
+
+Add React to an Existing Project 
+
+Setup 
+
+Editor Setup 
+
+Using TypeScript 
+
+React Developer Tools 
+
+React Compiler 
+
+
+  [... 391 more lines truncated ...]
+
+==================================================================
+ TOOL SPEC (how it would appear in the model prompt)
+==================================================================
+3. DocSearch - Searches installed documentation (Dash docsets).
+   Returns the text content of the top matching documentation pages.
+   Parameters: query (required, string),
+               docsets (optional, string, comma-separated: php, wordpress, wp,
+                        laravel, react, javascript, js, typescript, ts, node, nodejs)
+
+   If docsets is omitted, searches all installed documentation.
+
+==================================================================
+ TOOL CALL EXAMPLE (what the model would emit)
+==================================================================
+<tool_call>
+{"name": "DocSearch", "arguments": {"query": "add_action", "docsets": "wordpress"}}
+</tool_call>
+
+==================================================================
+ INTEGRATION PATTERN (in Order89Action.kt)
+==================================================================
+"DocSearch" -> {
+    val query = call.arguments["query"]?.jsonPrimitive?.content ?: ""
+    val docsets = call.arguments["docsets"]?.jsonPrimitive?.content
+    DocSearchTool.execute(query, docsets)
+}
+
+==================================================================
+ SUMMARY
+==================================================================
+DocSearch pipeline:
+  1. Resolve docset aliases (e.g. "wp" -> "wordpress", "ts" -> "react"+"nodejs")
+  2. GET /docsets/list -> cache platform->identifier mapping
+  3. GET /search?query=<q>&docset_identifiers=<ids>&max_results=2
+  4. For each result: GET <load_url> -> strip HTML -> truncate to ~2000 chars
+  5. Format as "[Docset] Name (Type)\n<text content>" separated by ---
+
+Key design decisions:
+  - 2 results by default: enough context without flooding the model's token budget
+  - 2000 chars per result: ~500 tokens, so ~1000 tokens total for 2 results
+  - HTML stripping is regex-based (no jsoup dependency - project convention)
+  - Docset discovery is cached per DashClient instance (identifiers stable per session)
+  - Platform aliases let the model use natural names ("wp", "ts", "js")
+  - Falls back gracefully: unknown docset -> skip, no results -> clear message
+
+
+Output saved to: /Users/lucatume/repos/completamente/rhdp/84-output-docsearch-kotlin-prototype.txt

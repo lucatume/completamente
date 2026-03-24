@@ -76,7 +76,7 @@ class ToolOrchestrationTest : BaseCompletionTest() {
                 if (callCount == 1) {
                     fakeResponse(
                         "<tool_call>\n{\"name\": \"FileSearch\", \"arguments\": {\"query\": \"a\"}}\n</tool_call>\n" +
-                        "<tool_call>\n{\"name\": \"WebSearch\", \"arguments\": {\"query\": \"b\"}}\n</tool_call>"
+                        "<tool_call>\n{\"name\": \"DocSearch\", \"arguments\": {\"query\": \"b\", \"docsets\": \"php\"}}\n</tool_call>"
                     )
                 } else {
                     fakeResponse("```kotlin\nval x = 1\n```")
@@ -87,7 +87,7 @@ class ToolOrchestrationTest : BaseCompletionTest() {
         assertEquals(2, callCount)
         assertEquals(2, toolNames.size)
         assertTrue(toolNames.contains("FileSearch"))
-        assertTrue(toolNames.contains("WebSearch"))
+        assertTrue(toolNames.contains("DocSearch"))
     }
 
     fun testMultipleRoundsOfToolCalls() {

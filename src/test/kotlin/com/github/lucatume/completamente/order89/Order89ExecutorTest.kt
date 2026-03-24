@@ -495,7 +495,8 @@ class Order89ExecutorTest : BaseCompletionTest() {
         val request = makeRequest(prompt = "add a method", fileContent = "class Foo {}", selectionStart = 10, selectionEnd = 10)
         val result = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = true)
         assertTrue(result.contains("FileSearch"))
-        assertTrue(result.contains("WebSearch"))
+        assertTrue(result.contains("DocSearch"))
+        assertFalse(result.contains("WebSearch"))
         assertTrue(result.contains("<tool_call>"))
     }
 

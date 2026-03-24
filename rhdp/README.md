@@ -128,3 +128,9 @@ Sections consume the token budget in this order; later sections absorb pressure 
 | 78 | 78-harness-order89-tool-rich-results.py | harness | Test rich tool results + multi-turn + no-tools variants for complete Order 89 tool integration |
 | 79 | 79-output-order89-tool-rich-results.txt | output | Results from harness 78: V9_inline_no_tools perfect 15/15 at 527 tokens, V8_multi_round also 15/15 |
 | 80 | 80-design-order89-tool-usage.md | design | Order 89 tool usage: setting (off/manual/auto), two-phase execution, FileSearch/WebSearch, parallel calls |
+| 81 | 81-harness-dash-api-exploration.py | harness | Test Dash HTTP API pipeline: health, docsets/list, search, load_url content for PHP/WordPress/Laravel/React/JS/NodeJS |
+| 82 | 82-output-dash-api-exploration.txt | output | Results from harness 81: full API flow demonstrated across 6 docsets, cross-docset search, HTML content retrieval |
+| 83 | 83-harness-docsearch-kotlin-prototype.kt | harness | Kotlin prototype of DocSearch tool: Dash API query → top 2 results → strip HTML → formatted text for model |
+| 83 | 83-harness-docsearch-kotlin-prototype-runner.py | harness | Python runner for Kotlin prototype (no standalone kotlinc available); validates same DocSearch logic |
+| 84 | 84-output-docsearch-kotlin-prototype.txt | output | Results from harness 83: all 8 test cases work; HTML nav/sidebar noise needs smarter stripping |
+| 85 | 85-design-order89-docsearch.md | design | Replace WebSearch stub with DocSearch (Dash API): pipeline, HTML stripping, platform aliases, tool spec update |

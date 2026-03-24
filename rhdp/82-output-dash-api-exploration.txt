@@ -1,0 +1,558 @@
+
+==================================================================
+ STEP 1: Health Check
+==================================================================
+GET http://127.0.0.1:49228/health
+
+{
+  "status": "ok",
+  "timestamp": 1774102575.5651379
+}
+
+Health check passed.
+
+==================================================================
+ STEP 2: List Installed Docsets
+==================================================================
+GET http://127.0.0.1:49228/docsets/list
+
+  Platform             Name                                ID           FTS
+  ──────────────────── ─────────────────────────────────── ──────────── ──────────
+  php                  PHP                                 ktfaytok     disabled
+  phpunit              PHPUnit 13.0                        vkpwlhoq     disabled
+  wordpress            WordPress                           ejiwzyca     disabled
+  javascript           JavaScript                          yezxscnj     disabled
+  react                React 19.2.4                        fvfuiahr     disabled
+  html                 HTML                                gpkirwec     disabled
+  css                  CSS                                 ejfmkpdr     disabled
+  usercontribGNU_Make  GNU Make 4.4.1                      yzypxahj     enabled
+  bash                 Bash                                xlddjktm     disabled
+  mysql                MySQL 8.4                           zrdsdrsu     disabled
+  nodejs               NodeJS 25.8.1                       rbxvslqt     disabled
+  github               tlaplus/tlaplus Repo SHA: 11bffb17cc9170778f4b91ebf64c502f3339eeef, Wiki SHA: 37663500fc58c05190d04d4e6ba768407175258d ombgvlxn     enabled
+  markdown             Markdown                            ftbwifzv     disabled
+  c                    C                                   cobxvdhp     disabled
+  sass                 Sass 1.98.0                         lklrafri     disabled
+  jQuery               jQuery 4.0.0                        ldbpwlts     disabled
+  sqlite               SQLite 3.51.3                       fsrmrsbm     disabled
+  cpp                  C++                                 smmsycor     disabled
+  usercontribKotlin    Kotlin 1.9.20                       ijasdglf     disabled
+  python               Python 3.14.3                       egqadedg     disabled
+  laravel              Laravel 12.x                        kssvzdke     disabled
+
+Resolved target docset identifiers:
+  php: ktfaytok
+  wordpress: ejiwzyca
+  laravel: kssvzdke
+  react: fvfuiahr
+  javascript: yezxscnj
+  nodejs: rbxvslqt
+
+==================================================================
+ STEP 3: Search Queries (one per framework)
+==================================================================
+
+--- PHP: searching for 'array_map' ---
+GET http://127.0.0.1:49228/search?query=array_map&docset_identifiers=ktfaytok&max_results=3
+
+  Found 1 result(s):
+  [1] array_map
+      type: Function
+      platform: php
+      docset: PHP
+      load_url: http://127.0.0.1:49283/Dash/rplzlkuc/www.php.net/manual/en/function.array-map.html
+
+
+--- WORDPRESS: searching for 'add_action' ---
+GET http://127.0.0.1:49228/search?query=add_action&docset_identifiers=ejiwzyca&max_results=3
+
+  Found 2 result(s):
+  [1] add_action
+      type: Function
+      platform: wordpress
+      docset: WordPress
+      load_url: http://127.0.0.1:49283/Dash/qjswzmbp/developer.wordpress.org/reference/functions/add_action/index.html
+
+  [2] rest_add_application_passwords_to_index
+      type: Function
+      platform: wordpress
+      docset: WordPress
+      load_url: http://127.0.0.1:49283/Dash/qjswzmbp/developer.wordpress.org/reference/functions/rest_add_application_passwords_to_index/index.html
+
+
+--- LARAVEL: searching for 'Route' ---
+GET http://127.0.0.1:49228/search?query=Route&docset_identifiers=kssvzdke&max_results=3
+
+  Found 4 result(s):
+  [1] Route
+      type: Class
+      platform: laravel
+      docset: Laravel
+      load_url: http://127.0.0.1:49283/Dash/zztvmrjn/api.laravel.com/docs/12.x/Illuminate/Routing/Route.html
+      description: Illuminate\Routing
+
+  [2] Route
+      type: Class
+      platform: laravel
+      docset: Laravel
+      load_url: http://127.0.0.1:49283/Dash/zztvmrjn/api.laravel.com/docs/12.x/Illuminate/Support/Facades/Route.html
+      description: Illuminate\Support\Facades
+
+  [3] route
+      type: Helper
+      platform: laravel
+      docset: Laravel
+      load_url: http://127.0.0.1:49283/Dash/zztvmrjn/laravel.com/docs/12.x/helpers.html#//apple_ref/Helper/route
+
+  [4] Router
+      type: Class
+      platform: laravel
+      docset: Laravel
+      load_url: http://127.0.0.1:49283/Dash/zztvmrjn/api.laravel.com/docs/12.x/Illuminate/Routing/Router.html
+      description: Illuminate\Routing
+
+
+--- REACT: searching for 'useState' ---
+GET http://127.0.0.1:49228/search?query=useState&docset_identifiers=fvfuiahr&max_results=3
+
+  Found 4 result(s):
+  [1] useState
+      type: Guide
+      platform: react
+      docset: React
+      load_url: http://127.0.0.1:49283/Dash/exlwytjh/127.0.0.1_3000/reference/react/useState/index.html
+
+  [2] useState - Using TypeScript
+      type: Section
+      platform: react
+      docset: React
+      load_url: http://127.0.0.1:49283/Dash/exlwytjh/127.0.0.1_3000/learn/typescript/index.html#//dash_ref_123/Section/useState/0
+
+  [3] useState(initialState) - useState
+      type: Section
+      platform: react
+      docset: React
+      load_url: http://127.0.0.1:49283/Dash/exlwytjh/127.0.0.1_3000/reference/react/useState/index.html#//dash_ref_1481/Section/useState%28initialState%29/0
+
+  [4] Adding state to a component - useState
+      type: Section
+      platform: react
+      docset: React
+      load_url: http://127.0.0.1:49283/Dash/exlwytjh/127.0.0.1_3000/reference/react/useState/index.html#//dash_ref_1484/Section/Adding%20state%20to%20a%20component/0
+
+
+--- JAVASCRIPT: searching for 'Promise' ---
+GET http://127.0.0.1:49228/search?query=Promise&docset_identifiers=yezxscnj&max_results=3
+
+  Found 4 result(s):
+  [1] Promise
+      type: Class
+      platform: javascript
+      docset: JavaScript
+      load_url: http://127.0.0.1:49283/Dash/nzkebzpr/developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise.html
+
+  [2] promise
+      type: Property
+      platform: javascript
+      docset: JavaScript
+      load_url: http://127.0.0.1:49283/Dash/nzkebzpr/developer.mozilla.org/en-US/docs/Web/API/PromiseRejectionEvent/promise.html
+      description: PromiseRejectionEvent
+
+  [3] PromiseRejectionEvent
+      type: Class
+      platform: javascript
+      docset: JavaScript
+      load_url: http://127.0.0.1:49283/Dash/nzkebzpr/developer.mozilla.org/en-US/docs/Web/API/PromiseRejectionEvent.html
+
+  [4] PromiseRejectionEvent
+      type: Constructor
+      platform: javascript
+      docset: JavaScript
+      load_url: http://127.0.0.1:49283/Dash/nzkebzpr/developer.mozilla.org/en-US/docs/Web/API/PromiseRejectionEvent/PromiseRejectionEvent.html
+
+
+--- NODEJS: searching for 'fs.readFile' ---
+GET http://127.0.0.1:49228/search?query=fs.readFile&docset_identifiers=rbxvslqt&max_results=3
+
+  Found 3 result(s):
+  [1] fs.readFileSync(path[, options])
+      type: Method
+      platform: nodejs
+      docset: Node.js
+      load_url: http://127.0.0.1:49283/Dash/yqrnhanx/nodejs/api/fs.html#fsreadfilesyncpath-options
+
+  [2] fs.readFile(path[, options], callback)
+      type: Method
+      platform: nodejs
+      docset: Node.js
+      load_url: http://127.0.0.1:49283/Dash/yqrnhanx/nodejs/api/fs.html#fsreadfilepath-options-callback
+
+  [3] fsPromises.readFile(path[, options])
+      type: Method
+      platform: nodejs
+      docset: Node.js
+      load_url: http://127.0.0.1:49283/Dash/yqrnhanx/nodejs/api/fs.html#fspromisesreadfilepath-options
+
+
+==================================================================
+ STEP 4: Fetch Content from load_url (first result per framework)
+==================================================================
+
+--- PHP: content for 'array_map' ---
+GET http://127.0.0.1:49283/Dash/rplzlkuc/www.php.net/manual/en/function.array-map.html
+
+array_map 
+
+ update page now 
+
+ Downloads 
+
+ Documentation 
+
+ Get Involved 
+
+ Help 
+
+ Search docs
+
+ PHP 8.5.4 Released! 
+
+ Getting Started 
+ Introduction 
+ A simple tutorial 
+ Language Reference 
+ Basic syntax 
+ Types 
+ Variables 
+ Constants 
+ Expressions 
+ Operators 
+ Control Structures 
+ Functions 
+ Classes and Objects 
+ Namespaces 
+ Enumerations 
+ Errors 
+ Exceptions 
+ Fibers 
+ Generators 
+ Attributes 
+ References Explained 
+ Predefined Variables 
+ Predefined Exceptions 
+ Predefined Interfaces and Classes 
+ Predefined Attributes 
+ Context options and parameters 
+ Supported Protocols and Wrappers 
+
+ Security 
+ Introduction 
+ General considerations 
+ Installed as CGI binary 
+ Installed as an Apache module 
+ Session Security 
+ Filesystem Security 
+ Database Security 
+ Error Reporting 
+ User Submitted Data 
+ Hiding PHP 
+ Keeping Current 
+ Features 
+ HTTP authentication with PHP 
+ Cookies 
+ Sessions 
+
+  [... truncated to 60 lines ...]
+
+
+--- WORDPRESS: content for 'add_action' ---
+GET http://127.0.0.1:49283/Dash/qjswzmbp/developer.wordpress.org/reference/functions/add_action/index.html
+
+add_action() – Function 
+
+ Skip to content Handbook home > Article).
+-->
+
+ WordPress.org 
+
+ News Showcase Hosting Extend Themes Plugins Patterns Blocks Openverse ↗ ︎ Learn Learn WordPress Documentation Forums Developers WordPress.tv ↗ ︎ Community Make WordPress Education Photo Directory Five for the Future Events Job Board ↗ ︎ About About WordPress Enterprise Gutenberg ↗ ︎ Swag Store ↗ ︎ Get WordPress 
+
+ Search in WordPress.org 
+
+ Get WordPress 
+
+ WordPress.org 
+
+ WordPress Developer Resources 
+
+ add_action() 
+
+ Developer Blog Code Reference WP-CLI Commands 
+
+ Developer Blog Code Reference WP-CLI Commands 
+
+ Home Reference Functions add_action() 
+
+ Search 
+
+ add_action( string   $hook_name , callable   $callback , int   $priority  =  10 , int   $accepted_args  =  1  ): true 
+
+ In this article 
+ Table of Contents Description 
+ Parameters 
+ Return 
+ More Information 
+
+ Usage 
+
+ Source 
+ Related 
+ Changelog 
+ User Contributed Notes 
+
+ ↑ Back to top 
+
+ Adds a callback function to an action hook. 
+
+ Description Actions are the hooks that the WordPress core launches at specific points during execution, or when specific events occur. Plugins can specify that one or more of its PHP functions are executed at these points, using the Action API. 
+
+ Parameters $hook_name string required The name of the action to add the callback to. $callback callable required The callback to be run when the action is called. $priority int optional Used to specify the order in which the functions associated with a particular action are executed. 
+Lower numbers correspond with earlier execution, and functions with the same priority are executed in the order in which they were added to the action. Default: 10 $accepted_args int optional The number of arguments the function accepts. Default: 1 
+ Return true Always returns true. 
+ More Information 
+ Usage 
+
+ add_action( $hook, $function_to_add, $priority, $accepted_args ); 
+
+ To find out the number and name of arguments for an action, simply search the code base for the matching do_action() call. For example, if you are hooking into ‘save_post’, you would find it in post.php: 
+
+ do_action( 'save_post', $post_ID, $post, $update ); 
+
+
+  [... truncated to 60 lines ...]
+
+
+--- LARAVEL: content for 'Route' ---
+GET http://127.0.0.1:49283/Dash/zztvmrjn/api.laravel.com/docs/12.x/Illuminate/Routing/Route.html
+
+Illuminate\Routing\Route 
+
+ Laravel 6.x 
+ Laravel 7.x 
+ Laravel 8.x 
+ Laravel 9.x 
+ Laravel 10.x 
+ Laravel 11.x 
+ Laravel 12.x 
+ Laravel Dev 
+
+ Toggle navigation 
+
+ Laravel API 
+
+ Versions  
+
+ Laravel 6.x 
+ Laravel 7.x 
+ Laravel 8.x 
+ Laravel 9.x 
+ Laravel 10.x 
+ Laravel 11.x 
+ Laravel 12.x 
+ Laravel Dev 
+
+ Classes 
+ Namespaces 
+ Interfaces 
+ Traits 
+ Index 
+
+ class 
+ Illuminate \ Routing \ Route 
+
+ Route 
+
+ class
+ Route ( View source )
+
+ Traits 
+
+ Conditionable 
+
+ CreatesRegularExpressionRouteConstraints 
+
+ FiltersControllerMiddleware 
+
+ Macroable 
+
+ ResolvesRouteDependencies 
+
+ Properties 
+
+ static protected array
+
+ $macros 
+ The registered string macros. 
+ from  
+ Macroable 
+
+  [... truncated to 60 lines ...]
+
+
+--- REACT: content for 'useState' ---
+GET http://127.0.0.1:49283/Dash/exlwytjh/127.0.0.1_3000/reference/react/useState/index.html
+
+useState 
+
+ React v 19.2 Search ⌘ Ctrl K Learn Reference Community Blog react@19.2 Overview Hooks useActionState useCallback useContext useDebugValue useDeferredValue useEffect useEffectEvent useId useImperativeHandle useInsertionEffect useLayoutEffect useMemo useOptimistic useReducer useRef useState useSyncExternalStore useTransition Components <Fragment> (<>) <Profiler> <StrictMode> <Suspense> <Activity> <ViewTransition> - This feature is available in the latest Canary version of React APIs act addTransitionType - This feature is available in the latest Canary version of React cache cacheSignal captureOwnerStack createContext lazy memo startTransition use experimental_taintObjectReference - This feature is available in the latest Experimental version of React experimental_taintUniqueValue - This feature is available in the latest Experimental version of React react-dom@19.2 Hooks useFormStatus Components Common (e.g. <div>) <form> <input> <option> <progress> <select> <textarea> <link> <meta> <script> <style> <title> APIs createPortal flushSync preconnect prefetchDNS preinit preinitModule preload preloadModule Client APIs createRoot hydrateRoot Server APIs renderToPipeableStream renderToReadableStream renderToStaticMarkup renderToString resume resumeToPipeableStream Static APIs prerender prerenderToNodeStream resumeAndPrerender resumeAndPrerenderToNodeStream React Compiler Configuration compilationMode gating logger panicThreshold target Directives "use memo" "use no memo" Compiling Libraries React DevTools React Performance tracks eslint-plugin-react-hooks Lints exhaustive-deps rules-of-hooks component-hook-factories config error-boundaries gating globals immutability incompatible-library preserve-manual-memoization purity refs set-state-in-effect set-state-in-render static-components unsupported-syntax use-memo Rules of React Overview Components and Hooks must be pure React calls Components and Hooks Rules of Hooks React Server Components Server Components Server Functions Directives 'use client' 'use server' Legacy APIs Legacy React APIs Children cloneElement Component createElement createRef forwardRef isValidElement PureComponent API Reference Hooks useState useState is a React Hook that lets you add a state variable to your component. const [ state , setState ] = useState ( initialState ) 
+ Reference useState(initialState) set functions, like setSomething(nextState) Usage Adding state to a component Updating state based on the previous state Updating objects and arrays in state Avoiding recreating the initial state Resetting state with a key Storing information from previous renders Troubleshooting I’ve updated the state, but logging gives me the old value I’ve updated the state, but the screen doesn’t update I’m getting an error: “Too many re-renders” My initializer or updater function runs twice I’m trying to set state to a function, but it gets called instead 
+
+ Reference 
+ useState(initialState) 
+ Call useState at the top level of your
+
+
+--- JAVASCRIPT: content for 'Promise' ---
+GET http://127.0.0.1:49283/Dash/nzkebzpr/developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise.html
+
+Promise 
+
+ Skip to main content 
+
+ Skip to search 
+
+ MDN 
+
+ HTML 
+
+ HTML: Markup language 
+
+ HTML reference 
+
+ Elements 
+
+ Global attributes 
+
+ Attributes 
+
+ See all… 
+
+ HTML guides 
+
+ Responsive images 
+
+ HTML cheatsheet 
+
+ Date & time formats 
+
+ See all… 
+
+ Markup languages 
+
+ SVG 
+
+ MathML 
+
+ XML 
+
+ CSS 
+
+ CSS: Styling language 
+
+ CSS reference 
+
+ Properties 
+
+ Selectors 
+
+ At-rules 
+
+ Values 
+
+ See all… 
+
+ CSS guides 
+
+ Box model 
+
+
+  [... truncated to 60 lines ...]
+
+
+--- NODEJS: content for 'fs.readFile' ---
+GET http://127.0.0.1:49283/Dash/yqrnhanx/nodejs/api/fs.html#fsreadfilesyncpath-options
+
+File system Skip to content Node.js About this documentation Usage and example Assertion testing Asynchronous context tracking Async hooks Buffer C++ addons C/C++ addons with Node-API C++ embedder API Child processes Cluster Command-line options Console Crypto Debugger Deprecated APIs Diagnostics Channel DNS Domain Environment Variables Errors Events File system Globals HTTP HTTP/2 HTTPS Inspector Internationalization Modules: CommonJS modules Modules: ECMAScript modules Modules: node:module API Modules: Packages Modules: TypeScript Net OS Path Performance hooks Permissions Process Punycode Query strings Readline REPL Report Single executable applications SQLite Stream String decoder Test runner Timers TLS/SSL Trace events TTY UDP/datagram URL Utilities V8 VM WASI Web Crypto API Web Streams API Worker threads Zlib Code repository and issue tracker Node.js v25.8.1 documentation Node.js v25.8.1 Table of contents File system Promise example Callback example Synchronous example Promises API Class: FileHandle Event: 'close' filehandle.appendFile(data[, options]) filehandle.chmod(mode) filehandle.chown(uid, gid) filehandle.close() filehandle.createReadStream([options]) filehandle.createWriteStream([options]) filehandle.datasync() filehandle.fd filehandle.read(buffer, offset, length, position) filehandle.read([options]) filehandle.read(buffer[, options]) filehandle.readableWebStream([options]) filehandle.readFile(options) filehandle.readLines([options]) filehandle.readv(buffers[, position]) filehandle.stat([options]) filehandle.sync() filehandle.truncate(len) filehandle.utimes(atime, mtime) filehandle.write(buffer, offset[, length[, position]]) filehandle.write(buffer[, options]) filehandle.write(string[, position[, encoding]]) filehandle.writeFile(data, options) filehandle.writev(buffers[, position]) filehandle[Symbol.asyncDispose]() fsPromises.access(path[, mode]) fsPromises.appendFile(path, data[, options]) fsPromises.chmod(path, mode) fsPromises.chown(path, uid, gid) fsPromises.copyFile(src, dest[, mode]) fsPromises.cp(src, dest[, options]) fsPromises.glob(pattern[, options]) fsPromises.lchmod(path, mode) fsPromises.lchown(path, uid, gid) fsPromises.lutimes(path, atime, mtime) fsPromises.link(existingPath, newPath) fsPromises.lstat(path[, options]) fsPromises.mkdir(path[, options]) fsPromises.mkdtemp(prefix[, options]) fsPromises.mkdtempDisposable(prefix[, options]) fsPromises.open(path, flags[, mode]) fsPromises.opendir(path[, options]) fsPromises.readdir(path[, options]) fsPromises.readFile(path[, options]) fsPromises.readlink(path[, options]) fsPromises.realpath(path[, options]) fsPromises.rename(oldPath, newPath) fsPromises.rmdir(path[, options]) fsPromises.rm(path[, options]) fsPromises.stat(path[, options]) fsPromises.statfs(path[, options]) fsPromises.symlink(target, path[, type]) fsPromises.truncate(path[, len]) fsPromises.unlink(path) fsPromises.utimes(path, atime, mtime) fsPromises.watch(filename[, options]) fsPromises.writeFile(file, data
+
+
+==================================================================
+ STEP 5: Cross-docset Search (multiple docsets at once)
+==================================================================
+Searching 'request' across PHP + WordPress + Laravel
+GET http://127.0.0.1:49228/search?query=request&docset_identifiers=ktfaytok%2Cejiwzyca%2Ckssvzdke&max_results=5
+
+Found 6 result(s) across docsets:
+  [1] PHP: request (Method)
+  [2] WordPress: request (Hook)
+  [3] Laravel: Request (Class)
+  [4] Laravel: Request (Class)
+  [5] Laravel: Request (Class)
+  [6] Laravel: request (Helper)
+
+==================================================================
+ STEP 6: TypeScript via React + NodeJS docsets
+==================================================================
+Searching 'TypeScript' across React + NodeJS
+GET http://127.0.0.1:49228/search?query=TypeScript&docset_identifiers=fvfuiahr%2Crbxvslqt&max_results=5
+
+Found 6 result(s):
+  [1] React: TypeScript with React Components - Using TypeScript (Section)
+  [2] Node.js: TypeScript features (Guide)
+  [3] React: Using TypeScript (Guide)
+  [4] React: Adding TypeScript to an existing React project - Using TypeScript (Section)
+  [5] React: useMemo - Using TypeScript (Section)
+  [6] React: Children - Using TypeScript (Section)
+
+NOTE: Dash does not have a standalone TypeScript docset.
+TypeScript docs are found within the React and NodeJS docsets.
+
+==================================================================
+ SUMMARY: API Flow
+==================================================================
+
+The Dash API pipeline from query to content:
+
+  1. GET /health
+     -> {"status": "ok", "timestamp": <unix_ts>}
+
+  2. GET /docsets/list
+     -> {"docsets": [{"name": "...", "identifier": "<8chars>", "platform": "...", ...}]}
+     Note: identifier is a random 8-char string, unique per install.
+
+  3. GET /search?query=<term>&docset_identifiers=<id1,id2>&max_results=<n>
+     -> {"results": [{"name": "...", "load_url": "http://...", "type": "...", ...}]}
+     Note: load_url uses a DIFFERENT port than the API. Results include:
+       - name: display name of the entry
+       - load_url: URL to fetch the actual HTML content
+       - type: Function, Class, Method, Guide, Section, etc.
+       - platform: the docset's platform string
+       - docset: display name of the source docset
+       - description: optional brief description (often null)
+
+  4. GET <load_url>
+     -> Raw HTML of the documentation page
+     This is a full HTML page mirrored from the original documentation source.
+     To extract useful content, you need to strip HTML tags and parse the body.
+
+  Key observations:
+  - The API port is dynamic; find it in:
+    ~/Library/Application Support/Dash/.dash_api_server/status.json
+  - The content server port (in load_url) is different from the API port
+  - Docset identifiers are random per-install; always discover them via /docsets/list
+  - load_url may include anchor fragments (#//dash_ref_xxx/...) for section-level results
+  - Cross-docset search works by passing comma-separated identifiers
+  - No authentication required (localhost only)
+  - Full-text search can be enabled per-docset via /docsets/enable_fts (POST with identifier)
+
+
+Output saved to: /Users/lucatume/repos/completamente/rhdp/82-output-dash-api-exploration.txt

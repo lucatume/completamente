@@ -70,7 +70,8 @@ class ToolIntegrationTest : BaseCompletionTest() {
         val chatPrompt = Order89Executor.buildChatPrompt(request, emptyList(), includeTools = true)
         assertTrue(chatPrompt.contains("<|im_start|>"))
         assertTrue(chatPrompt.contains("FileSearch"))
-        assertTrue(chatPrompt.contains("WebSearch"))
+        assertTrue(chatPrompt.contains("DocSearch"))
+        assertFalse(chatPrompt.contains("WebSearch"))
     }
 
     fun testFullPipelinePhase1ToolCallPhase2Code() {

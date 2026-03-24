@@ -554,7 +554,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         action.updateStatusDisplay(editor, display, StatusUpdate.ToolCalls(
             listOf(
                 ToolCall("FileSearch", mapOf("query" to JsonPrimitive("FIXME"))),
-                ToolCall("WebSearch", mapOf("query" to JsonPrimitive("kotlin docs")))
+                ToolCall("DocSearch", mapOf("query" to JsonPrimitive("kotlin docs"), "docsets" to JsonPrimitive("kt")))
             )
         ))
         assertFalse("Old tool call should be gone", doc.text.contains("TODO"))

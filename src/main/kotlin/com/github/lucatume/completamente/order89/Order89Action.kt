@@ -187,9 +187,10 @@ class Order89Action : AnAction() {
                         val path = call.arguments["path"]?.jsonPrimitive?.content
                         runReadAction { FileSearchTool.execute(project, query, caseSensitive, path) }
                     }
-                    "WebSearch" -> {
+                    "DocSearch" -> {
                         val query = call.arguments["query"]?.jsonPrimitive?.content ?: ""
-                        WebSearchTool.execute(query)
+                        val docsets = call.arguments["docsets"]?.jsonPrimitive?.content
+                        DocSearchTool.execute(query, docsets)
                     }
                     else -> "Unknown tool: ${call.name}"
                 }
