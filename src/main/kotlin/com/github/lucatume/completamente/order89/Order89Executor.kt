@@ -1,5 +1,6 @@
 package com.github.lucatume.completamente.order89
 
+import com.github.lucatume.completamente.services.DebugLog
 import com.github.lucatume.completamente.services.Settings
 import java.net.URI
 import java.net.http.HttpClient
@@ -318,15 +319,20 @@ When you have gathered the information you need, produce your code output as spe
         val allResults = mutableListOf<ToolResult>()
 
         for (round in 1..maxRounds) {
+            DebugLog.log("Order89 tool round $round/$maxRounds start")
             onStatusUpdate(StatusUpdate.WaitingForModel)
 
             val prompt = buildChatPrompt(request, allResults, includeTools = true)
             val body = buildChatRequestBody(prompt, settings)
+            DebugLog.log("Order89 round $round request: ${body.length} chars")
 
             val responseBody: String
             try {
-                responseBody = completionFn(body, settings.order89ServerUrl)
+                responseBody = DebugLog.timed("Order89 round $round HTTP") {
+                    completionFn(body, settings.order89ServerUrl)
+                }
             } catch (e: Exception) {
+                DebugLog.log("Order89 round $round HTTP error: ${e.message}")
                 return Order89Result(success = false, output = e.message ?: "Unknown error")
             }
 
@@ -345,18 +351,23 @@ When you have gathered the information you need, produce your code output as spe
 
             if (toolCalls.isEmpty()) {
                 // Model produced code directly, no Phase 2 needed
+                DebugLog.log("Order89 round $round: no tool calls, producing code directly")
                 val cleaned = cleanOutput(content)
                 return Order89Result(success = true, output = cleaned)
             }
 
             // Show tool calls in status display, then execute in parallel
+            DebugLog.log("Order89 round $round: ${toolCalls.size} tool calls: ${toolCalls.joinToString { it.name }}")
             onStatusUpdate(StatusUpdate.ToolCalls(toolCalls))
             val futures = toolCalls.map { call ->
                 CompletableFuture.supplyAsync {
-                    try {
-                        ToolResult(call, toolExecutor(call))
-                    } catch (e: Exception) {
-                        ToolResult(call, "Error: ${e.message}")
+                    DebugLog.timed("Order89 tool ${call.name}") {
+                        try {
+                            ToolResult(call, toolExecutor(call))
+                        } catch (e: Exception) {
+                            DebugLog.log("Order89 tool ${call.name} failed: ${e.message}")
+                            ToolResult(call, "Error: ${e.message}")
+                        }
                     }
                 }
             }
@@ -366,14 +377,19 @@ When you have gathered the information you need, produce your code output as spe
         }
 
         // Max rounds reached or all rounds done with results — Phase 2
+        DebugLog.log("Order89 Phase 2 start, ${allResults.size} tool results")
         onStatusUpdate(StatusUpdate.WaitingForModel)
         val phase2Prompt = buildChatPrompt(request, allResults, includeTools = false)
         val phase2Body = buildChatRequestBody(phase2Prompt, settings)
+        DebugLog.log("Order89 Phase 2 request: ${phase2Body.length} chars")
 
         val phase2Response: String
         try {
-            phase2Response = completionFn(phase2Body, settings.order89ServerUrl)
+            phase2Response = DebugLog.timed("Order89 Phase 2 HTTP") {
+                completionFn(phase2Body, settings.order89ServerUrl)
+            }
         } catch (e: Exception) {
+            DebugLog.log("Order89 Phase 2 HTTP error: ${e.message}")
             return Order89Result(success = false, output = e.message ?: "Unknown error")
         }
 
@@ -396,8 +412,9 @@ When you have gathered the information you need, produce your code output as spe
         val executor = Executors.newSingleThreadExecutor()
         val future = executor.submit(Callable {
             try {
-                val prompt = buildPrompt(request)
+                val prompt = DebugLog.timed("Order89 prompt build") { buildPrompt(request) }
                 val body = buildRequestBody(prompt, settings)
+                DebugLog.log("Order89 request: ${body.length} chars")
 
                 val httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create("${settings.order89ServerUrl}/completion"))
@@ -405,7 +422,10 @@ When you have gathered the information you need, produce your code output as spe
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build()
 
-                val response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+                val response = DebugLog.timed("Order89 HTTP") {
+                    httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+                }
+                DebugLog.log("Order89 response: status=${response.statusCode()}, body=${response.body().length} chars")
 
                 if (response.statusCode() != 200) {
                     return@Callable Order89Result(
@@ -427,6 +447,7 @@ When you have gathered the information you need, produce your code output as spe
                 val cleaned = cleanOutput(content)
                 Order89Result(success = true, output = cleaned)
             } catch (e: Exception) {
+                DebugLog.log("Order89 error: ${e.message}")
                 Order89Result(success = false, output = e.message ?: "Unknown error")
             }
         })

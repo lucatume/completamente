@@ -11,6 +11,7 @@ import com.github.lucatume.completamente.completion.reindentSuggestion
 import com.github.lucatume.completamente.completion.shouldDiscardSuggestion
 import com.github.lucatume.completamente.completion.trimCompletion
 import com.github.lucatume.completamente.completion.shouldSuppressAutoTrigger
+import com.github.lucatume.completamente.services.DebugLog
 import com.github.lucatume.completamente.services.CacheWarmingService
 import com.github.lucatume.completamente.services.Chunk
 import com.github.lucatume.completamente.services.ChunksRingBuffer
@@ -70,6 +71,7 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
         val psiFile = request.file
         val project = psiFile.project
         val settings = SettingsState.getInstance().toSettings()
+        val fimStart = System.nanoTime()
 
         // All editor/document/PSI access must happen inside a read action.
         // Capture everything we need from the editor state in one read action.
@@ -86,7 +88,7 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
             val indentStyle: IndentStyle
         )
 
-        val snapshot = readAction {
+        val snapshot = DebugLog.timed("FIM snapshot") { readAction {
             val offset = editor.caretModel.offset
             val cursorLine = document.getLineNumber(offset)
             val lineStart = document.getLineStartOffset(cursorLine)
@@ -125,7 +127,9 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
                 cursorLineIndent = cursorLineIndent,
                 indentStyle = indentStyle
             )
-        }
+        } }
+
+        DebugLog.log("FIM start: ${snapshot.filePath}:${snapshot.cursorLine}:${snapshot.cursorColumn}")
 
         coroutineContext.ensureActive()
 
@@ -139,18 +143,21 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
             ringChunks = snapshot.ringChunks,
             settings = settings
         )
-        val infillRequest = composeInfillRequest(ctx)
+        val infillRequest = DebugLog.timed("FIM compose") { composeInfillRequest(ctx) }
 
         coroutineContext.ensureActive()
 
         // Send the request on IO dispatcher (respects coroutine cancellation via thread interrupt).
         val response = try {
-            withContext(Dispatchers.IO) {
-                val client = InfillClient(settings.serverUrl)
-                client.sendCompletion(infillRequest)
+            DebugLog.timed("FIM HTTP request") {
+                withContext(Dispatchers.IO) {
+                    val client = InfillClient(settings.serverUrl)
+                    client.sendCompletion(infillRequest)
+                }
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
+            DebugLog.log("FIM HTTP error: ${e.message}")
             return InlineCompletionSingleSuggestion.build {}
         }
 
@@ -158,6 +165,7 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
 
         val suggestion = response.content
         if (suggestion.isEmpty()) {
+            DebugLog.log("FIM empty response")
             return InlineCompletionSingleSuggestion.build {}
         }
 
@@ -166,12 +174,14 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
         val prefixLastLine = snapshot.fileContent.substring(snapshot.lineStart, snapshot.offset)
 
         if (shouldDiscardSuggestion(suggestion, suffixText, prefixLastLine)) {
+            DebugLog.log("FIM suggestion discarded by quality filter")
             return InlineCompletionSingleSuggestion.build {}
         }
 
         // Trim leading indent overlap on line 0 and trailing whitespace artifacts.
         val trimmed = trimCompletion(suggestion, snapshot.cursorColumn)
         if (trimmed.isEmpty()) {
+            DebugLog.log("FIM suggestion empty after trimming")
             return InlineCompletionSingleSuggestion.build {}
         }
 
@@ -185,6 +195,9 @@ class FimInlineCompletionProvider : InlineCompletionProvider {
 
         // Reindent multi-line suggestions to match project code style.
         val reindented = reindentSuggestion(trimmed, snapshot.cursorLineIndent, snapshot.indentStyle)
+
+        val totalMs = (System.nanoTime() - fimStart) / 1_000_000
+        DebugLog.log("FIM complete: ${reindented.length} chars, total ${totalMs}ms")
 
         // Return the suggestion as gray text.
         return InlineCompletionSingleSuggestion.build {

@@ -1,5 +1,6 @@
 package com.github.lucatume.completamente.completion
 
+import com.github.lucatume.completamente.services.DebugLog
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.net.URI
@@ -30,6 +31,7 @@ class InfillClient(private val baseUrl: String) {
      */
     fun sendCompletion(request: InfillRequest): InfillResponse {
         val body = json.encodeToString(request)
+        DebugLog.log("InfillClient request body: ${body.length} chars")
         val timeoutMs = request.tMaxPredictMs.toLong() + request.tMaxPromptMs.toLong() + 2000L
         val httpRequest = HttpRequest.newBuilder()
             .uri(URI.create("$baseUrl/infill"))
@@ -39,7 +41,10 @@ class InfillClient(private val baseUrl: String) {
             .build()
 
         try {
-            val response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+            val response = DebugLog.timed("InfillClient HTTP") {
+                httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+            }
+            DebugLog.log("InfillClient response: status=${response.statusCode()}, body=${response.body().length} chars")
             if (response.statusCode() != 200) {
                 throw InfillClientException("Server returned status ${response.statusCode()}: ${response.body()}")
             }
@@ -60,6 +65,7 @@ class InfillClient(private val baseUrl: String) {
      */
     fun sendCacheWarming(extra: List<InfillExtraChunk>) {
         try {
+            DebugLog.log("InfillClient cache warming: ${extra.size} chunks")
             val request = buildCacheWarmingRequest(extra)
             val body = json.encodeToString(request)
             val httpRequest = HttpRequest.newBuilder()
@@ -80,7 +86,8 @@ class InfillClient(private val baseUrl: String) {
      * Returns true if the server responds with 200 OK within 2 seconds.
      */
     fun isServerReachable(): Boolean {
-        return try {
+        DebugLog.log("InfillClient health check: $baseUrl/health")
+        val reachable = try {
             val httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create("$baseUrl/health"))
                 .timeout(Duration.ofSeconds(2))
@@ -91,6 +98,8 @@ class InfillClient(private val baseUrl: String) {
         } catch (_: Exception) {
             false
         }
+        DebugLog.log("InfillClient health check result: $reachable")
+        return reachable
     }
 }
 

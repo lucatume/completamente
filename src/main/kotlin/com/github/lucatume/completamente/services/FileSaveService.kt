@@ -28,6 +28,8 @@ class FileSaveService(private val project: Project) {
             FileDocumentManagerListener.TOPIC,
             object : FileDocumentManagerListener {
                 override fun beforeDocumentSaving(document: Document) {
+                    val file = FileDocumentManager.getInstance().getFile(document)
+                    DebugLog.log("before file save: ${file?.name ?: "unknown"}")
                     val event = BeforeFileSaveEvent(document, project)
                     beforeSaveHandlers.forEach { it(event) }
                 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.github.lucatume.completamente.completion.pickChunkFromFile
 import com.github.lucatume.completamente.completion.pickChunkFromText
+import com.github.lucatume.completamente.services.DebugLog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -49,20 +50,24 @@ class CompletamenteStartupActivity : ProjectActivity {
         project.service<FileOpenCloseService>().onFileOpened { event ->
             // When opening a file, set the cursor line at `null` to pick from its center.
             // The IDE would otherwise say the cursor is at the start of the file.
+            DebugLog.log("chunk pickup on file open: ${event.file.name}")
             handleFile(event.file, project, settings, null)
         }
 
         project.service<FileOpenCloseService>().onFileClosed { event ->
+            DebugLog.log("chunk pickup on file close: ${event.file.name}")
             handleFile(event.file, project, settings)
         }
 
         project.service<FileSaveService>().onBeforeFileSaved { event ->
             val file = FileDocumentManager.getInstance().getFile(event.document) ?: return@onBeforeFileSaved
+            DebugLog.log("chunk pickup on file save: ${file.name}")
             handleFile(file, project, settings)
         }
 
         project.service<ClipboardCopyService>().onClipboardCopy { event ->
             val filename = event.project.projectFile?.name ?: "clipboard"
+            DebugLog.log("chunk pickup on clipboard copy: $filename (${event.content.length} chars)")
             val chunksRingBuffer = project.service<ChunksRingBuffer>()
             pickChunkFromText(
                 event.content,

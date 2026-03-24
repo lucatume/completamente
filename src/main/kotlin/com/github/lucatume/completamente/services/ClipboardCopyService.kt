@@ -20,6 +20,7 @@ class ClipboardCopyService(private val project: Project) {
             object : CopyPasteManager.ContentChangedListener {
                 override fun contentChanged(oldTransferable: Transferable?, newTransferable: Transferable?) {
                     val content = extractStringContent(newTransferable) ?: return
+                    DebugLog.log("clipboard copy: ${content.length} chars")
                     val event = ClipboardCopyEvent(content, project)
                     copyHandlers.forEach { it(event) }
                 }

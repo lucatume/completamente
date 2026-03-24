@@ -27,11 +27,13 @@ class FileOpenCloseService(private val project: Project) {
             FileEditorManagerListener.FILE_EDITOR_MANAGER,
             object : FileEditorManagerListener {
                 override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+                    DebugLog.log("file opened: ${file.name}")
                     val event = FileOpenEvent(file, project)
                     openHandlers.forEach { it(event) }
                 }
 
                 override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+                    DebugLog.log("file closed: ${file.name}")
                     val event = FileCloseEvent(file, project)
                     closeHandlers.forEach { it(event) }
                 }

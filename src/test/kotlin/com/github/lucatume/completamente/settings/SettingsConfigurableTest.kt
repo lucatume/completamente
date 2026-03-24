@@ -19,6 +19,7 @@ class SettingsConfigurableTest : BaseCompletionTest() {
             state.order89ServerUrl = defaults.order89ServerUrl
             state.order89ToolUsage = defaults.order89ToolUsage
             state.order89MaxToolRounds = defaults.order89MaxToolRounds
+            state.debugLogging = defaults.debugLogging
         } finally {
             super.tearDown()
         }
@@ -182,5 +183,34 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         method.invoke(configurable)
 
         assertEquals(3, state.order89MaxToolRounds)
+    }
+
+    fun testApplyWithDebugLoggingEnabled() {
+        val configurable = SettingsConfigurable()
+        configurable.createComponent()
+        val state = SettingsState.getInstance()
+
+        val field = SettingsConfigurable::class.java.getDeclaredField("debugLogging")
+        field.isAccessible = true
+        field.set(configurable, true)
+
+        val method = SettingsConfigurable::class.java.getDeclaredMethod("applyToState")
+        method.isAccessible = true
+        method.invoke(configurable)
+
+        assertTrue(state.debugLogging)
+    }
+
+    fun testResetRestoresDebugLogging() {
+        val configurable = SettingsConfigurable()
+        configurable.createComponent()
+        val state = SettingsState.getInstance()
+
+        state.debugLogging = false
+        configurable.reset()
+
+        val field = SettingsConfigurable::class.java.getDeclaredField("debugLogging")
+        field.isAccessible = true
+        assertFalse(field.get(configurable) as Boolean)
     }
 }

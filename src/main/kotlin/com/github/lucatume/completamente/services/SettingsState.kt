@@ -35,6 +35,9 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     var order89ToolUsage: String = "OFF"
     var order89MaxToolRounds: Int = 3
 
+    // Debug
+    var debugLogging: Boolean = false
+
     override fun getState(): SettingsState = this
 
     override fun loadState(state: SettingsState) {
@@ -56,7 +59,8 @@ class SettingsState : PersistentStateComponent<SettingsState> {
         order89RepeatPenalty = order89RepeatPenalty,
         order89NPredict = order89NPredict,
         order89ToolUsage = try { ToolUsageMode.valueOf(order89ToolUsage) } catch (_: Exception) { ToolUsageMode.OFF },
-        order89MaxToolRounds = order89MaxToolRounds
+        order89MaxToolRounds = order89MaxToolRounds,
+        debugLogging = debugLogging
     )
 
     companion object {

@@ -30,6 +30,7 @@ class SettingsConfigurable : Configurable {
     private var order89RepeatPenalty = ""
     private var order89NPredict = ""
     private var order89MaxToolRounds = ""
+    private var debugLogging = false
 
     override fun getDisplayName(): String = "completamente"
 
@@ -119,6 +120,13 @@ class SettingsConfigurable : Configurable {
                         .comment("Maximum rounds of tool calls before generating code (1-10)")
                 }
             }
+            group("Debug") {
+                row {
+                    checkBox("Enable debug logging")
+                        .bindSelected(::debugLogging)
+                        .comment("Logs pipeline timing to idea.log")
+                }
+            }
         }
 
         return dialogPanel!!
@@ -140,6 +148,7 @@ class SettingsConfigurable : Configurable {
         order89NPredict = state.order89NPredict.toString()
         order89MaxToolRounds = state.order89MaxToolRounds.toString()
         toolUsageCombo?.selectedItem = state.order89ToolUsage
+        debugLogging = state.debugLogging
     }
 
     override fun isModified(): Boolean {
@@ -170,6 +179,7 @@ class SettingsConfigurable : Configurable {
         state.order89NPredict = order89NPredict.toIntOrNull() ?: defaults.order89NPredict
         state.order89ToolUsage = toolUsageCombo?.selectedItem as? String ?: defaults.order89ToolUsage
         state.order89MaxToolRounds = order89MaxToolRounds.toIntOrNull() ?: defaults.order89MaxToolRounds
+        state.debugLogging = debugLogging
     }
 
     override fun reset() {

@@ -1,5 +1,6 @@
 package com.github.lucatume.completamente.order89
 
+import com.github.lucatume.completamente.services.DebugLog
 import com.github.lucatume.completamente.completion.collectReferencedFiles
 import com.github.lucatume.completamente.completion.surfaceExtract
 import com.github.lucatume.completamente.services.SettingsState
@@ -126,8 +127,9 @@ class Order89Action : AnAction() {
         if (!dialog.showAndWait() || dialog.promptText.isBlank()) return
 
         val settings = SettingsState.getInstance().toSettings()
+        DebugLog.log("Order89 start: file=${psiFile.virtualFile?.path}, selection=$selectionStart-$selectionEnd")
 
-        val contextChunks = runReadAction<List<ContextChunk>> {
+        val contextChunks = DebugLog.timed("Order89 context extraction") { runReadAction<List<ContextChunk>> {
             try {
                 val startLine = editor.document.getLineNumber(selectionStart)
                 val endLine = editor.document.getLineNumber(selectionEnd)
@@ -142,7 +144,8 @@ class Order89Action : AnAction() {
             } catch (_: Exception) {
                 emptyList()
             }
-        }
+        } }
+        DebugLog.log("Order89 context: ${contextChunks.size} chunks")
 
         val filePath = psiFile.virtualFile?.path ?: ""
 

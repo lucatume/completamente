@@ -175,6 +175,7 @@ class SettingsStateTest : BaseCompletionTest() {
         state.order89ServerUrl = "http://order89:8017"
         state.order89ToolUsage = "MANUAL"
         state.order89MaxToolRounds = 5
+        state.debugLogging = true
 
         val settings = state.toSettings()
 
@@ -188,6 +189,7 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals("http://order89:8017", settings.order89ServerUrl)
         assertEquals(ToolUsageMode.MANUAL, settings.order89ToolUsage)
         assertEquals(5, settings.order89MaxToolRounds)
+        assertTrue(settings.debugLogging)
     }
 
     fun testLoadStateCopiesAllFields() {
@@ -203,6 +205,7 @@ class SettingsStateTest : BaseCompletionTest() {
         source.order89ServerUrl = "http://custom:8017"
         source.order89ToolUsage = "AUTO"
         source.order89MaxToolRounds = 7
+        source.debugLogging = true
 
         state.loadState(source)
 
@@ -216,6 +219,7 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals("http://custom:8017", state.order89ServerUrl)
         assertEquals("AUTO", state.order89ToolUsage)
         assertEquals(7, state.order89MaxToolRounds)
+        assertTrue(state.debugLogging)
     }
 
     // -- Tool usage settings tests --
@@ -270,5 +274,30 @@ class SettingsStateTest : BaseCompletionTest() {
 
         assertEquals("MANUAL", state.order89ToolUsage)
         assertEquals(10, state.order89MaxToolRounds)
+    }
+
+    // -- Debug logging settings tests --
+
+    fun testDebugLoggingDefaultIsFalse() {
+        val state = SettingsState()
+        val settings = state.toSettings()
+        assertFalse(settings.debugLogging)
+    }
+
+    fun testDebugLoggingCustomValueRoundTrips() {
+        val state = SettingsState()
+        state.debugLogging = true
+        val settings = state.toSettings()
+        assertTrue(settings.debugLogging)
+    }
+
+    fun testLoadStateCopiesDebugLogging() {
+        val state = SettingsState()
+        val source = SettingsState()
+        source.debugLogging = true
+
+        state.loadState(source)
+
+        assertTrue(state.debugLogging)
     }
 }

@@ -27,8 +27,12 @@ class CacheWarmingService(private val project: Project) : Disposable {
      */
     fun scheduleWarmup(extra: List<InfillExtraChunk>) {
         // Skip scheduling if the extras haven't changed (deduplication).
-        if (extra == lastWarmedExtras) return
+        if (extra == lastWarmedExtras) {
+            DebugLog.log("cache warmup skipped: extras unchanged (${extra.size} chunks)")
+            return
+        }
 
+        DebugLog.log("cache warmup scheduled: ${extra.size} chunks")
         // Store immediately so getLastWarmedExtras reflects intent even before the request fires.
         lastWarmedExtras = extra
         alarm.cancelAllRequests()
@@ -36,9 +40,10 @@ class CacheWarmingService(private val project: Project) : Disposable {
             try {
                 val serverUrl = SettingsState.getInstance().toSettings().serverUrl
                 val client = InfillClient(serverUrl)
+                DebugLog.log("cache warmup firing: ${extra.size} chunks to $serverUrl")
                 client.sendCacheWarming(extra)
-            } catch (_: Exception) {
-                // Fire and forget -- errors are silently ignored.
+            } catch (e: Exception) {
+                DebugLog.log("cache warmup failed: ${e.javaClass.simpleName}: ${e.message}")
             }
         }, 500)
     }

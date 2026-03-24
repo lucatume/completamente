@@ -17,5 +17,6 @@ data class Settings(
     val order89RepeatPenalty: Double = 1.05,
     val order89NPredict: Int = 1024,
     val order89ToolUsage: ToolUsageMode = ToolUsageMode.OFF,
-    val order89MaxToolRounds: Int = 3
+    val order89MaxToolRounds: Int = 3,
+    val debugLogging: Boolean = false
 )
