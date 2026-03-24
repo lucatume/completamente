@@ -10,9 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Order 89 tool usage: the model can now call `FileSearch` (project-wide grep) and
-  `WebSearch` (stub) tools to gather context before generating code. Uses a two-phase
-  architecture (Phase 1 with tools, Phase 2 without) validated at 15/15 accuracy in
-  harness testing (rhdp/70–79).
+  `DocSearch` (local Dash documentation) tools to gather context before generating code.
+  Uses a two-phase architecture (Phase 1 with tools, Phase 2 without) validated at 15/15
+  accuracy in harness testing (rhdp/70–79, 81–85).
 - New `Tool usage` setting with three modes: OFF (default, no tools), MANUAL (tools
   enabled when prompt starts with `/tools`), AUTO (tools always available).
 - New `Max tool rounds` setting (default: 3) to cap the tool-calling loop.
