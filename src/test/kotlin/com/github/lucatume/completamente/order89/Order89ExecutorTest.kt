@@ -415,6 +415,28 @@ class Order89ExecutorTest : BaseCompletionTest() {
         assertEquals("", Order89Executor.stripTrailingProse(""))
     }
 
+    // -- matchTrailingNewlines tests --
+
+    fun testMatchTrailingNewlinesAppendsMissingNewline() {
+        assertEquals("bar\n", Order89Executor.matchTrailingNewlines("foo\n", "bar"))
+    }
+
+    fun testMatchTrailingNewlinesPreservesMultiple() {
+        assertEquals("bar\n\n", Order89Executor.matchTrailingNewlines("foo\n\n", "bar"))
+    }
+
+    fun testMatchTrailingNewlinesTrimsExtra() {
+        assertEquals("bar", Order89Executor.matchTrailingNewlines("foo", "bar\n\n"))
+    }
+
+    fun testMatchTrailingNewlinesNoChange() {
+        assertEquals("bar\n", Order89Executor.matchTrailingNewlines("foo\n", "bar\n"))
+    }
+
+    fun testMatchTrailingNewlinesEmptyOriginal() {
+        assertEquals("bar", Order89Executor.matchTrailingNewlines("", "bar\n"))
+    }
+
     // -- cleanOutput integration tests --
 
     fun testCleanOutputProseWithFencedCode() {

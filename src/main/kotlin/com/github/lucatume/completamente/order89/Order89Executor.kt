@@ -297,6 +297,11 @@ When you have gathered the information you need, produce your code output as spe
             .let { stripTrailingProse(it) }
     }
 
+    fun matchTrailingNewlines(originalSelection: String, replacement: String): String {
+        val targetCount = originalSelection.takeLastWhile { it == '\n' }.length
+        return replacement.trimEnd('\n') + "\n".repeat(targetCount)
+    }
+
     fun reindentOutput(output: String, selectionIndent: String): String {
         val lines = output.split("\n")
         if (lines.size <= 1) return output

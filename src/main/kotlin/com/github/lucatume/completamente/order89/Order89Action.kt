@@ -256,9 +256,14 @@ class Order89Action : AnAction() {
                         // inside WriteCommandAction causes IntelliJ to record it in
                         // the same undo group, making status text reappear on undo.
                         removeStatusDisplay(editor, session.statusDisplay)
+                        val originalSelection = effectiveRequest.fileContent.substring(
+                            effectiveRequest.selectionStart,
+                            effectiveRequest.selectionEnd
+                        )
+                        val finalOutput = Order89Executor.matchTrailingNewlines(originalSelection, result.output)
                         WriteCommandAction.runWriteCommandAction(project, "Order 89", null, {
                             if (!session.range.isValid) return@runWriteCommandAction
-                            editor.document.replaceString(session.range.startOffset, session.range.endOffset, result.output)
+                            editor.document.replaceString(session.range.startOffset, session.range.endOffset, finalOutput)
                             PsiDocumentManager.getInstance(project).commitDocument(editor.document)
                             val committedPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
                             if (committedPsiFile != null && session.range.isValid) {
