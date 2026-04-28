@@ -52,10 +52,10 @@ abstract class BaseCompletamenteUiTest {
         runCatching {
             robot.runJs(
                 """
-                const FileEditorManager = Java.type('com.intellij.openapi.fileEditor.FileEditorManager')
-                const ProjectManager   = Java.type('com.intellij.openapi.project.ProjectManager')
-                const projects = ProjectManager.getInstance().getOpenProjects()
-                for (let i = 0; i < projects.length; i++) {
+                importPackage(com.intellij.openapi.fileEditor)
+                importPackage(com.intellij.openapi.project)
+                var projects = ProjectManager.getInstance().getOpenProjects()
+                for (var i = 0; i < projects.length; i++) {
                     FileEditorManager.getInstance(projects[i]).closeAllFiles()
                 }
                 """.trimIndent(),
@@ -81,18 +81,35 @@ abstract class BaseCompletamenteUiTest {
 
     private fun configureSettings(llamaUrl: String, order89CliCommand: String) {
         val script = """
-            const Settings = Java.type('com.github.lucatume.completamente.services.Settings')
-            const s = Settings.getInstance().getState()
-            s.endpoint = '${escapeJs(llamaUrl)}'
-            s.order89CliCommand = '${escapeJs(order89CliCommand)}'
+            var pluginId = com.intellij.openapi.extensions.PluginId.findId('com.github.lucatume.completamente')
+            var pluginCl = com.intellij.ide.plugins.PluginManagerCore.findPlugin(pluginId).getPluginClassLoader()
+            var stateClass = java.lang.Class.forName(
+                'com.github.lucatume.completamente.services.SettingsState', true, pluginCl)
+            var service = com.intellij.openapi.application.ApplicationManager.getApplication().getService(stateClass)
+            service.setServerUrl('${escapeJs(llamaUrl)}')
+            service.setOrder89CliCommand('${escapeJs(order89CliCommand)}')
         """.trimIndent()
         robot.runJs(script, runInEdt = true)
     }
 
+    /** Read a String setting back from the IDE-side service, by Java getter name (e.g. "getServerUrl"). */
+    protected fun readStringSetting(getter: String): String =
+        robot.callJs<String>(
+            """
+            var pluginId = com.intellij.openapi.extensions.PluginId.findId('com.github.lucatume.completamente')
+            var pluginCl = com.intellij.ide.plugins.PluginManagerCore.findPlugin(pluginId).getPluginClassLoader()
+            var stateClass = java.lang.Class.forName(
+                'com.github.lucatume.completamente.services.SettingsState', true, pluginCl)
+            var service = com.intellij.openapi.application.ApplicationManager.getApplication().getService(stateClass)
+            String(service.${getter}())
+            """.trimIndent(),
+            runInEdt = true,
+        )
+
     private fun openSandboxProject(path: Path) {
         val script = """
-            const ProjectUtil = Java.type('com.intellij.ide.impl.ProjectUtil')
-            const Paths       = Java.type('java.nio.file.Paths')
+            var ProjectUtil = com.intellij.ide.impl.ProjectUtil
+            var Paths       = java.nio.file.Paths
             ProjectUtil.openOrImport(Paths.get('${escapeJs(path.toAbsolutePath().toString())}'), null, true)
         """.trimIndent()
         robot.runJs(script, runInEdt = true)
@@ -101,15 +118,14 @@ abstract class BaseCompletamenteUiTest {
 
     private fun ensureIdeReady() {
         val deadline = System.currentTimeMillis() + Duration.ofSeconds(60).toMillis()
+        var lastError: Throwable? = null
         while (System.currentTimeMillis() < deadline) {
-            try {
-                robot.find(ContainerFixture::class.java, byXpath("//div[@class='IdeFrameImpl']"))
-                return
-            } catch (_: Throwable) {
-                Thread.sleep(500)
-            }
+            val outcome = runCatching { robot.runJs("/* ping */", runInEdt = false) }
+            if (outcome.isSuccess) return
+            lastError = outcome.exceptionOrNull()
+            Thread.sleep(500)
         }
-        error("IDE frame did not appear within 60s")
+        error("Robot-server did not respond to JS within 60s; last error: $lastError")
     }
 
     private fun escapeJs(s: String) = s.replace("\\", "\\\\").replace("'", "\\'")

@@ -164,6 +164,12 @@ val uiTest by tasks.registering(Test::class) {
         "ui.test.reports.dir",
         layout.buildDirectory.dir("reports/uiTest").get().asFile.absolutePath,
     )
+    // Gson (via Retrofit) needs reflective access to JDK internals on Java 17+.
+    jvmArgs(
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    )
     shouldRunAfter("test")
 }
 
