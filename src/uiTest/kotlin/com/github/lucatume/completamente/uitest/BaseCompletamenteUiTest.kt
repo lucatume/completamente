@@ -4,6 +4,7 @@ import com.github.lucatume.completamente.uitest.support.ArtefactRecorder
 import com.github.lucatume.completamente.uitest.support.FakeAgentCli
 import com.github.lucatume.completamente.uitest.support.FakeLlamaServer
 import com.github.lucatume.completamente.uitest.support.SandboxProject
+import com.github.lucatume.completamente.uitest.support.SummaryWriter
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.search.locators.byXpath
@@ -30,8 +31,18 @@ abstract class BaseCompletamenteUiTest {
     protected val robot: RemoteRobot = RemoteRobot(robotUrl)
 
     @get:Rule val artefactRule: TestWatcher = object : TestWatcher() {
+        override fun starting(description: Description) {
+            SummaryWriter.started(description.className, description.methodName)
+        }
+        override fun succeeded(description: Description) {
+            SummaryWriter.passed(description.className, description.methodName)
+        }
         override fun failed(e: Throwable, description: Description) {
             recorder.captureFailure(description.className, description.methodName, e)
+            SummaryWriter.failed(description.className, description.methodName, e.message)
+        }
+        override fun skipped(e: org.junit.AssumptionViolatedException, description: Description) {
+            SummaryWriter.ignored(description.className, description.methodName)
         }
     }
 
