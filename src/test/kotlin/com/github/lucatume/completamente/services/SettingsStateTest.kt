@@ -1,7 +1,6 @@
 package com.github.lucatume.completamente.services
 
 import com.github.lucatume.completamente.BaseCompletionTest
-import com.github.lucatume.completamente.order89.ToolUsageMode
 
 class SettingsStateTest : BaseCompletionTest() {
 
@@ -46,32 +45,6 @@ class SettingsStateTest : BaseCompletionTest() {
 
         assertEquals(32, state.ringNChunks)
         assertEquals(128, state.ringChunkSize)
-    }
-
-    fun testOrder89ServerUrlDefaultValue() {
-        val state = SettingsState()
-        val settings = state.toSettings()
-
-        assertEquals("http://127.0.0.1:8017", settings.order89ServerUrl)
-    }
-
-    fun testOrder89ServerUrlCustomValueRoundTrips() {
-        val state = SettingsState()
-        state.order89ServerUrl = "http://localhost:9999"
-
-        val settings = state.toSettings()
-
-        assertEquals("http://localhost:9999", settings.order89ServerUrl)
-    }
-
-    fun testLoadStateCopiesOrder89ServerUrl() {
-        val state = SettingsState()
-        val source = SettingsState()
-        source.order89ServerUrl = "http://other:1234"
-
-        state.loadState(source)
-
-        assertEquals("http://other:1234", state.order89ServerUrl)
     }
 
     fun testToSettingsWithZeroRingNChunks() {
@@ -172,9 +145,7 @@ class SettingsStateTest : BaseCompletionTest() {
         state.ringNChunks = 4
         state.ringChunkSize = 32
         state.maxQueuedChunks = 2
-        state.order89ServerUrl = "http://order89:8017"
-        state.order89ToolUsage = "MANUAL"
-        state.order89MaxToolRounds = 5
+        state.order89CliCommand = "agent @\"%%prompt_file%%\""
         state.debugLogging = true
 
         val settings = state.toSettings()
@@ -186,9 +157,7 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals(4, settings.ringNChunks)
         assertEquals(32, settings.ringChunkSize)
         assertEquals(2, settings.maxQueuedChunks)
-        assertEquals("http://order89:8017", settings.order89ServerUrl)
-        assertEquals(ToolUsageMode.MANUAL, settings.order89ToolUsage)
-        assertEquals(5, settings.order89MaxToolRounds)
+        assertEquals("agent @\"%%prompt_file%%\"", settings.order89CliCommand)
         assertTrue(settings.debugLogging)
     }
 
@@ -202,9 +171,7 @@ class SettingsStateTest : BaseCompletionTest() {
         source.ringNChunks = 99
         source.ringChunkSize = 200
         source.maxQueuedChunks = 50
-        source.order89ServerUrl = "http://custom:8017"
-        source.order89ToolUsage = "AUTO"
-        source.order89MaxToolRounds = 7
+        source.order89CliCommand = "custom @\"%%prompt_file%%\""
         source.debugLogging = true
 
         state.loadState(source)
@@ -216,67 +183,40 @@ class SettingsStateTest : BaseCompletionTest() {
         assertEquals(99, state.ringNChunks)
         assertEquals(200, state.ringChunkSize)
         assertEquals(50, state.maxQueuedChunks)
-        assertEquals("http://custom:8017", state.order89ServerUrl)
-        assertEquals("AUTO", state.order89ToolUsage)
-        assertEquals(7, state.order89MaxToolRounds)
+        assertEquals("custom @\"%%prompt_file%%\"", state.order89CliCommand)
         assertTrue(state.debugLogging)
     }
 
-    // -- Tool usage settings tests --
+    // -- Order 89 CLI command --
 
-    fun testToolUsageDefaultIsOff() {
+    fun testOrder89CliCommandDefaultIsBundledPiInvocation() {
         val state = SettingsState()
         val settings = state.toSettings()
-        assertEquals(ToolUsageMode.OFF, settings.order89ToolUsage)
+        assertEquals(DEFAULT_ORDER89_CLI_COMMAND, settings.order89CliCommand)
+        assertTrue(
+            "Default command must include the prompt-file placeholder",
+            settings.order89CliCommand.contains("%%prompt_file%%")
+        )
     }
 
-    fun testToolUsageManualRoundTrips() {
+    fun testOrder89CliCommandCustomValueRoundTrips() {
         val state = SettingsState()
-        state.order89ToolUsage = "MANUAL"
+        state.order89CliCommand = "claude --prompt-file %%prompt_file%%"
         val settings = state.toSettings()
-        assertEquals(ToolUsageMode.MANUAL, settings.order89ToolUsage)
+        assertEquals("claude --prompt-file %%prompt_file%%", settings.order89CliCommand)
     }
 
-    fun testToolUsageAutoRoundTrips() {
-        val state = SettingsState()
-        state.order89ToolUsage = "AUTO"
-        val settings = state.toSettings()
-        assertEquals(ToolUsageMode.AUTO, settings.order89ToolUsage)
-    }
-
-    fun testToolUsageInvalidStringFallsBackToOff() {
-        val state = SettingsState()
-        state.order89ToolUsage = "INVALID_VALUE"
-        val settings = state.toSettings()
-        assertEquals(ToolUsageMode.OFF, settings.order89ToolUsage)
-    }
-
-    fun testMaxToolRoundsDefault() {
-        val state = SettingsState()
-        val settings = state.toSettings()
-        assertEquals(3, settings.order89MaxToolRounds)
-    }
-
-    fun testMaxToolRoundsCustomValueRoundTrips() {
-        val state = SettingsState()
-        state.order89MaxToolRounds = 5
-        val settings = state.toSettings()
-        assertEquals(5, settings.order89MaxToolRounds)
-    }
-
-    fun testLoadStateCopiesToolFields() {
+    fun testLoadStateCopiesOrder89CliCommand() {
         val state = SettingsState()
         val source = SettingsState()
-        source.order89ToolUsage = "MANUAL"
-        source.order89MaxToolRounds = 10
+        source.order89CliCommand = "other-cli %%prompt_file%%"
 
         state.loadState(source)
 
-        assertEquals("MANUAL", state.order89ToolUsage)
-        assertEquals(10, state.order89MaxToolRounds)
+        assertEquals("other-cli %%prompt_file%%", state.order89CliCommand)
     }
 
-    // -- Debug logging settings tests --
+    // -- Debug logging --
 
     fun testDebugLoggingDefaultIsFalse() {
         val state = SettingsState()

@@ -2,54 +2,137 @@ package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.services.DebugLog
 import com.github.lucatume.completamente.services.Settings
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
-import java.util.concurrent.Callable
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
+import com.intellij.openapi.application.ApplicationManager
+import java.io.File
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.Future
-import kotlinx.serialization.json.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
-data class ContextChunk(
-    val path: String,
-    val content: String
-)
+const val PROMPT_FILE_PLACEHOLDER: String = "%%prompt_file%%"
 
 data class Order89Request(
     val prompt: String,
     val filePath: String,
-    val fileContent: String,
     val language: String,
+    val fileContent: String,
     val selectionStart: Int,
     val selectionEnd: Int,
-    val contextChunks: List<ContextChunk>
-)
+    val startLine: Int,
+    val startCol: Int,
+    val endLine: Int,
+    val endCol: Int,
+    val referencedFilePaths: List<String>
+) {
+    val selectionText: String get() = fileContent.substring(selectionStart, selectionEnd)
+}
 
 data class Order89Result(
     val success: Boolean,
     val output: String
 )
 
+data class ProcessRunResult(
+    val exitCode: Int,
+    val stdout: String,
+    val stderr: String,
+    val stdoutTruncated: Boolean = false,
+    val stderrTruncated: Boolean = false
+)
+
+data class CappedRead(val text: String, val truncated: Boolean)
+
+/**
+ * Holds the live [Process] for an in-flight Order 89 invocation so ESC can destroy it.
+ * Setting a process after [cancel] has been called destroys it immediately.
+ *
+ * [cancel] is non-blocking: it sends SIGTERM synchronously, then dispatches the
+ * 250 ms wait + force-kill to a pooled thread. ESC fires from the EDT and must not block
+ * the UI if the CLI ignores SIGTERM.
+ */
+class Order89ProcessSession {
+    private val processRef = AtomicReference<Process?>(null)
+    private val cancelled = AtomicBoolean(false)
+
+    fun setProcess(process: Process) {
+        processRef.set(process)
+        // Re-check cancelled after the store: closes the race where cancel() observed a null
+        // processRef and returned, while we hadn't yet stored the live process. Without this,
+        // a subprocess could outlive a cancelled session.
+        if (cancelled.get() && processRef.compareAndSet(process, null)) {
+            process.destroyForcibly()
+        }
+    }
+
+    fun cancel() {
+        cancelled.set(true)
+        val process = processRef.getAndSet(null) ?: return
+        // Snapshot descendants BEFORE terminating the shell wrapper. Otherwise the shell may
+        // exit first and reparent its children to init, breaking the parent→child link we use
+        // to find them. Pipelines and `cmd &` lose this link otherwise.
+        val descendants: List<ProcessHandle> = try {
+            process.toHandle().descendants().toList()
+        } catch (_: Throwable) {
+            emptyList()
+        }
+        descendants.forEach { runCatching { it.destroy() } }
+        process.destroy()
+        ApplicationManager.getApplication().executeOnPooledThread {
+            if (!process.waitFor(250, TimeUnit.MILLISECONDS)) {
+                descendants.forEach { runCatching { if (it.isAlive) it.destroyForcibly() } }
+                process.destroyForcibly()
+            }
+        }
+    }
+}
+
 internal fun escapeXmlAttr(value: String): String =
     value.replace("&", "&amp;").replace("\"", "&quot;").replace("'", "&apos;").replace("<", "&lt;").replace(">", "&gt;")
 
 object Order89Executor {
 
-    private val httpClient: HttpClient = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofSeconds(5))
-        .build()
+    /** Total file-content embedded in the prompt is capped to keep the agent's context manageable. */
+    internal const val MAX_PROMPT_FILE_CHARS: Int = 200_000
+
+    /** When trimming, this many chars on each side of the selection are kept verbatim. */
+    internal const val PROMPT_FILE_WINDOW_CHARS: Int = 50_000
+
+    /** Quote a path as a double-quoted string with backslash and quote escapes. */
+    fun escapePosixPath(path: String): String =
+        "\"" + path.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+    /**
+     * Render the file content split around the selection. For files within
+     * [MAX_PROMPT_FILE_CHARS] the full content is returned. Otherwise a window of
+     * [PROMPT_FILE_WINDOW_CHARS] on each side of the selection is kept verbatim and the
+     * trimmed regions are replaced with a `[… N chars truncated]` marker.
+     */
+    internal fun renderFileWindow(content: String, selectionStart: Int, selectionEnd: Int): Pair<String, String> {
+        if (content.length <= MAX_PROMPT_FILE_CHARS) {
+            return Pair(content.substring(0, selectionStart), content.substring(selectionEnd))
+        }
+        val beforeStart = maxOf(0, selectionStart - PROMPT_FILE_WINDOW_CHARS)
+        val afterEnd = minOf(content.length, selectionEnd + PROMPT_FILE_WINDOW_CHARS)
+        val before = buildString {
+            if (beforeStart > 0) append("[… $beforeStart chars truncated]\n")
+            append(content, beforeStart, selectionStart)
+        }
+        val after = buildString {
+            append(content, selectionEnd, afterEnd)
+            if (afterEnd < content.length) append("\n[… ${content.length - afterEnd} chars truncated]")
+        }
+        return Pair(before, after)
+    }
 
     fun buildPrompt(request: Order89Request): String {
-        val before = request.fileContent.substring(0, request.selectionStart)
-        val selection = request.fileContent.substring(request.selectionStart, request.selectionEnd)
-        val after = request.fileContent.substring(request.selectionEnd)
-
+        val (before, after) = renderFileWindow(request.fileContent, request.selectionStart, request.selectionEnd)
+        val selection = request.selectionText
         return buildString {
             appendLine("<Order89Prompt>")
-            appendLine("You are a code transformation tool. You receive a file with a marked selection and an instruction.")
+            appendLine("You are a code transformation agent. You receive a file with a marked selection range and an instruction.")
             appendLine("You output ONLY the code that replaces the selection.")
             appendLine()
             appendLine("<Order89Rules>")
@@ -63,182 +146,58 @@ object Order89Executor {
             appendLine("- Do NOT include any text before or after the fenced code block.")
             appendLine("- If the selection is empty (<Order89UserSelection></Order89UserSelection>),")
             appendLine("  output code to insert at that position.")
+            appendLine("- Do NOT modify any file directly. Return the modified selection content as a single")
+            appendLine("  fenced code block. Order 89 may be invoked on multiple ranges concurrently and the")
+            appendLine("  IDE applies the replacement based on original line positions; modifying files")
+            appendLine("  yourself would corrupt other concurrent invocations.")
+            appendLine("- Treat the <Order89FileContent> block below as the authoritative content of the file")
+            appendLine("  under edit. The on-disk copy may be stale (IDE has unsaved changes). Use the path")
+            appendLine("  only to reason about location; do not re-read this file from disk.")
             appendLine("</Order89Rules>")
             appendLine()
-            appendLine("<Order89Context>")
-            appendLine("The following files are referenced by the file under edit. Use them to understand")
-            appendLine("the APIs and types available, so your generated code calls real methods with correct signatures.")
-            for (chunk in request.contextChunks) {
-                appendLine()
-                appendLine("<Order89ContextFile path=\"${escapeXmlAttr(chunk.path)}\">")
-                appendLine(chunk.content)
-                appendLine("</Order89ContextFile>")
-            }
-            appendLine("</Order89Context>")
-            appendLine()
             appendLine("Language: ${request.language}")
-            appendLine("File: ${request.filePath}")
+            appendLine("File: ${escapePosixPath(request.filePath)}")
+            appendLine("Selection: ${request.startLine}:${request.startCol}-${request.endLine}:${request.endCol}")
             appendLine()
+            if (request.referencedFilePaths.isNotEmpty()) {
+                appendLine("<Order89ReferencedFiles>")
+                appendLine("The following files are referenced by the file under edit. Read them as needed")
+                appendLine("to understand the APIs and types available, so your generated code calls real")
+                appendLine("methods with correct signatures.")
+                for (p in request.referencedFilePaths) {
+                    appendLine(escapePosixPath(p))
+                }
+                appendLine("</Order89ReferencedFiles>")
+                appendLine()
+            }
             appendLine("<Order89Instruction>")
             appendLine(request.prompt)
             appendLine("</Order89Instruction>")
             appendLine()
-            appendLine("REMINDER: Match the file's documentation style.")
-            appendLine()
+            // Live document snapshot taken at invocation time. Authoritative — do NOT re-read the
+            // file from disk; the IDE may have unsaved changes and the on-disk copy can be stale.
             appendLine("<Order89FileContent>")
             append(before)
             append("<Order89UserSelection>")
             append(selection)
             append("</Order89UserSelection>")
             append(after)
-            appendLine()
+            if (request.fileContent.isNotEmpty() && !request.fileContent.endsWith('\n')) appendLine()
             appendLine("</Order89FileContent>")
+            appendLine()
+            appendLine("REMINDER: Match the file's documentation style. Return ONLY the replacement code in a single fenced block.")
             appendLine("</Order89Prompt>")
         }
     }
 
-    private const val TOOL_SPEC = """You have two tools you may call to gather information before writing code:
-
-1. FileSearch — Finds files in the project containing a string. Returns file:line pairs.
-   Case-insensitive by default.
-   Parameters: query (required, string), case_sensitive (optional, boolean, default false),
-   path (optional, string, file or directory to search recursively)
-
-2. DocSearch — Searches installed documentation (Dash docsets).
-   Returns the text content of the top matching documentation pages.
-   Parameters: query (required, string),
-               docsets (optional, string, comma-separated: php, wordpress, wp,
-                        laravel, react, javascript, js, typescript, ts, node, nodejs, kotlin, kt)
-
-To use a tool, respond with:
-<tool_call>
-{"name": "<tool-name>", "arguments": {<args>}}
-</tool_call>
-
-When you have gathered the information you need, produce your code output as specified in the rules."""
-
-    private const val TOOL_CALLING_RULE = "- If you need information from project files or API documentation to correctly implement the\n" +
-        "  instruction, call the appropriate tool FIRST. Once you have the information, produce the code."
-
-    fun buildChatPrompt(
-        request: Order89Request,
-        toolResults: List<ToolResult> = emptyList(),
-        includeTools: Boolean = true
-    ): String {
-        return buildString {
-            // System message
-            append("<|im_start|>system\n")
-            appendLine("You are a code transformation tool. You receive a file with a marked selection and an instruction.")
-            appendLine("You output ONLY the code that replaces the selection.")
-            appendLine()
-            appendLine("<Order89Rules>")
-            appendLine("- Wrap your code output in a fenced code block using triple backticks with the language identifier.")
-            appendLine("- Do NOT add documentation blocks, comments, or type annotations that the surrounding")
-            appendLine("  code does not already use. Conversely, if the surrounding code includes documentation")
-            appendLine("  blocks on every function, include one on yours in the same format.")
-            appendLine("- Preserve the indentation style, brace placement, and whitespace patterns of the")
-            appendLine("  surrounding code.")
-            appendLine("- Do NOT describe what you are about to do. Do NOT explain your reasoning.")
-            appendLine("- Do NOT include any text before or after the fenced code block.")
-            appendLine("- If the selection is empty (<Order89UserSelection></Order89UserSelection>),")
-            appendLine("  output code to insert at that position.")
-            if (includeTools) {
-                appendLine(TOOL_CALLING_RULE)
-            }
-            appendLine("</Order89Rules>")
-            if (includeTools) {
-                appendLine()
-                appendLine(TOOL_SPEC)
-            }
-            append("<|im_end|>\n")
-
-            // User message
-            append("<|im_start|>user\n")
-
-            // Inject tool results as ReferenceCode blocks (Phase 2)
-            if (!includeTools && toolResults.isNotEmpty()) {
-                for (result in toolResults) {
-                    val rawSource = "${result.call.name}: ${result.call.arguments["query"]?.let {
-                        it.jsonPrimitive.content
-                    } ?: ""}"
-                    val source = escapeXmlAttr(rawSource)
-                    appendLine("<ReferenceCode source=\"$source\">")
-                    appendLine(result.output)
-                    appendLine("</ReferenceCode>")
-                    appendLine()
-                }
-            }
-
-            appendLine("<Order89Context>")
-            appendLine("The following files are referenced by the file under edit. Use them to understand")
-            appendLine("the APIs and types available, so your generated code calls real methods with correct signatures.")
-            for (chunk in request.contextChunks) {
-                appendLine()
-                appendLine("<Order89ContextFile path=\"${escapeXmlAttr(chunk.path)}\">")
-                appendLine(chunk.content)
-                appendLine("</Order89ContextFile>")
-            }
-            appendLine("</Order89Context>")
-            appendLine()
-            appendLine("Language: ${request.language}")
-            appendLine("File: ${request.filePath}")
-            appendLine()
-            appendLine("<Order89Instruction>")
-            appendLine(request.prompt)
-            appendLine("</Order89Instruction>")
-            appendLine()
-            appendLine("REMINDER: Match the file's documentation style.")
-            appendLine()
-            appendLine("<Order89FileContent>")
-            val before = request.fileContent.substring(0, request.selectionStart)
-            val selection = request.fileContent.substring(request.selectionStart, request.selectionEnd)
-            val after = request.fileContent.substring(request.selectionEnd)
-            append(before)
-            append("<Order89UserSelection>")
-            append(selection)
-            append("</Order89UserSelection>")
-            append(after)
-            appendLine()
-            appendLine("</Order89FileContent>")
-            append("<|im_end|>\n")
-
-            // Assistant turn
-            append("<|im_start|>assistant\n")
-        }
-    }
-
-    fun buildChatRequestBody(prompt: String, settings: Settings): String {
-        val json = buildJsonObject {
-            put("prompt", prompt)
-            put("n_predict", settings.order89NPredict)
-            put("temperature", settings.order89Temperature)
-            put("top_p", settings.order89TopP)
-            put("top_k", settings.order89TopK)
-            put("repeat_penalty", settings.order89RepeatPenalty)
-            putJsonArray("stop") {
-                add("<|im_end|>")
-                add("<|im_start|>")
-            }
-            put("cache_prompt", false)
-        }
-        return json.toString()
-    }
-
-    fun buildRequestBody(prompt: String, settings: Settings): String {
-        val json = buildJsonObject {
-            put("prompt", prompt)
-            put("n_predict", settings.order89NPredict)
-            put("temperature", settings.order89Temperature)
-            put("top_p", settings.order89TopP)
-            put("top_k", settings.order89TopK)
-            put("repeat_penalty", settings.order89RepeatPenalty)
-            putJsonArray("stop") {
-                add("</Order89Prompt>")
-                add("\n\n\n\n")
-            }
-            put("cache_prompt", false)
-        }
-        return json.toString()
+    /**
+     * Replaces every occurrence of [PROMPT_FILE_PLACEHOLDER] in [command] with [promptFilePath].
+     * The path's backslashes and double quotes are escaped so substitution into a double-quoted
+     * argument (e.g. `@"%%prompt_file%%"`) yields a single shell-style token after tokenization.
+     */
+    fun substitutePromptFile(command: String, promptFilePath: String): String {
+        val escaped = promptFilePath.replace("\\", "\\\\").replace("\"", "\\\"")
+        return command.replace(PROMPT_FILE_PLACEHOLDER, escaped)
     }
 
     fun detectBaseIndent(text: String): String {
@@ -316,150 +275,150 @@ When you have gathered the information you need, produce your code output as spe
         }.joinToString("\n")
     }
 
-    fun executeWithTools(
-        request: Order89Request,
-        settings: Settings,
-        toolExecutor: (ToolCall) -> String,
-        completionFn: (String, String) -> String,
-        onStatusUpdate: (StatusUpdate) -> Unit = {}
-    ): Order89Result {
-        val maxRounds = settings.order89MaxToolRounds
-        val allResults = mutableListOf<ToolResult>()
+    /** Maximum bytes captured from a single output stream — prevents OOM from a runaway agent. */
+    internal const val MAX_STREAM_CHARS: Int = 8 * 1024 * 1024
 
-        for (round in 1..maxRounds) {
-            DebugLog.log("Order89 tool round $round/$maxRounds start")
-            onStatusUpdate(StatusUpdate.WaitingForModel)
+    /**
+     * Resolved login shell used to launch the command. Reads `$SHELL` and falls back to
+     * `/bin/sh` if unset/blank — matches the behavior users see in their terminal so
+     * profile-driven PATH (nvm, asdf, mise) is picked up.
+     */
+    internal fun resolveLoginShell(): String =
+        System.getenv("SHELL")?.takeIf { it.isNotBlank() } ?: "/bin/sh"
 
-            val prompt = buildChatPrompt(request, allResults, includeTools = true)
-            val body = buildChatRequestBody(prompt, settings)
-            DebugLog.log("Order89 round $round request: ${body.length} chars")
-
-            val responseBody: String
-            try {
-                responseBody = DebugLog.timed("Order89 round $round HTTP") {
-                    completionFn(body, settings.order89ServerUrl)
-                }
-            } catch (e: Exception) {
-                DebugLog.log("Order89 round $round HTTP error: ${e.message}")
-                return Order89Result(success = false, output = e.message ?: "Unknown error")
-            }
-
-            val responseJson = try {
-                Json.parseToJsonElement(responseBody).jsonObject
-            } catch (e: Exception) {
-                return Order89Result(success = false, output = "Invalid JSON response: ${e.message}")
-            }
-
-            val content = responseJson["content"]?.jsonPrimitive?.contentOrNull
-            if (content.isNullOrEmpty()) {
-                return Order89Result(success = false, output = "Empty content in response")
-            }
-
-            val toolCalls = extractToolCalls(content)
-
-            if (toolCalls.isEmpty()) {
-                // Model produced code directly, no Phase 2 needed
-                DebugLog.log("Order89 round $round: no tool calls, producing code directly")
-                val cleaned = cleanOutput(content)
-                return Order89Result(success = true, output = cleaned)
-            }
-
-            // Show tool calls in status display, then execute in parallel
-            DebugLog.log("Order89 round $round: ${toolCalls.size} tool calls: ${toolCalls.joinToString { it.name }}")
-            onStatusUpdate(StatusUpdate.ToolCalls(toolCalls))
-            val futures = toolCalls.map { call ->
-                CompletableFuture.supplyAsync {
-                    DebugLog.timed("Order89 tool ${call.name}") {
-                        try {
-                            ToolResult(call, toolExecutor(call))
-                        } catch (e: Exception) {
-                            DebugLog.log("Order89 tool ${call.name} failed: ${e.message}")
-                            ToolResult(call, "Error: ${e.message}")
-                        }
-                    }
-                }
-            }
-
-            val roundResults = futures.map { it.join() }
-            allResults.addAll(roundResults)
-        }
-
-        // Max rounds reached or all rounds done with results — Phase 2
-        DebugLog.log("Order89 Phase 2 start, ${allResults.size} tool results")
-        onStatusUpdate(StatusUpdate.WaitingForModel)
-        val phase2Prompt = buildChatPrompt(request, allResults, includeTools = false)
-        val phase2Body = buildChatRequestBody(phase2Prompt, settings)
-        DebugLog.log("Order89 Phase 2 request: ${phase2Body.length} chars")
-
-        val phase2Response: String
-        try {
-            phase2Response = DebugLog.timed("Order89 Phase 2 HTTP") {
-                completionFn(phase2Body, settings.order89ServerUrl)
-            }
-        } catch (e: Exception) {
-            DebugLog.log("Order89 Phase 2 HTTP error: ${e.message}")
-            return Order89Result(success = false, output = e.message ?: "Unknown error")
-        }
-
-        val phase2Json = try {
-            Json.parseToJsonElement(phase2Response).jsonObject
-        } catch (e: Exception) {
-            return Order89Result(success = false, output = "Invalid JSON response: ${e.message}")
-        }
-
-        val phase2Content = phase2Json["content"]?.jsonPrimitive?.contentOrNull
-        if (phase2Content.isNullOrEmpty()) {
-            return Order89Result(success = false, output = "Empty content in Phase 2 response")
-        }
-
-        val cleaned = cleanOutput(phase2Content)
-        return Order89Result(success = true, output = cleaned)
+    /**
+     * Default process runner. Launches [commandString] via `$SHELL -lc` with [workingDirectory]
+     * (if non-null), piping stdout/stderr separately. Hands the live [Process] to [session] so
+     * ESC can destroy it. Blocks until the process exits naturally or is killed.
+     *
+     * The shell handles tokenization and quoting, so users see the same PATH and aliases-from-
+     * profile they get in their interactive terminal.
+     */
+    internal fun defaultRunProcess(
+        commandString: String,
+        workingDirectory: File?,
+        session: Order89ProcessSession
+    ): ProcessRunResult {
+        val shell = resolveLoginShell()
+        val pb = ProcessBuilder(shell, "-l", "-c", commandString)
+        if (workingDirectory != null) pb.directory(workingDirectory)
+        val process = pb.start()
+        session.setProcess(process)
+        // Drain stdout/stderr concurrently to avoid pipe-buffer deadlocks.
+        val outFuture = readerFuture(process.inputStream)
+        val errFuture = readerFuture(process.errorStream)
+        val exit = process.waitFor()
+        val out = outFuture.get()
+        val err = errFuture.get()
+        return ProcessRunResult(exit, out.text, err.text, out.truncated, err.truncated)
     }
 
-    fun execute(request: Order89Request, settings: Settings): Future<Order89Result> {
-        val executor = Executors.newSingleThreadExecutor()
-        val future = executor.submit(Callable {
-            try {
-                val prompt = DebugLog.timed("Order89 prompt build") { buildPrompt(request) }
-                val body = buildRequestBody(prompt, settings)
-                DebugLog.log("Order89 request: ${body.length} chars")
+    private fun readerFuture(stream: InputStream): Future<CappedRead> =
+        ApplicationManager.getApplication().executeOnPooledThread<CappedRead> {
+            readCappedStream(stream, MAX_STREAM_CHARS)
+        }
 
-                val httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create("${settings.order89ServerUrl}/completion"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .build()
-
-                val response = DebugLog.timed("Order89 HTTP") {
-                    httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+    /**
+     * Reads at most [cap] characters from [stream], then drains and discards the rest so the
+     * child process's pipe doesn't fill up and block. Always closes the stream. The returned
+     * [CappedRead.truncated] is true if any input was discarded — callers must surface this
+     * rather than apply a partial result.
+     */
+    internal fun readCappedStream(stream: InputStream, cap: Int): CappedRead {
+        val buf = StringBuilder()
+        var capped = false
+        stream.bufferedReader().use { reader ->
+            val chunk = CharArray(8192)
+            while (true) {
+                val n = reader.read(chunk)
+                if (n < 0) break
+                if (!capped) {
+                    val take = minOf(n, cap - buf.length)
+                    if (take > 0) buf.append(chunk, 0, take)
+                    if (buf.length >= cap) capped = true
+                } else {
+                    // Past the cap: keep draining so the child's stdout pipe doesn't block,
+                    // but discard the bytes — we've already decided to fail this invocation.
                 }
-                DebugLog.log("Order89 response: status=${response.statusCode()}, body=${response.body().length} chars")
-
-                if (response.statusCode() != 200) {
-                    return@Callable Order89Result(
-                        success = false,
-                        output = "HTTP ${response.statusCode()}: ${response.body()}"
-                    )
-                }
-
-                val responseJson = Json.parseToJsonElement(response.body()).jsonObject
-                val content = responseJson["content"]?.jsonPrimitive?.contentOrNull
-
-                if (content.isNullOrEmpty()) {
-                    return@Callable Order89Result(
-                        success = false,
-                        output = "Empty content in response"
-                    )
-                }
-
-                val cleaned = cleanOutput(content)
-                Order89Result(success = true, output = cleaned)
-            } catch (e: Exception) {
-                DebugLog.log("Order89 error: ${e.message}")
-                Order89Result(success = false, output = e.message ?: "Unknown error")
             }
-        })
-        executor.shutdown()
-        return future
+        }
+        return CappedRead(buf.toString(), capped)
+    }
+
+    private fun truncateError(stderr: String, maxLines: Int = 20, maxChars: Int = 2000): String {
+        val trimmed = stderr.trim()
+        if (trimmed.isEmpty()) return "(no stderr output)"
+        val lines = trimmed.lines()
+        val tail = if (lines.size > maxLines) lines.takeLast(maxLines).joinToString("\n") else trimmed
+        return if (tail.length > maxChars) "…" + tail.takeLast(maxChars) else tail
+    }
+
+    /**
+     * Runs the configured CLI for [request] and returns the cleaned replacement output
+     * (or an error). Intended to be called off the EDT.
+     *
+     * [runProcess] is injectable for tests; production callers should pass [::defaultRunProcess].
+     */
+    fun execute(
+        request: Order89Request,
+        settings: Settings,
+        workingDirectory: File?,
+        session: Order89ProcessSession,
+        runProcess: (String, File?, Order89ProcessSession) -> ProcessRunResult = ::defaultRunProcess
+    ): Order89Result {
+        val command = settings.order89CliCommand
+        if (!command.contains(PROMPT_FILE_PLACEHOLDER)) {
+            return Order89Result(false, "Order 89 command must contain $PROMPT_FILE_PLACEHOLDER. " +
+                "Configure it in Settings → completamente → Order 89.")
+        }
+        if (command.isBlank()) {
+            return Order89Result(false, "Order 89 command is empty. " +
+                "Configure it in Settings → completamente → Order 89.")
+        }
+        val promptText = DebugLog.timed("Order89 prompt build") { buildPrompt(request) }
+        val tempFile: Path = Files.createTempFile("order89-", ".md")
+        try {
+            Files.writeString(tempFile, promptText)
+            val absolutePath = tempFile.toAbsolutePath().toString()
+            val substituted = substitutePromptFile(command, absolutePath)
+            DebugLog.log("Order89 invoking via ${resolveLoginShell()} -lc: $substituted (cwd=${workingDirectory?.absolutePath ?: "<system temp>"})")
+            val result = try {
+                DebugLog.timed("Order89 process") { runProcess(substituted, workingDirectory, session) }
+            } catch (e: Exception) {
+                DebugLog.log("Order89 process error: ${e.message}")
+                return Order89Result(false, "Failed to launch CLI: ${e.message}")
+            }
+            DebugLog.log("Order89 process exit=${result.exitCode}, stdout=${result.stdout.length} chars, stderr=${result.stderr.length} chars, stdoutTruncated=${result.stdoutTruncated}")
+            if (result.exitCode != 0) {
+                return Order89Result(false, "CLI exit code ${result.exitCode}: ${truncateError(result.stderr)}")
+            }
+            if (result.stdoutTruncated) {
+                return Order89Result(false,
+                    "CLI output exceeded $MAX_STREAM_CHARS chars and was truncated. " +
+                        "Refusing to apply a partial replacement."
+                )
+            }
+            if (result.stdout.isBlank()) {
+                return Order89Result(false,
+                    "CLI exited 0 but produced no output. Check that the command writes the " +
+                        "replacement code to stdout."
+                )
+            }
+            val cleaned = cleanOutput(result.stdout)
+            return if (cleaned.isBlank()) {
+                Order89Result(false,
+                    "CLI exited 0 but the output contained no extractable code. " +
+                        "Raw output:\n${result.stdout.take(2000)}"
+                )
+            } else {
+                Order89Result(true, cleaned)
+            }
+        } finally {
+            try {
+                Files.deleteIfExists(tempFile)
+            } catch (_: Exception) {
+                // best-effort cleanup
+            }
+        }
     }
 }

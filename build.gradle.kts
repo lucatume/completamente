@@ -144,7 +144,17 @@ tasks {
         dependsOn(patchChangelog)
     }
 
+    // buildSearchableOptions is heavy (boots a headless IDE) and unused for local dev. We
+    // disable it AND its downstream consumers — otherwise `clean buildPlugin` fails with
+    // "inputDirectory ... doesn't exist" because prepareJarSearchableOptions still expects
+    // the dir buildSearchableOptions would have produced. Re-enable for marketplace releases.
     buildSearchableOptions {
+        enabled = false
+    }
+    prepareJarSearchableOptions {
+        enabled = false
+    }
+    jarSearchableOptions {
         enabled = false
     }
 }

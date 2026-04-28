@@ -12,7 +12,7 @@ class Order89CursorCancellationTest : BaseCompletionTest() {
 
     private fun makeTestSession(range: RangeMarker): Order89Session {
         val future = CompletableFuture<Order89Result>()
-        return Order89Session(future, null as Order89StatusDisplay?, range)
+        return Order89Session(future, Order89ProcessSession(), null, range)
     }
 
     private fun findSessionAtCaret(

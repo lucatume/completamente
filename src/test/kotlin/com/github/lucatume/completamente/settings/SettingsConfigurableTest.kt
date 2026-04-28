@@ -1,6 +1,7 @@
 package com.github.lucatume.completamente.settings
 
 import com.github.lucatume.completamente.BaseCompletionTest
+import com.github.lucatume.completamente.services.DEFAULT_ORDER89_CLI_COMMAND
 import com.github.lucatume.completamente.services.SettingsState
 
 class SettingsConfigurableTest : BaseCompletionTest() {
@@ -16,9 +17,7 @@ class SettingsConfigurableTest : BaseCompletionTest() {
             state.ringNChunks = defaults.ringNChunks
             state.ringChunkSize = defaults.ringChunkSize
             state.maxQueuedChunks = defaults.maxQueuedChunks
-            state.order89ServerUrl = defaults.order89ServerUrl
-            state.order89ToolUsage = defaults.order89ToolUsage
-            state.order89MaxToolRounds = defaults.order89MaxToolRounds
+            state.order89CliCommand = defaults.order89CliCommand
             state.debugLogging = defaults.debugLogging
         } finally {
             super.tearDown()
@@ -41,7 +40,6 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         configurable.createComponent()
         val state = SettingsState.getInstance()
 
-        // Set ringNChunks to a non-numeric value via reflection on the private field
         val field = SettingsConfigurable::class.java.getDeclaredField("ringNChunks")
         field.isAccessible = true
         field.set(configurable, "not_a_number")
@@ -141,50 +139,6 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         assertFalse(state.autoSuggestions)
     }
 
-    fun testIsModifiedReturnsTrueAfterFieldChange() {
-        val configurable = SettingsConfigurable()
-        configurable.createComponent()
-
-        val field = SettingsConfigurable::class.java.getDeclaredField("order89ServerUrl")
-        field.isAccessible = true
-        field.set(configurable, "http://changed:9999")
-
-        assertTrue(configurable.isModified)
-    }
-
-    fun testApplyWithValidToolUsageMode() {
-        val configurable = SettingsConfigurable()
-        configurable.createComponent()
-        val state = SettingsState.getInstance()
-
-        val comboField = SettingsConfigurable::class.java.getDeclaredField("toolUsageCombo")
-        comboField.isAccessible = true
-        val combo = comboField.get(configurable) as javax.swing.JComboBox<*>
-        combo.selectedItem = "AUTO"
-
-        val method = SettingsConfigurable::class.java.getDeclaredMethod("applyToState")
-        method.isAccessible = true
-        method.invoke(configurable)
-
-        assertEquals("AUTO", state.order89ToolUsage)
-    }
-
-    fun testApplyWithNonNumericMaxToolRoundsUsesDefault() {
-        val configurable = SettingsConfigurable()
-        configurable.createComponent()
-        val state = SettingsState.getInstance()
-
-        val field = SettingsConfigurable::class.java.getDeclaredField("order89MaxToolRounds")
-        field.isAccessible = true
-        field.set(configurable, "not_a_number")
-
-        val method = SettingsConfigurable::class.java.getDeclaredMethod("applyToState")
-        method.isAccessible = true
-        method.invoke(configurable)
-
-        assertEquals(3, state.order89MaxToolRounds)
-    }
-
     fun testApplyWithDebugLoggingEnabled() {
         val configurable = SettingsConfigurable()
         configurable.createComponent()
@@ -212,5 +166,48 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         val field = SettingsConfigurable::class.java.getDeclaredField("debugLogging")
         field.isAccessible = true
         assertFalse(field.get(configurable) as Boolean)
+    }
+
+    // -- Order 89 CLI command field --
+
+    fun testOrder89CliCommandFieldDefaultsToBundledCommand() {
+        val configurable = SettingsConfigurable()
+        configurable.createComponent()
+
+        val field = SettingsConfigurable::class.java.getDeclaredField("order89CliCommand")
+        field.isAccessible = true
+        assertEquals(DEFAULT_ORDER89_CLI_COMMAND, field.get(configurable) as String)
+    }
+
+    fun testApplyWritesOrder89CliCommandToState() {
+        val configurable = SettingsConfigurable()
+        configurable.createComponent()
+        val state = SettingsState.getInstance()
+
+        val field = SettingsConfigurable::class.java.getDeclaredField("order89CliCommand")
+        field.isAccessible = true
+        field.set(configurable, "claude --prompt-file %%prompt_file%%")
+
+        val method = SettingsConfigurable::class.java.getDeclaredMethod("applyToState")
+        method.isAccessible = true
+        method.invoke(configurable)
+
+        assertEquals("claude --prompt-file %%prompt_file%%", state.order89CliCommand)
+    }
+
+    fun testApplyBlankOrder89CliCommandFallsBackToDefault() {
+        val configurable = SettingsConfigurable()
+        configurable.createComponent()
+        val state = SettingsState.getInstance()
+
+        val field = SettingsConfigurable::class.java.getDeclaredField("order89CliCommand")
+        field.isAccessible = true
+        field.set(configurable, "   ")
+
+        val method = SettingsConfigurable::class.java.getDeclaredMethod("applyToState")
+        method.isAccessible = true
+        method.invoke(configurable)
+
+        assertEquals(DEFAULT_ORDER89_CLI_COMMAND, state.order89CliCommand)
     }
 }

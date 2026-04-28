@@ -1,7 +1,6 @@
 package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.BaseCompletionTest
-import kotlinx.serialization.json.JsonPrimitive
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
@@ -59,36 +58,36 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val offset = 0
 
         WriteCommandAction.runWriteCommandAction(project) {
-            doc.insertString(offset, "\u2726 Executing\u2026\n")
+            doc.insertString(offset, "✦ Executing…\n")
         }
 
         val symbolRange = doc.createRangeMarker(0, 1)
         val symbolChar = doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset))
-        assertEquals("\u2726", symbolChar)
+        assertEquals("✦", symbolChar)
         symbolRange.dispose()
     }
 
     fun testSymbolReplaceStringSameLength() {
-        myFixture.configureByText("test.kt", "\u2726 Executing\u2026\nfun main() {}")
+        myFixture.configureByText("test.kt", "✦ Executing…\nfun main() {}")
         val doc = myFixture.editor.document
         val symbolRange = doc.createRangeMarker(0, 1)
         val originalLength = doc.textLength
 
         WriteCommandAction.runWriteCommandAction(project) {
-            doc.replaceString(symbolRange.startOffset, symbolRange.endOffset, "\u2727")
+            doc.replaceString(symbolRange.startOffset, symbolRange.endOffset, "✧")
         }
 
         assertEquals("Document length should not change", originalLength, doc.textLength)
-        assertEquals("\u2727", doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset)))
+        assertEquals("✧", doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset)))
         symbolRange.dispose()
     }
 
     fun testSymbolRangeStaysValidAfterReplace() {
-        myFixture.configureByText("test.kt", "\u2726 Executing\u2026\n")
+        myFixture.configureByText("test.kt", "✦ Executing…\n")
         val doc = myFixture.editor.document
         val symbolRange = doc.createRangeMarker(0, 1)
 
-        val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
+        val symbols = charArrayOf('✦', '✧', '✶', '✷', '✸', '✹')
         for (symbol in symbols) {
             WriteCommandAction.runWriteCommandAction(project) {
                 doc.replaceString(symbolRange.startOffset, symbolRange.endOffset, symbol.toString())
@@ -102,7 +101,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
     // -- Order89StatusDisplay data class --
 
     fun testStatusDisplayDataClassHoldsAllFields() {
-        myFixture.configureByText("test.kt", "\u2726 Executing\u2026\n  prompt\nfun main() {}")
+        myFixture.configureByText("test.kt", "✦ Executing…\n  prompt\nfun main() {}")
         val doc = myFixture.editor.document
         val range = doc.createRangeMarker(0, doc.getLineEndOffset(1) + 1)
         val symbolRange = doc.createRangeMarker(0, 1)
@@ -141,11 +140,11 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val originalText = doc.text
 
         // Insert status text.
-        val statusText = "\u2726 Executing\u2026\n  do something\n"
+        val statusText = "✦ Executing…\n  do something\n"
         WriteCommandAction.runWriteCommandAction(project) {
             doc.insertString(0, statusText)
         }
-        assertTrue(doc.text.contains("Executing\u2026"))
+        assertTrue(doc.text.contains("Executing…"))
 
         val range = doc.createRangeMarker(0, statusText.length)
         val symbolRange = doc.createRangeMarker(0, 1)
@@ -172,7 +171,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val doc = editor.document
         val originalText = doc.text
 
-        val statusText = "\u2726 Executing\u2026\n  prompt\n"
+        val statusText = "✦ Executing…\n  prompt\n"
         WriteCommandAction.runWriteCommandAction(project) {
             doc.insertString(0, statusText)
         }
@@ -204,7 +203,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         myFixture.configureByText("test.kt", "    fun main() {}")
         val doc = myFixture.editor.document
         val indent = "    "
-        val statusText = "$indent\u2726 Executing\u2026\n${indent}  prompt\n"
+        val statusText = "$indent✦ Executing…\n${indent}  prompt\n"
 
         WriteCommandAction.runWriteCommandAction(project) {
             doc.insertString(0, statusText)
@@ -212,13 +211,13 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
 
         // Symbol should be at indent.length offset.
         val symbolRange = doc.createRangeMarker(indent.length, indent.length + 1)
-        assertEquals("\u2726", doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset)))
+        assertEquals("✦", doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset)))
 
         // Replace and verify.
         WriteCommandAction.runWriteCommandAction(project) {
-            doc.replaceString(symbolRange.startOffset, symbolRange.endOffset, "\u2737")
+            doc.replaceString(symbolRange.startOffset, symbolRange.endOffset, "✷")
         }
-        assertEquals("\u2737", doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset)))
+        assertEquals("✷", doc.getText(TextRange(symbolRange.startOffset, symbolRange.endOffset)))
         symbolRange.dispose()
     }
 
@@ -271,7 +270,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
         val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(vFile)!!
 
         // 1. Insert status text undo-transparently (mimics insertStatusLines).
-        val statusText = "\u2726 Executing\u2026\n  do something\n"
+        val statusText = "✦ Executing…\n  do something\n"
         ApplicationManager.getApplication().runWriteAction {
             CommandProcessor.getInstance().runUndoTransparentAction {
                 UndoUtil.disableUndoIn(doc) {
@@ -279,7 +278,7 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
                 }
             }
         }
-        assertTrue(doc.text.contains("Executing\u2026"))
+        assertTrue(doc.text.contains("Executing…"))
 
         val statusRange = doc.createRangeMarker(0, statusText.length)
         val symbolRange = doc.createRangeMarker(0, 1)
@@ -336,243 +335,6 @@ class Order89StatusDisplayTest : BaseCompletionTest() {
     fun testTruncatePromptExactlyAtLimit() {
         val exact = "a".repeat(60)
         assertEquals(exact, truncatePrompt(exact, maxLength = 60))
-    }
-
-    // -- updateStatusDisplay tests --
-
-    fun testUpdateStatusDisplayWithToolCallsShowsSubLines() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val editor = myFixture.editor
-        val doc = editor.document
-
-        val statusText = "\u2726 Executing\u2026\n  \u2514\u2500 prompt text\n"
-        WriteCommandAction.runWriteCommandAction(project) {
-            doc.insertString(0, statusText)
-        }
-
-        val range = doc.createRangeMarker(0, statusText.length)
-        val symbolRange = doc.createRangeMarker(0, 1)
-        val attrs = TextAttributes().apply { foregroundColor = Color(255, 16, 240); fontType = Font.ITALIC }
-        val h = editor.markupModel.addRangeHighlighter(
-            0, "\u2726 Executing\u2026".length, HighlighterLayer.LAST, attrs, HighlighterTargetArea.EXACT_RANGE
-        )
-        val timer = Timer(100) {}
-        val display = Order89StatusDisplay(range, symbolRange, mutableListOf(), listOf(h), timer, Timer(100) {})
-        val action = Order89Action()
-
-        val toolCalls = listOf(
-            ToolCall("FileSearch", mapOf("query" to JsonPrimitive("TODO"), "path" to JsonPrimitive("src/")))
-        )
-        action.updateStatusDisplay(editor, display, StatusUpdate.ToolCalls(toolCalls))
-
-        val text = doc.text
-        assertTrue("Should contain Executing", text.contains("Executing\u2026"))
-        assertTrue("Should contain FileSearch tool call", text.contains("FileSearch( query: \"TODO\", path: \"src/\")"))
-        assertTrue("Should contain tree char", text.contains("\u2514"))
-        // 1 sub-line highlighter (shimmer handles first line separately)
-        assertEquals(1, display.highlighters.size)
-
-        timer.stop()
-        display.highlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        display.shimmerHighlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        symbolRange.dispose()
-        range.dispose()
-    }
-
-    fun testUpdateStatusDisplayWithWaitingPreservesSubLines() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val editor = myFixture.editor
-        val doc = editor.document
-
-        val statusText = "\u2726 Executing\u2026\n  \u2514\u2500 some tool call\n"
-        WriteCommandAction.runWriteCommandAction(project) {
-            doc.insertString(0, statusText)
-        }
-
-        val range = doc.createRangeMarker(0, statusText.length)
-        val symbolRange = doc.createRangeMarker(0, 1)
-        val attrs = TextAttributes().apply { foregroundColor = Color(255, 16, 240); fontType = Font.ITALIC }
-        val h = editor.markupModel.addRangeHighlighter(
-            0, "\u2726 Executing\u2026".length, HighlighterLayer.LAST, attrs, HighlighterTargetArea.EXACT_RANGE
-        )
-        val subLineAttrs = TextAttributes().apply { foregroundColor = Color(200, 200, 200); fontType = Font.ITALIC }
-        val subH = editor.markupModel.addRangeHighlighter(
-            "\u2726 Executing\u2026\n".length, statusText.length - 1, HighlighterLayer.LAST, subLineAttrs, HighlighterTargetArea.EXACT_RANGE
-        )
-        val timer = Timer(100) {}
-        val display = Order89StatusDisplay(range, symbolRange, mutableListOf(subH), listOf(h), timer, Timer(100) {})
-        val action = Order89Action()
-
-        action.updateStatusDisplay(editor, display, StatusUpdate.WaitingForModel)
-
-        val text = doc.text
-        assertTrue("Should still contain Executing", text.contains("Executing\u2026"))
-        assertTrue("Should still contain sub-line text", text.contains("some tool call"))
-        // Sub-line highlighter preserved (shimmer handles first line separately)
-        assertEquals(1, display.highlighters.size)
-
-        timer.stop()
-        display.highlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        display.shimmerHighlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        symbolRange.dispose()
-        range.dispose()
-    }
-
-    fun testUpdateStatusDisplayWithMultipleToolCalls() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val editor = myFixture.editor
-        val doc = editor.document
-
-        val statusText = "\u2726 Executing\u2026\n  \u2514\u2500 prompt\n"
-        WriteCommandAction.runWriteCommandAction(project) {
-            doc.insertString(0, statusText)
-        }
-
-        val range = doc.createRangeMarker(0, statusText.length)
-        val symbolRange = doc.createRangeMarker(0, 1)
-        val attrs = TextAttributes().apply { foregroundColor = Color(255, 16, 240); fontType = Font.ITALIC }
-        val h = editor.markupModel.addRangeHighlighter(
-            0, "\u2726 Executing\u2026".length, HighlighterLayer.LAST, attrs, HighlighterTargetArea.EXACT_RANGE
-        )
-        val timer = Timer(100) {}
-        val display = Order89StatusDisplay(range, symbolRange, mutableListOf(), listOf(h), timer, Timer(100) {})
-        val action = Order89Action()
-
-        val toolCalls = listOf(
-            ToolCall("FileSearch", mapOf("query" to JsonPrimitive("TODO"))),
-            ToolCall("FileSearch", mapOf("query" to JsonPrimitive("FIXME")))
-        )
-        action.updateStatusDisplay(editor, display, StatusUpdate.ToolCalls(toolCalls))
-
-        val text = doc.text
-        assertTrue("Should contain first tool call", text.contains("TODO"))
-        assertTrue("Should contain second tool call", text.contains("FIXME"))
-        assertTrue("Non-last line should use branch char", text.contains("\u251C"))
-        assertTrue("Last line should use corner char", text.contains("\u2514"))
-        // 2 sub-line highlighters (shimmer handles first line separately)
-        assertEquals(2, display.highlighters.size)
-
-        timer.stop()
-        display.highlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        display.shimmerHighlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        symbolRange.dispose()
-        range.dispose()
-    }
-
-    fun testUpdateStatusDisplayWithNullDisplayIsNoOp() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val originalText = myFixture.editor.document.text
-        val action = Order89Action()
-        action.updateStatusDisplay(myFixture.editor, null, StatusUpdate.WaitingForModel)
-        assertEquals(originalText, myFixture.editor.document.text)
-    }
-
-    fun testUpdateStatusDisplayWithDisposedRangeIsNoOp() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val editor = myFixture.editor
-        val doc = editor.document
-
-        val statusText = "\u2726 Executing\u2026\n  \u2514\u2500 prompt\n"
-        WriteCommandAction.runWriteCommandAction(project) {
-            doc.insertString(0, statusText)
-        }
-
-        val range = doc.createRangeMarker(0, statusText.length)
-        val symbolRange = doc.createRangeMarker(0, 1)
-        val timer = Timer(100) {}
-        val display = Order89StatusDisplay(range, symbolRange, mutableListOf(), emptyList(), timer, Timer(100) {})
-        val action = Order89Action()
-
-        // Dispose the range before calling update
-        range.dispose()
-        val textBefore = doc.text
-        action.updateStatusDisplay(editor, display, StatusUpdate.ToolCalls(
-            listOf(ToolCall("FileSearch", mapOf("query" to JsonPrimitive("test"))))
-        ))
-        assertEquals("Document should be unchanged after update on disposed range", textBefore, doc.text)
-
-        timer.stop()
-        symbolRange.dispose()
-    }
-
-    fun testUpdateStatusDisplayAfterRemoveIsNoOp() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val editor = myFixture.editor
-        val doc = editor.document
-        val originalText = doc.text
-
-        val statusText = "\u2726 Executing\u2026\n  \u2514\u2500 prompt\n"
-        WriteCommandAction.runWriteCommandAction(project) {
-            doc.insertString(0, statusText)
-        }
-
-        val range = doc.createRangeMarker(0, statusText.length)
-        val symbolRange = doc.createRangeMarker(0, 1)
-        val timer = Timer(100) {}
-        val display = Order89StatusDisplay(range, symbolRange, mutableListOf(), emptyList(), timer, Timer(100) {})
-        val action = Order89Action()
-
-        // Remove the display first
-        action.removeStatusDisplay(editor, display)
-        assertEquals("Document restored after removal", originalText, doc.text)
-
-        // Now try to update — should be a no-op since range is disposed
-        action.updateStatusDisplay(editor, display, StatusUpdate.ToolCalls(
-            listOf(ToolCall("FileSearch", mapOf("query" to JsonPrimitive("test"))))
-        ))
-        assertEquals("Document unchanged after update post-removal", originalText, doc.text)
-    }
-
-    fun testUpdateStatusDisplayReplacesSubLinesOnConsecutiveCalls() {
-        myFixture.configureByText("test.kt", "fun main() {}")
-        val editor = myFixture.editor
-        val doc = editor.document
-
-        val statusText = "\u2726 Executing\u2026\n  \u2514\u2500 prompt text\n"
-        WriteCommandAction.runWriteCommandAction(project) {
-            doc.insertString(0, statusText)
-        }
-
-        val range = doc.createRangeMarker(0, statusText.length)
-        val symbolRange = doc.createRangeMarker(0, 1)
-        val attrs = TextAttributes().apply { foregroundColor = Color(255, 16, 240); fontType = Font.ITALIC }
-        val h = editor.markupModel.addRangeHighlighter(
-            0, "\u2726 Executing\u2026".length, HighlighterLayer.LAST, attrs, HighlighterTargetArea.EXACT_RANGE
-        )
-        val timer = Timer(100) {}
-        val display = Order89StatusDisplay(range, symbolRange, mutableListOf(), listOf(h), timer, Timer(100) {})
-        val action = Order89Action()
-
-        // First update: show one tool call
-        action.updateStatusDisplay(editor, display, StatusUpdate.ToolCalls(
-            listOf(ToolCall("FileSearch", mapOf("query" to JsonPrimitive("TODO"))))
-        ))
-        assertTrue("Should contain first tool call", doc.text.contains("TODO"))
-        assertEquals("1 sub-line highlighter", 1, display.highlighters.size)
-
-        // Second update: replace with different tool calls
-        action.updateStatusDisplay(editor, display, StatusUpdate.ToolCalls(
-            listOf(
-                ToolCall("FileSearch", mapOf("query" to JsonPrimitive("FIXME"))),
-                ToolCall("DocSearch", mapOf("query" to JsonPrimitive("kotlin docs"), "docsets" to JsonPrimitive("kt")))
-            )
-        ))
-        assertFalse("Old tool call should be gone", doc.text.contains("TODO"))
-        assertTrue("New tool call 1 should be present", doc.text.contains("FIXME"))
-        assertTrue("New tool call 2 should be present", doc.text.contains("kotlin docs"))
-        assertEquals("2 sub-line highlighters", 2, display.highlighters.size)
-
-        // Third update: back to waiting — sub-lines preserved
-        action.updateStatusDisplay(editor, display, StatusUpdate.WaitingForModel)
-        assertTrue("Tool calls should still be present", doc.text.contains("FIXME"))
-        assertTrue("Tool calls should still be present", doc.text.contains("kotlin docs"))
-        assertEquals("All highlighters preserved", 2, display.highlighters.size)
-
-        timer.stop()
-        display.highlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        display.shimmerHighlighters.forEach { if (it.isValid) editor.markupModel.removeHighlighter(it) }
-        symbolRange.dispose()
-        range.dispose()
     }
 
     // -- shimmerColors tests --

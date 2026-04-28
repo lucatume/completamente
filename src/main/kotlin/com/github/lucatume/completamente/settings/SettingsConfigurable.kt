@@ -3,17 +3,17 @@ package com.github.lucatume.completamente.settings
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JComboBox
 import javax.swing.JComponent
+import javax.swing.JTextArea
 
 class SettingsConfigurable : Configurable {
     private var dialogPanel: DialogPanel? = null
     private val state = SettingsState.getInstance()
-    private var toolUsageCombo: JComboBox<String>? = null
 
     // Current field values — kept in sync with the UI via bind*() on apply/reset
     private var serverUrl = ""
@@ -23,13 +23,7 @@ class SettingsConfigurable : Configurable {
     private var ringNChunks = ""
     private var ringChunkSize = ""
     private var maxQueuedChunks = ""
-    private var order89ServerUrl = ""
-    private var order89Temperature = ""
-    private var order89TopP = ""
-    private var order89TopK = ""
-    private var order89RepeatPenalty = ""
-    private var order89NPredict = ""
-    private var order89MaxToolRounds = ""
+    private var order89CliCommand = ""
     private var debugLogging = false
 
     override fun getDisplayName(): String = "completamente"
@@ -77,47 +71,29 @@ class SettingsConfigurable : Configurable {
                 }
             }
             group("Order 89") {
-                row("Server URL:") {
-                    textField()
-                        .bindText(::order89ServerUrl)
-                        .comment("llama.cpp server endpoint for Order 89")
-                }
-                row("Temperature:") {
-                    textField()
-                        .bindText(::order89Temperature)
-                        .comment("Sampling temperature (0.0–2.0)")
-                }
-                row("Top-P:") {
-                    textField()
-                        .bindText(::order89TopP)
-                        .comment("Nucleus sampling probability (0.0–1.0)")
-                }
-                row("Top-K:") {
-                    textField()
-                        .bindText(::order89TopK)
-                        .comment("Top-K sampling (0 to disable)")
-                }
-                row("Repeat penalty:") {
-                    textField()
-                        .bindText(::order89RepeatPenalty)
-                        .comment("Repetition penalty (1.0 = no penalty)")
-                }
-                row("Max predicted tokens:") {
-                    textField()
-                        .bindText(::order89NPredict)
-                        .comment("Maximum number of tokens to predict")
-                }
-                row("Tool usage:") {
-                    val combo = JComboBox(DefaultComboBoxModel(arrayOf("OFF", "MANUAL", "AUTO")))
-                    combo.selectedItem = state.order89ToolUsage
-                    toolUsageCombo = combo
-                    cell(combo)
-                        .comment("OFF = no tools, MANUAL = /tools prefix, AUTO = always")
-                }
-                row("Max tool rounds:") {
-                    textField()
-                        .bindText(::order89MaxToolRounds)
-                        .comment("Maximum rounds of tool calls before generating code (1-10)")
+                row {
+                    val area = JTextArea(order89CliCommand, 3, 0).apply {
+                        lineWrap = true
+                        wrapStyleWord = true
+                    }
+                    val scroll = JBScrollPane(area).apply {
+                        horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+                    }
+                    cell(scroll)
+                        .align(com.intellij.ui.dsl.builder.AlignX.FILL)
+                        .resizableColumn()
+                        .onApply { order89CliCommand = area.text }
+                        .onReset { area.text = order89CliCommand }
+                        .onIsModified { area.text != order89CliCommand }
+                }.layout(RowLayout.PARENT_GRID)
+                row {
+                    comment(
+                        "<code>%%prompt_file%%</code> is replaced at run time with the absolute path to the " +
+                            "generated prompt file. The command runs through your login shell " +
+                            "(<code>\$SHELL -lc</code>) with its working directory set to the current project " +
+                            "root, so PATH and other init from <code>~/.zprofile</code>/<code>~/.bash_profile</code> apply " +
+                            "just as in your terminal."
+                    )
                 }
             }
             group("Debug") {
@@ -140,22 +116,11 @@ class SettingsConfigurable : Configurable {
         ringNChunks = state.ringNChunks.toString()
         ringChunkSize = state.ringChunkSize.toString()
         maxQueuedChunks = state.maxQueuedChunks.toString()
-        order89ServerUrl = state.order89ServerUrl
-        order89Temperature = state.order89Temperature.toString()
-        order89TopP = state.order89TopP.toString()
-        order89TopK = state.order89TopK.toString()
-        order89RepeatPenalty = state.order89RepeatPenalty.toString()
-        order89NPredict = state.order89NPredict.toString()
-        order89MaxToolRounds = state.order89MaxToolRounds.toString()
-        toolUsageCombo?.selectedItem = state.order89ToolUsage
+        order89CliCommand = state.order89CliCommand
         debugLogging = state.debugLogging
     }
 
-    override fun isModified(): Boolean {
-        if (dialogPanel?.isModified() == true) return true
-        val comboValue = toolUsageCombo?.selectedItem as? String ?: "OFF"
-        return comboValue != state.order89ToolUsage
-    }
+    override fun isModified(): Boolean = dialogPanel?.isModified() == true
 
     override fun apply() {
         dialogPanel?.apply()
@@ -171,14 +136,7 @@ class SettingsConfigurable : Configurable {
         state.ringNChunks = ringNChunks.toIntOrNull() ?: defaults.ringNChunks
         state.ringChunkSize = ringChunkSize.toIntOrNull() ?: defaults.ringChunkSize
         state.maxQueuedChunks = maxQueuedChunks.toIntOrNull() ?: defaults.maxQueuedChunks
-        state.order89ServerUrl = order89ServerUrl
-        state.order89Temperature = order89Temperature.toDoubleOrNull() ?: defaults.order89Temperature
-        state.order89TopP = order89TopP.toDoubleOrNull() ?: defaults.order89TopP
-        state.order89TopK = order89TopK.toIntOrNull() ?: defaults.order89TopK
-        state.order89RepeatPenalty = order89RepeatPenalty.toDoubleOrNull() ?: defaults.order89RepeatPenalty
-        state.order89NPredict = order89NPredict.toIntOrNull() ?: defaults.order89NPredict
-        state.order89ToolUsage = toolUsageCombo?.selectedItem as? String ?: defaults.order89ToolUsage
-        state.order89MaxToolRounds = order89MaxToolRounds.toIntOrNull() ?: defaults.order89MaxToolRounds
+        state.order89CliCommand = order89CliCommand.ifBlank { defaults.order89CliCommand }
         state.debugLogging = debugLogging
     }
 

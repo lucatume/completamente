@@ -2,7 +2,6 @@ package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.services.DebugLog
 import com.github.lucatume.completamente.completion.collectReferencedFiles
-import com.github.lucatume.completamente.completion.surfaceExtract
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -24,20 +23,17 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.openapi.editor.colors.EditorColors
-import kotlinx.serialization.json.jsonPrimitive
 import java.awt.Color
 import java.awt.Font
 import java.awt.event.KeyEvent
+import java.io.File
 import java.util.ArrayDeque
-import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
-import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import javax.swing.KeyStroke
 import javax.swing.Timer
@@ -103,6 +99,7 @@ data class Order89StatusDisplay(
 
 data class Order89Session(
     val future: Future<Order89Result>,
+    val processSession: Order89ProcessSession,
     val statusDisplay: Order89StatusDisplay?,
     val range: RangeMarker
 )
@@ -129,107 +126,52 @@ class Order89Action : AnAction() {
         val settings = SettingsState.getInstance().toSettings()
         DebugLog.log("Order89 start: file=${psiFile.virtualFile?.path}, selection=$selectionStart-$selectionEnd")
 
-        val contextChunks = DebugLog.timed("Order89 context extraction") { runReadAction<List<ContextChunk>> {
-            try {
-                val startLine = editor.document.getLineNumber(selectionStart)
-                val endLine = editor.document.getLineNumber(selectionEnd)
-                val referencedFiles = collectReferencedFiles(psiFile, startLine, endLine)
-                referencedFiles.mapNotNull { file ->
-                    val extracted = surfaceExtract(project, file)
-                    if (extracted != null) {
-                        val relativePath = file.path.removePrefix(project.basePath ?: "").removePrefix("/")
-                        ContextChunk(relativePath, extracted)
-                    } else null
+        val referencedFilePaths: List<String> = DebugLog.timed("Order89 referenced-file collection") {
+            runReadAction<List<String>> {
+                try {
+                    val startLine = editor.document.getLineNumber(selectionStart)
+                    val endLine = editor.document.getLineNumber(selectionEnd)
+                    collectReferencedFiles(psiFile, startLine, endLine).map { it.path }
+                } catch (_: Exception) {
+                    emptyList()
                 }
-            } catch (_: Exception) {
-                emptyList()
             }
-        } }
-        DebugLog.log("Order89 context: ${contextChunks.size} chunks")
+        }
+        DebugLog.log("Order89 referenced files: ${referencedFilePaths.size}")
 
         val filePath = psiFile.virtualFile?.path ?: ""
-
-        // Capture file content BEFORE inserting status lines.
+        val doc = editor.document
+        val startLineIdx = doc.getLineNumber(selectionStart)
+        val endLineIdx = doc.getLineNumber(selectionEnd)
+        // Capture document text BEFORE inserting status lines — agent must see the user's
+        // selection in its original surrounding context, not with our spinner text spliced in.
         val request = Order89Request(
             prompt = dialog.promptText,
             filePath = filePath,
-            fileContent = editor.document.text,
             language = psiFile.language.id,
+            fileContent = doc.text,
             selectionStart = selectionStart,
             selectionEnd = selectionEnd,
-            contextChunks = contextChunks
+            startLine = startLineIdx + 1,
+            startCol = selectionStart - doc.getLineStartOffset(startLineIdx) + 1,
+            endLine = endLineIdx + 1,
+            endCol = selectionEnd - doc.getLineStartOffset(endLineIdx) + 1,
+            referencedFilePaths = referencedFilePaths
         )
 
-        // Parse tool mode and strip /tools prefix if applicable
-        val (cleanPrompt, toolsEnabled) = parseToolsPrefix(dialog.promptText, settings.order89ToolUsage)
-
-        // Rebuild request with cleaned prompt if tools stripped the prefix
-        val effectiveRequest = if (cleanPrompt != request.prompt) {
-            request.copy(prompt = cleanPrompt)
-        } else {
-            request
-        }
-
-        // Create selection range marker BEFORE inserting status lines.
-        val rangeMarker = editor.document.createRangeMarker(selectionStart, selectionEnd)
+        val rangeMarker = doc.createRangeMarker(selectionStart, selectionEnd)
         rangeMarker.isGreedyToRight = true
 
-        // Insert status lines as real document text above the selection.
-        val insertionOffset = editor.document.getLineStartOffset(targetLine)
+        val insertionOffset = doc.getLineStartOffset(targetLine)
         val statusDisplay = insertStatusLines(editor, insertionOffset, dialog.promptText)
 
-        val future: Future<Order89Result> = if (toolsEnabled) {
-            val toolExecutor: (ToolCall) -> String = { call ->
-                when (call.name) {
-                    "FileSearch" -> {
-                        val query = call.arguments["query"]?.jsonPrimitive?.content ?: ""
-                        val caseSensitive = call.arguments["case_sensitive"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
-                        val path = call.arguments["path"]?.jsonPrimitive?.content
-                        runReadAction { FileSearchTool.execute(project, query, caseSensitive, path) }
-                    }
-                    "DocSearch" -> {
-                        val query = call.arguments["query"]?.jsonPrimitive?.content ?: ""
-                        val docsets = call.arguments["docsets"]?.jsonPrimitive?.content
-                        DocSearchTool.execute(query, docsets)
-                    }
-                    else -> "Unknown tool: ${call.name}"
-                }
-            }
-            val sharedHttpClient = java.net.http.HttpClient.newBuilder()
-                .connectTimeout(java.time.Duration.ofSeconds(5))
-                .build()
-            val completionFn: (String, String) -> String = { body, serverUrl ->
-                val httpRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("$serverUrl/completion"))
-                    .header("Content-Type", "application/json")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
-                    .build()
-                val response = sharedHttpClient.send(httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString())
-                if (response.statusCode() != 200) {
-                    throw RuntimeException("HTTP ${response.statusCode()}: ${response.body()}")
-                }
-                response.body()
-            }
-            val executor = Executors.newSingleThreadExecutor()
-            val f = executor.submit(Callable {
-                Order89Executor.executeWithTools(
-                    effectiveRequest, settings, toolExecutor, completionFn,
-                    onStatusUpdate = { update ->
-                        ApplicationManager.getApplication().invokeLater({
-                            if (!editor.isDisposed) {
-                                updateStatusDisplay(editor, statusDisplay, update)
-                            }
-                        }, ModalityState.defaultModalityState())
-                    }
-                )
-            })
-            executor.shutdown()
-            f
-        } else {
-            Order89Executor.execute(effectiveRequest, settings)
+        val processSession = Order89ProcessSession()
+        val workingDir = project.basePath?.let { File(it) }
+        val future: Future<Order89Result> = ApplicationManager.getApplication().executeOnPooledThread<Order89Result> {
+            Order89Executor.execute(request, settings, workingDir, processSession)
         }
 
-        val session = Order89Session(future, statusDisplay, rangeMarker)
+        val session = Order89Session(future, processSession, statusDisplay, rangeMarker)
         val sessions = editor.getUserData(SESSIONS_KEY) ?: ArrayDeque<Order89Session>().also {
             editor.putUserData(SESSIONS_KEY, it)
         }
@@ -256,11 +198,7 @@ class Order89Action : AnAction() {
                         // inside WriteCommandAction causes IntelliJ to record it in
                         // the same undo group, making status text reappear on undo.
                         removeStatusDisplay(editor, session.statusDisplay)
-                        val originalSelection = effectiveRequest.fileContent.substring(
-                            effectiveRequest.selectionStart,
-                            effectiveRequest.selectionEnd
-                        )
-                        val finalOutput = Order89Executor.matchTrailingNewlines(originalSelection, result.output)
+                        val finalOutput = Order89Executor.matchTrailingNewlines(request.selectionText, result.output)
                         WriteCommandAction.runWriteCommandAction(project, "Order 89", null, {
                             if (!session.range.isValid) return@runWriteCommandAction
                             editor.document.replaceString(session.range.startOffset, session.range.endOffset, finalOutput)
@@ -280,7 +218,6 @@ class Order89Action : AnAction() {
             } catch (_: CancellationException) {
                 // Cancelled by user via ESC.
             } catch (ex: Exception) {
-                // Covers HTTP errors, unexpected executor failures, etc.
                 ApplicationManager.getApplication().invokeLater {
                     if (editor.isDisposed) return@invokeLater
                     NotificationGroupManager.getInstance()
@@ -340,94 +277,17 @@ class Order89Action : AnAction() {
         display.range.dispose()
     }
 
-    internal fun updateStatusDisplay(editor: Editor, display: Order89StatusDisplay?, update: StatusUpdate) {
-        if (display == null || !display.range.isValid) return
-        // WaitingForModel: leave existing sub-lines (prompt text or previous tool calls) intact.
-        if (update is StatusUpdate.WaitingForModel) return
-        val doc = editor.document
-        val startOffset = display.range.startOffset
-        val startLine = doc.getLineNumber(startOffset)
-        val firstLineEnd = doc.getLineEndOffset(startLine)
-        val firstLineText = doc.getText(TextRange(doc.getLineStartOffset(startLine), firstLineEnd))
-        val indent = firstLineText.takeWhile { it == ' ' || it == '\t' }
-
-        // Remove old sub-line highlighters (shimmer handles the first line separately)
-        while (display.highlighters.isNotEmpty()) {
-            val h = display.highlighters.removeAt(display.highlighters.lastIndex)
-            if (h.isValid) editor.markupModel.removeHighlighter(h)
-        }
-
-        // Build new sub-line text
-        val subLineText = when (update) {
-            is StatusUpdate.WaitingForModel -> "" // unreachable after early return above
-            is StatusUpdate.ToolCalls -> {
-                buildString {
-                    update.calls.forEachIndexed { i, call ->
-                        val treeChar = if (i == update.calls.lastIndex) "\u2514" else "\u251C"
-                        append("$indent  $treeChar\u2500 ").append(formatToolCallDisplay(call)).append('\n')
-                    }
-                }
-            }
-        }
-
-        // Replace everything after the first line's newline to the end of the range.
-        // Invariant: insertStatusLines always appends '\n' after every line, so firstLineEnd + 1
-        // points to the start of the sub-line region. The guard handles the degenerate case where
-        // the range has been trimmed to a single line with no trailing newline.
-        ApplicationManager.getApplication().runWriteAction {
-            CommandProcessor.getInstance().runUndoTransparentAction {
-                UndoUtil.disableUndoIn(doc) {
-                    if (display.range.isValid) {
-                        val replaceStart = firstLineEnd + 1
-                        val replaceEnd = display.range.endOffset
-                        if (replaceStart <= replaceEnd) {
-                            doc.replaceString(replaceStart, replaceEnd, subLineText)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Add new highlighters for sub-lines, recalculating positions from the
-        // (now-updated) first line end to account for any document shifts.
-        if (subLineText.isNotEmpty() && display.range.isValid) {
-            val updatedFirstLineEnd = doc.getLineEndOffset(doc.getLineNumber(display.range.startOffset))
-            val (_, defaultFg) = statusLineColors(editor)
-            val markup = editor.markupModel
-            val subLines = subLineText.split('\n').dropLast(1)
-            val subLineAttrs = TextAttributes().apply {
-                foregroundColor = defaultFg
-                fontType = Font.ITALIC
-            }
-            var pos = updatedFirstLineEnd + 1
-            for (line in subLines) {
-                if (!display.range.isValid) break
-                val lineStart = pos
-                val lineEndOffset = pos + line.length
-                display.highlighters.add(
-                    markup.addRangeHighlighter(
-                        lineStart, lineEndOffset,
-                        HighlighterLayer.LAST,
-                        subLineAttrs,
-                        HighlighterTargetArea.EXACT_RANGE
-                    )
-                )
-                pos = lineEndOffset + 1
-            }
-        }
-    }
-
     private fun insertStatusLines(editor: Editor, offset: Int, prompt: String): Order89StatusDisplay? {
         val promptLines = formatPromptLines(prompt)
         val lineEnd = editor.document.getLineEndOffset(editor.document.getLineNumber(offset))
         val lineText = editor.document.getText(TextRange(offset, lineEnd))
         val indent = lineText.takeWhile { it == ' ' || it == '\t' }
-        val statusLine1 = "$indent\u2726 Executing\u2026"
+        val statusLine1 = "$indent✦ Executing…"
         val statusText = buildString {
             append(statusLine1).append('\n')
             promptLines.forEachIndexed { i, line ->
-                val treeChar = if (i == promptLines.lastIndex) "\u2514" else "\u251C"
-                append("$indent  $treeChar\u2500 ").append(line).append('\n')
+                val treeChar = if (i == promptLines.lastIndex) "└" else "├"
+                append("$indent  $treeChar─ ").append(line).append('\n')
             }
         }
 
@@ -443,7 +303,7 @@ class Order89Action : AnAction() {
         val statusRange = editor.document.createRangeMarker(offset, offset + statusText.length)
         val symbolRange = editor.document.createRangeMarker(offset + indent.length, offset + indent.length + 1)
 
-        val symbols = charArrayOf('\u2726', '\u2727', '\u2736', '\u2737', '\u2738', '\u2739')
+        val symbols = charArrayOf('✦', '✧', '✶', '✷', '✸', '✹')
         var symbolIndex = 0
 
         val (_, defaultFg) = statusLineColors(editor)
@@ -569,6 +429,7 @@ private class Order89EscAction(
 
         if (match != null) {
             deque.remove(match)
+            match.processSession.cancel()
             match.future.cancel(true)
             parent.removeStatusDisplay(editor, match.statusDisplay)
             match.range.dispose()

@@ -1,12 +1,14 @@
 package com.github.lucatume.completamente.services
 
-import com.github.lucatume.completamente.order89.ToolUsageMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
+
+const val DEFAULT_ORDER89_CLI_COMMAND: String =
+    "pi --tools read,grep,find,ls @\"%%prompt_file%%\" -p \"Execute the instructions in the files\""
 
 @Service(Service.Level.APP)
 @State(
@@ -26,14 +28,7 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     var maxQueuedChunks: Int = 16
 
     // Order 89
-    var order89ServerUrl: String = "http://127.0.0.1:8017"
-    var order89Temperature: Double = 0.7
-    var order89TopP: Double = 0.8
-    var order89TopK: Int = 20
-    var order89RepeatPenalty: Double = 1.05
-    var order89NPredict: Int = 1024
-    var order89ToolUsage: String = "OFF"
-    var order89MaxToolRounds: Int = 3
+    var order89CliCommand: String = DEFAULT_ORDER89_CLI_COMMAND
 
     // Debug
     var debugLogging: Boolean = false
@@ -52,14 +47,7 @@ class SettingsState : PersistentStateComponent<SettingsState> {
         ringNChunks = ringNChunks,
         ringChunkSize = ringChunkSize,
         maxQueuedChunks = maxQueuedChunks,
-        order89ServerUrl = order89ServerUrl,
-        order89Temperature = order89Temperature,
-        order89TopP = order89TopP,
-        order89TopK = order89TopK,
-        order89RepeatPenalty = order89RepeatPenalty,
-        order89NPredict = order89NPredict,
-        order89ToolUsage = try { ToolUsageMode.valueOf(order89ToolUsage) } catch (_: Exception) { ToolUsageMode.OFF },
-        order89MaxToolRounds = order89MaxToolRounds,
+        order89CliCommand = order89CliCommand,
         debugLogging = debugLogging
     )
 

@@ -8,16 +8,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added
-- Order 89 tool usage: the model can now call `FileSearch` (project-wide grep) and
-  `DocSearch` (local Dash documentation) tools to gather context before generating code.
-  Uses a two-phase architecture (Phase 1 with tools, Phase 2 without) validated at 15/15
-  accuracy in harness testing (rhdp/70–79, 81–85).
-- New `Tool usage` setting with three modes: OFF (default, no tools), MANUAL (tools
-  enabled when prompt starts with `/tools`), AUTO (tools always available).
-- New `Max tool rounds` setting (default: 3) to cap the tool-calling loop.
-- Status display updates during tool execution: "Gathering info... (round N/M)",
-  "Searching: \"query\"...", "Generating code...".
+### Changed
+- Order 89 now shells out to a user-configured agentic CLI instead of calling a local
+  llama.cpp `/completion` endpoint. The plugin writes the prompt + selection to a temp
+  file, runs the configured command with its working directory set to the project root,
+  and post-processes the CLI's STDOUT exactly as before. Tool selection, search, and
+  context gathering are delegated to the agent.
+- Order 89 now invokes the configured command via the user's login shell
+  (`$SHELL -lc`, falling back to `/bin/sh`) instead of `ProcessBuilder` with a
+  plugin-side tokenized argv. PATH and other init from `~/.zprofile`/`~/.bash_profile`
+  are picked up, matching what users see in their terminal — fixes `pi: command not
+  found` for IDE launches that didn't inherit a configured shell PATH (Spotlight, Dock,
+  launchd). Quoting is now the shell's job; the plugin no longer ships a POSIX
+  tokenizer.
+- ESC cancellation now snapshots and signals the shell's descendants before terminating
+  the shell wrapper itself, so commands that pipe (`pi … | tee log`) or background
+  (`cmd &`) still get torn down cleanly within the 250 ms grace window.
+- New single setting `Order 89 CLI command` with default
+  `pi --tools read,grep,find,ls @"%%prompt_file%%" -p "Execute the instructions in the files"`.
+  The placeholder `%%prompt_file%%` is substituted at runtime with the absolute path to
+  the generated prompt file. Standard shell quoting applies — wrap paths in `"..."`.
+- Order 89 prompts now reference files by escaped POSIX path rather than embedding
+  structure-extracted context. The agent fetches what it needs through its own tools.
+  Embedded file content for the file under edit is capped at 200k characters, with a
+  50k window each side of the selection for larger files.
+- Order 89 prompt explicitly instructs the agent to return the modified selection as a
+  single fenced code block — never to edit files directly — so concurrent invocations
+  on overlapping ranges cannot corrupt the buffer through line drift.
+- ESC cancellation destroys the running CLI process (non-blocking, force-kills after a
+  250 ms grace period) and always deletes the temp prompt file.
+
+### Removed
+- Order 89 settings: `order89ServerUrl`, `order89Temperature`, `order89TopP`,
+  `order89TopK`, `order89RepeatPenalty`, `order89NPredict`, `order89ToolUsage`,
+  `order89MaxToolRounds`. Replaced by the single `order89CliCommand` setting.
+- In-plugin Order 89 tool pipeline (`Order89Tools`, `ToolTypes`, two-phase orchestration).
+  The agentic CLI provides its own tools.
+
+### Fixed
+- Empty or truncated CLI output is surfaced as an error notification instead of silently
+  replacing the selection with nothing. Output streams are bounded at 8 MB to avoid OOM
+  on runaway agents.
 
 ## [0.0.4] - 2026-03-20
 
