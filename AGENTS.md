@@ -31,9 +31,10 @@ End-to-end UI tests live under `src/uiTest/` and run via Remote Robot against a 
 
 ### Running
 
-- Boot the IDE in one terminal: `./gradlew runIdeForUiTests` (long-running; downloads and launches IntelliJ IDEA Community 2024.3.6 with `robot-server-plugin` on port 8082).
-- Run all UI tests in another terminal: `./gradlew uiTest`
+- One-shot: `./gradlew uiTest` — boots a sandboxed IntelliJ IDEA Community 2024.3.6 with `robot-server-plugin` on port 8082, waits for it, runs the tests, then stops the IDE. First run is slow (the IDE has to be downloaded).
 - Run a single UI test: `./gradlew uiTest --tests "*SettingsDialogUiTest*"`
+- Fast iteration: in one terminal run `./gradlew runIdeForUiTests` (long-running). `uiTest` will detect the existing robot-server on 8082, reuse it, and *not* shut it down on teardown. To opt out of teardown when uiTest *did* boot the IDE itself, pass `-PuiTestKeepIde=true`.
+- The auto-boot writes the spawned IDE's stdout to `build/uiTest/runIdeForUiTests.log` and tracks its PID in `build/uiTest/.ide-pid` (deleted on teardown).
 - UI tests are **on-demand** — not run as part of `./gradlew test` or `./gradlew check`.
 
 ### Artefacts

@@ -1,6 +1,8 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import java.net.InetSocketAddress
+import java.net.Socket
 
 plugins {
     id("java") // Java support
@@ -154,7 +156,7 @@ val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
 }
 
 val uiTest by tasks.registering(Test::class) {
-    description = "Runs UI tests against a Remote Robot–driven IDE."
+    description = "Runs UI tests against a Remote Robot–driven IDE; boots and stops the sandbox IDE automatically."
     group = "verification"
     testClassesDirs = sourceSets["uiTest"].output.classesDirs
     classpath = sourceSets["uiTest"].runtimeClasspath
@@ -171,6 +173,95 @@ val uiTest by tasks.registering(Test::class) {
         "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
     )
     shouldRunAfter("test")
+
+    // Auto-boot of the sandbox IDE for UI tests. Probes 127.0.0.1:8082; if a robot-server is
+    // already up (manual `runIdeForUiTests` session) we reuse it and leave it running. Otherwise
+    // we spawn `runIdeForUiTests` in a detached --no-daemon Gradle invocation, wait for the port
+    // to come up, and kill the whole subtree on teardown. Pass -PuiTestKeepIde=true to skip
+    // teardown for fast local iteration.
+    val pidFile = layout.buildDirectory.file("uiTest/.ide-pid").get().asFile
+    val logFile = layout.buildDirectory.file("uiTest/runIdeForUiTests.log").get().asFile
+    val keepIde = providers.gradleProperty("uiTestKeepIde").map { it.toBoolean() }.orElse(false)
+    val rootProjectDir = rootDir
+    val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
+
+    doFirst {
+        pidFile.parentFile.mkdirs()
+        if (UiTestIdeBoot.isPortOpen(8082)) {
+            logger.lifecycle("[uiTest] robot-server already up on 127.0.0.1:8082 — reusing existing IDE.")
+            pidFile.delete()
+            return@doFirst
+        }
+        val wrapper = rootProjectDir.resolve(if (isWindows) "gradlew.bat" else "gradlew")
+        logger.lifecycle("[uiTest] booting runIdeForUiTests in background (logs → $logFile).")
+        val process = ProcessBuilder(
+            wrapper.absolutePath, "runIdeForUiTests", "--no-daemon", "--console=plain",
+        )
+            .directory(rootProjectDir)
+            .redirectOutput(ProcessBuilder.Redirect.to(logFile))
+            .redirectErrorStream(true)
+            .start()
+        pidFile.writeText(process.pid().toString())
+        UiTestIdeBoot.waitForPortOrFail(process, 8082, 180_000L, logFile, logger)
+    }
+
+    doLast {
+        if (keepIde.get()) {
+            logger.lifecycle("[uiTest] -PuiTestKeepIde=true → leaving IDE running.")
+            return@doLast
+        }
+        if (!pidFile.exists()) {
+            logger.lifecycle("[uiTest] IDE was already running before uiTest; not stopping it.")
+            return@doLast
+        }
+        val pid = pidFile.readText().trim().toLongOrNull()
+        pidFile.delete()
+        if (pid != null) UiTestIdeBoot.stopProcessTree(pid, logger)
+    }
+}
+
+object UiTestIdeBoot {
+    fun isPortOpen(port: Int): Boolean = try {
+        Socket().use { socket ->
+            socket.connect(InetSocketAddress("127.0.0.1", port), 500)
+            true
+        }
+    } catch (_: Exception) {
+        false
+    }
+
+    fun waitForPortOrFail(
+        process: Process,
+        port: Int,
+        timeoutMs: Long,
+        logFile: java.io.File,
+        logger: org.gradle.api.logging.Logger,
+    ) {
+        val start = System.currentTimeMillis()
+        val deadline = start + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            if (isPortOpen(port)) {
+                logger.lifecycle("[uiTest] robot-server up after ${System.currentTimeMillis() - start} ms.")
+                return
+            }
+            if (!process.isAlive) {
+                stopProcessTree(process.pid(), logger)
+                throw GradleException("runIdeForUiTests exited before robot-server became reachable; see $logFile")
+            }
+            Thread.sleep(1000)
+        }
+        stopProcessTree(process.pid(), logger)
+        throw GradleException("Timed out (${timeoutMs / 1000}s) waiting for robot-server on 127.0.0.1:$port; see $logFile")
+    }
+
+    fun stopProcessTree(pid: Long, logger: org.gradle.api.logging.Logger) {
+        val handle = ProcessHandle.of(pid).orElse(null) ?: return
+        // Descendants first: the IDE JVM is a grandchild of the gradlew shell wrapper, and the
+        // intermediate gradle JVM won't pass on signals to it.
+        handle.descendants().forEach { it.destroyForcibly() }
+        handle.destroyForcibly()
+        logger.lifecycle("[uiTest] stopped runIdeForUiTests (pid=$pid) and descendants.")
+    }
 }
 
 tasks.named<Copy>("processUiTestResources") {
