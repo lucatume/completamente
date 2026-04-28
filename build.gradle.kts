@@ -22,8 +22,6 @@ kotlin {
 
 sourceSets {
     create("uiTest") {
-        kotlin.srcDir("src/uiTest/kotlin")
-        resources.srcDir("src/uiTest/resources")
         compileClasspath += sourceSets["main"].output + sourceSets["test"].output
         runtimeClasspath += sourceSets["main"].output + sourceSets["test"].output
     }
