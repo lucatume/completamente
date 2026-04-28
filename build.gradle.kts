@@ -20,6 +20,20 @@ kotlin {
     jvmToolchain(21)
 }
 
+sourceSets {
+    create("uiTest") {
+        kotlin.srcDir("src/uiTest/kotlin")
+        resources.srcDir("src/uiTest/resources")
+        compileClasspath += sourceSets["main"].output + sourceSets["test"].output
+        runtimeClasspath += sourceSets["main"].output + sourceSets["test"].output
+    }
+}
+
+val uiTestImplementation: Configuration by configurations.getting {
+    extendsFrom(configurations["testImplementation"])
+}
+configurations["uiTestRuntimeOnly"].extendsFrom(configurations["testRuntimeOnly"])
+
 // Configure project's dependencies
 repositories {
     mavenCentral()
@@ -35,6 +49,11 @@ repositories {
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)
+
+    "uiTestImplementation"(libs.junit)
+    "uiTestImplementation"(libs.opentest4j)
+    "uiTestImplementation"(libs.remote.robot)
+    "uiTestImplementation"(libs.remote.fixtures)
 
     implementation(libs.kotlinx.serialization.core) {
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
@@ -115,6 +134,44 @@ intellijPlatform {
         ides {
             recommended()
         }
+    }
+}
+
+val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
+    task {
+        jvmArgumentProviders += CommandLineArgumentProvider {
+            listOf(
+                "-Drobot-server.port=8082",
+                "-Dide.mac.message.dialogs.as.sheets=false",
+                "-Djb.privacy.policy.text=<!--999.999-->",
+                "-Djb.consents.confirmation.enabled=false",
+                "-Didea.trust.all.projects=true",
+                "-Dide.show.tips.on.startup.default.value=false",
+            )
+        }
+    }
+    plugins {
+        robotServerPlugin("0.11.23")
+    }
+}
+
+val uiTest by tasks.registering(Test::class) {
+    description = "Runs UI tests against a Remote Robot–driven IDE."
+    group = "verification"
+    testClassesDirs = sourceSets["uiTest"].output.classesDirs
+    classpath = sourceSets["uiTest"].runtimeClasspath
+    useJUnit()
+    systemProperty("robot.server.url", "http://127.0.0.1:8082")
+    systemProperty(
+        "ui.test.reports.dir",
+        layout.buildDirectory.dir("reports/uiTest").get().asFile.absolutePath,
+    )
+    shouldRunAfter("test")
+}
+
+tasks.named<Copy>("processUiTestResources") {
+    filesMatching("**/fake-agent.sh") {
+        permissions { unix("rwxr-xr-x") }
     }
 }
 
