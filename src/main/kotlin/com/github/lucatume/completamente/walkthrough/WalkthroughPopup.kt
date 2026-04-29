@@ -21,10 +21,10 @@ import javax.swing.AbstractAction
 import javax.swing.BorderFactory
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
-import javax.swing.JTextArea
 import javax.swing.KeyStroke
 import javax.swing.ScrollPaneConstants
 
@@ -197,18 +197,30 @@ class WalkthroughPopup(
             border = BorderFactory.createEmptyBorder(8, 12, 8, 12)
         }
 
-        // Narration body — hidden when null.
+        // Narration body — hidden when null. Rendered as HTML so the markdown subset and
+        // legacy <code>/<b>/<i>/<em>/<strong> tags from older agents render natively.
         if (state.narration != null) {
-            val area = JTextArea(state.narration).apply {
+            val pane = JEditorPane().apply {
+                contentType = "text/html"
                 isEditable = false
-                lineWrap = true
-                wrapStyleWord = true
-                this.font = font
                 this.background = bg
                 this.foreground = fg
                 border = BorderFactory.createEmptyBorder()
+                // JEditorPane's HTMLEditorKit ignores the JComponent.font; styling lives in the
+                // HTML <body> via CSS. Inject font/colour from the editor scheme so the popup
+                // tracks theme changes for free.
+                document.putProperty("IgnoreCharsetDirective", true)
+                text = wrapWithStyle(NarrationRenderer.toHtml(state.narration), font, fg)
+                addHyperlinkListener { e ->
+                    if (e.eventType == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
+                        e.url?.toExternalForm()?.let { com.intellij.ide.BrowserUtil.browse(it) }
+                    }
+                }
+                // JEditorPane reports a wide preferred size when given long single-line HTML;
+                // we pin a width so the scroll-pane wraps content within the popup.
+                size = Dimension(420, 160)
             }
-            val scroll = JScrollPane(area).apply {
+            val scroll = JScrollPane(pane).apply {
                 border = BorderFactory.createEmptyBorder()
                 viewport.background = bg
                 horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -257,6 +269,21 @@ class WalkthroughPopup(
             margin = JBUI.insets(2, 6)
             addActionListener { onClick() }
         }
+
+    /**
+     * Inject font-family/size and foreground colour into the HTML body so the JEditorPane
+     * matches the editor scheme. The CSS lives inside the document to avoid mutating a shared
+     * `HTMLEditorKit` style sheet.
+     */
+    private fun wrapWithStyle(html: String, font: Font, fg: java.awt.Color): String {
+        val rgb = String.format("#%02x%02x%02x", fg.red, fg.green, fg.blue)
+        val css = "body{font-family:'${font.family}';font-size:${font.size}pt;color:$rgb;" +
+            "margin:0;word-wrap:break-word;}" +
+            "code{font-family:'${font.family}';}" +
+            "a{color:$rgb;text-decoration:underline;}"
+        // NarrationRenderer.toHtml already wraps in <html><body>; inject a <style> after <html>.
+        return html.replaceFirst("<html>", "<html><head><style>$css</style></head>")
+    }
 
     companion object {
         /** Height to assume when the popup hasn't laid out yet and content has no preferred size. */
