@@ -15,6 +15,7 @@
             displayName="completamente"/>
         <notificationGroup id="completamente" displayType="STICKY_BALLOON"/>
         <projectService serviceImplementation="com.github.lucatume.completamente.services.CacheWarmingService"/>
+        <projectService serviceImplementation="com.github.lucatume.completamente.walkthrough.WalkthroughService"/>
         <inline.completion.provider id="completamente.fim"
                                      order="first"
                                      implementation="com.github.lucatume.completamente.fim.FimInlineCompletionProvider"/>
@@ -28,6 +29,14 @@
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 8"/>
             <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt 8"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt 8"/>
+        </action>
+        <action id="com.github.lucatume.completamente.walkthrough.WalkthroughAction"
+                class="com.github.lucatume.completamente.walkthrough.WalkthroughAction"
+                text="Walkthrough"
+                description="Generate an LLM-driven step-by-step tour of the selected code">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 9"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt 9"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt 9"/>
         </action>
     </actions>
 </idea-plugin>

@@ -75,6 +75,12 @@ class WalkthroughNavigator(
 
     fun canGoPrev(): Boolean = path.size > 1
 
+    /** `<<` enablement — false on the root. Mirrors `<` in the linear-only iteration. */
+    fun canGoFirst(): Boolean = path.size > 1
+
+    /** `>>` enablement — false when no further resolvable step exists. Mirrors `>` in the linear-only iteration. */
+    fun canGoLast(): Boolean = canGoNext()
+
     /**
      * Advance one step along the active branch, cascading silently through unresolvable steps
      * until landing on a resolvable one. If no further resolvable step exists, [current]
