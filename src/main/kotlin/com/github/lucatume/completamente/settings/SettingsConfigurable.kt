@@ -24,6 +24,7 @@ class SettingsConfigurable : Configurable {
     private var ringChunkSize = ""
     private var maxQueuedChunks = ""
     private var order89CliCommand = ""
+    private var walkthroughCliCommand = ""
     private var debugLogging = false
 
     override fun getDisplayName(): String = "completamente"
@@ -101,6 +102,33 @@ class SettingsConfigurable : Configurable {
                         .onIsModified { area.text != order89CliCommand }
                 }.layout(RowLayout.PARENT_GRID)
             }
+            group("Walkthrough") {
+                row {
+                    comment(
+                        "Same execution model as Order 89 — <code>\$SHELL -ic</code>, " +
+                            "<code>%%prompt_file%%</code> placeholder, project root as the working directory. " +
+                            "Walkthrough is read-only: the agent must not modify any file. The CLI's stdout " +
+                            "is parsed as a <code>&lt;Walkthrough&gt;...&lt;/Walkthrough&gt;</code> block of " +
+                            "<code>&lt;Step&gt;</code> elements with <code>file=</code> and " +
+                            "<code>range=</code> attributes."
+                    )
+                }
+                row {
+                    val area = JTextArea(walkthroughCliCommand, 3, 0).apply {
+                        lineWrap = true
+                        wrapStyleWord = true
+                    }
+                    val scroll = JBScrollPane(area).apply {
+                        horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+                    }
+                    cell(scroll)
+                        .align(com.intellij.ui.dsl.builder.AlignX.FILL)
+                        .resizableColumn()
+                        .onApply { walkthroughCliCommand = area.text }
+                        .onReset { area.text = walkthroughCliCommand }
+                        .onIsModified { area.text != walkthroughCliCommand }
+                }.layout(RowLayout.PARENT_GRID)
+            }
             group("Debug") {
                 row {
                     checkBox("Enable debug logging")
@@ -122,6 +150,7 @@ class SettingsConfigurable : Configurable {
         ringChunkSize = state.ringChunkSize.toString()
         maxQueuedChunks = state.maxQueuedChunks.toString()
         order89CliCommand = state.order89CliCommand
+        walkthroughCliCommand = state.walkthroughCliCommand
         debugLogging = state.debugLogging
     }
 
@@ -142,6 +171,7 @@ class SettingsConfigurable : Configurable {
         state.ringChunkSize = ringChunkSize.toIntOrNull() ?: defaults.ringChunkSize
         state.maxQueuedChunks = maxQueuedChunks.toIntOrNull() ?: defaults.maxQueuedChunks
         state.order89CliCommand = order89CliCommand.ifBlank { defaults.order89CliCommand }
+        state.walkthroughCliCommand = walkthroughCliCommand.ifBlank { defaults.walkthroughCliCommand }
         state.debugLogging = debugLogging
     }
 

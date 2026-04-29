@@ -10,6 +10,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 const val DEFAULT_ORDER89_CLI_COMMAND: String =
     "pi --tools read,grep,find,ls @\"%%prompt_file%%\" -p \"Execute the instructions in the files\""
 
+const val DEFAULT_WALKTHROUGH_CLI_COMMAND: String =
+    "pi --tools read,grep,find,ls @\"%%prompt_file%%\" -p \"Read the instructions in the file and produce the walkthrough\""
+
 @Service(Service.Level.APP)
 @State(
     name = "com.github.lucatume.completamente.services.SettingsState",
@@ -30,6 +33,9 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     // Order 89
     var order89CliCommand: String = DEFAULT_ORDER89_CLI_COMMAND
 
+    // Walkthrough
+    var walkthroughCliCommand: String = DEFAULT_WALKTHROUGH_CLI_COMMAND
+
     // Debug
     var debugLogging: Boolean = false
 
@@ -48,6 +54,7 @@ class SettingsState : PersistentStateComponent<SettingsState> {
         ringChunkSize = ringChunkSize,
         maxQueuedChunks = maxQueuedChunks,
         order89CliCommand = order89CliCommand,
+        walkthroughCliCommand = walkthroughCliCommand,
         debugLogging = debugLogging
     )
 

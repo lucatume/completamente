@@ -1,8 +1,15 @@
 package com.github.lucatume.completamente.walkthrough
 
 import com.github.lucatume.completamente.BaseCompletionTest
+import com.github.lucatume.completamente.services.AgentProcessSession
 import com.github.lucatume.completamente.services.MAX_PROMPT_FILE_CHARS
+import com.github.lucatume.completamente.services.PROMPT_FILE_PLACEHOLDER
 import com.github.lucatume.completamente.services.PROMPT_FILE_WINDOW_CHARS
+import com.github.lucatume.completamente.services.ProcessRunResult
+import com.github.lucatume.completamente.services.Settings
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 
 class WalkthroughExecutorPromptTest : BaseCompletionTest() {
 
@@ -152,6 +159,160 @@ class WalkthroughExecutorPromptTest : BaseCompletionTest() {
         assertTrue("Reminder line must reinforce the single-block output rule",
             result.contains("REMINDER") && result.contains("Walkthrough> block")
         )
+    }
+
+    // -- execute (with fake runProcess) --
+
+    private fun pathFromAtToken(commandString: String): Path {
+        val match = Regex("@\"([^\"]+)\"").find(commandString)
+            ?: error("expected @\"...\" segment in command: $commandString")
+        return Path.of(match.groupValues[1])
+    }
+
+    private fun settingsWithCommand(cmd: String): Settings = Settings(walkthroughCliCommand = cmd)
+
+    private fun successfulOutput(): String = """
+        <Walkthrough>
+          <Step id="1" file="src/Foo.kt" range="1:1-2:1"><Narration>step</Narration></Step>
+        </Walkthrough>
+    """.trimIndent()
+
+    fun testExecuteSuccessReturnsParsedWalkthrough() {
+        val captured = AtomicReference<String?>()
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { commandString, _, _ ->
+                captured.set(commandString)
+                ProcessRunResult(0, successfulOutput(), "")
+            }
+        )
+        assertTrue("expected success, got: ${result.errorMessage}", result.success)
+        assertNotNull(result.walkthrough)
+        assertEquals("src/Foo.kt", result.walkthrough!!.root.range.file)
+        // Placeholder substituted to a real path
+        assertFalse(captured.get()!!.contains(PROMPT_FILE_PLACEHOLDER))
+    }
+
+    fun testExecuteWritesPromptToTempFileAndDeletesAfter() {
+        val capturedPath = AtomicReference<Path?>()
+        WalkthroughExecutor.execute(
+            makeRequest(prompt = "marker-prompt"),
+            settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { commandString, _, _ ->
+                val path = pathFromAtToken(commandString)
+                capturedPath.set(path)
+                assertTrue("Temp file should exist while process runs", Files.exists(path))
+                val content = Files.readString(path)
+                assertTrue("Temp file should contain the prompt", content.contains("marker-prompt"))
+                ProcessRunResult(0, successfulOutput(), "")
+            }
+        )
+        val path = capturedPath.get()!!
+        assertFalse("Temp file should be deleted after execute returns", Files.exists(path))
+    }
+
+    fun testExecuteRejectsCommandWithoutPlaceholder() {
+        var ran = false
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("agent --no-placeholder"),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { _, _, _ -> ran = true; ProcessRunResult(0, successfulOutput(), "") }
+        )
+        assertFalse(result.success)
+        assertTrue(result.errorMessage!!.contains(PROMPT_FILE_PLACEHOLDER))
+        assertFalse("runProcess must not be invoked when command is misconfigured", ran)
+    }
+
+    fun testExecuteRejectsBlankCommand() {
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("   "),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { _, _, _ -> error("must not run") }
+        )
+        assertFalse(result.success)
+    }
+
+    fun testExecuteFailsOnNonZeroExit() {
+        val capturedPath = AtomicReference<Path?>()
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { cmd, _, _ ->
+                capturedPath.set(pathFromAtToken(cmd))
+                ProcessRunResult(2, "", "boom")
+            }
+        )
+        assertFalse(result.success)
+        val msg = result.errorMessage!!
+        assertTrue(msg.contains("CLI exit code 2"))
+        assertTrue(msg.contains("boom"))
+        assertFalse("Temp file should be deleted on failure", Files.exists(capturedPath.get()!!))
+    }
+
+    fun testExecuteFailsOnTruncatedStdout() {
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { _, _, _ -> ProcessRunResult(0, successfulOutput(), "", stdoutTruncated = true) }
+        )
+        assertFalse("Truncated output must not be silently parsed", result.success)
+        assertTrue(result.errorMessage!!.contains("truncated"))
+    }
+
+    fun testExecuteFailsOnBlankStdout() {
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { _, _, _ -> ProcessRunResult(0, "", "") }
+        )
+        assertFalse(result.success)
+        assertTrue(result.errorMessage!!.contains("no output"))
+    }
+
+    fun testExecuteFailsOnParseError() {
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { _, _, _ -> ProcessRunResult(0, "no walkthrough block here", "") }
+        )
+        assertFalse(result.success)
+        assertNotNull(result.errorMessage)
+        // The error should include the raw output (truncated) so the user can see what came back.
+        assertTrue("Error message should expose the raw output, got: ${result.errorMessage}",
+            result.errorMessage!!.contains("no walkthrough block here")
+        )
+    }
+
+    fun testExecuteSucceedsWithEmptyWalkthroughBlock() {
+        // The parser legitimately allows an empty <Walkthrough></Walkthrough> block; the
+        // executor returns success with walkthrough=null, and the action layer surfaces the
+        // "no steps" notification to the user.
+        val result = WalkthroughExecutor.execute(
+            makeRequest(),
+            settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
+            workingDirectory = null,
+            session = AgentProcessSession(),
+            runProcess = { _, _, _ -> ProcessRunResult(0, "<Walkthrough></Walkthrough>", "") }
+        )
+        assertTrue("expected success, got: ${result.errorMessage}", result.success)
+        assertNull(result.walkthrough)
     }
 
     fun testPromptEmptyFileContentClosesFileContentTagOnItsOwnLine() {

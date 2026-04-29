@@ -9,5 +9,6 @@ data class Settings(
     val ringChunkSize: Int = 64,
     val maxQueuedChunks: Int = 16,
     val order89CliCommand: String = DEFAULT_ORDER89_CLI_COMMAND,
+    val walkthroughCliCommand: String = DEFAULT_WALKTHROUGH_CLI_COMMAND,
     val debugLogging: Boolean = false
 )
