@@ -14,8 +14,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -270,13 +268,14 @@ class WalkthroughSession private constructor(
                 ScrollType.CENTER
             )
 
-            val attrs = EditorColorsManager.getInstance().globalScheme
-                .getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)
+            // No visual highlight on the range — the popup's wedge points at the line instead.
+            // We still register the highlighter so its RangeMarker tracks document edits and the
+            // popup's "(range no longer valid)" footer stays accurate after intervening edits.
             val highlighter = editor.markupModel.addRangeHighlighter(
                 resolved.startOffset,
                 resolved.endOffset,
                 HighlighterLayer.SELECTION - 1,
-                attrs,
+                null,
                 HighlighterTargetArea.EXACT_RANGE
             )
             currentHighlighter = highlighter

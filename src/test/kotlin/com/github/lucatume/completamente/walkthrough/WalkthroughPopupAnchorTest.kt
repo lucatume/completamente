@@ -155,4 +155,48 @@ class WalkthroughPopupAnchorTest : BaseCompletionTest() {
         // above = 200 - 100 - 0 = 100
         assertEquals(100, y)
     }
+
+    // -- orientation (wedge direction) --
+
+    fun testPlacementAboveYieldsPointsDown() {
+        // Room above → popup above the line, wedge points down at the line.
+        val p = WalkthroughPopup.choosePlacement(
+            rangeStartY = 400,
+            rangeEndY = 400,
+            lineHeight = 16,
+            popupHeight = 160,
+            visibleTopY = 100,
+            gap = 4
+        )
+        assertEquals(236, p.y)
+        assertTrue("expected pointsDown=true when popup placed above the line", p.pointsDown)
+    }
+
+    fun testPlacementBelowYieldsPointsUp() {
+        // No room above → popup below the line, wedge points up at the line.
+        val p = WalkthroughPopup.choosePlacement(
+            rangeStartY = 110,
+            rangeEndY = 110,
+            lineHeight = 16,
+            popupHeight = 200,
+            visibleTopY = 100,
+            gap = 4
+        )
+        assertEquals(130, p.y)
+        assertFalse("expected pointsDown=false when popup placed below the line", p.pointsDown)
+    }
+
+    fun testPlacementBelowForMultiLineRangeYieldsPointsUp() {
+        // Multi-line range with no room above — wedge still points up, anchored to end line.
+        val p = WalkthroughPopup.choosePlacement(
+            rangeStartY = 100,
+            rangeEndY = 164,
+            lineHeight = 16,
+            popupHeight = 200,
+            visibleTopY = 50,
+            gap = 4
+        )
+        assertEquals(184, p.y)
+        assertFalse(p.pointsDown)
+    }
 }

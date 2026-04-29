@@ -12,14 +12,22 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Font
+import java.awt.BasicStroke
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.event.ActionEvent
+import java.awt.geom.Path2D
+import javax.swing.JRootPane
 import javax.swing.AbstractAction
 import javax.swing.BorderFactory
 import javax.swing.JButton
@@ -61,8 +69,14 @@ data class WalkthroughPopupHandlers(
 )
 
 /**
- * Builds and shows a non-modal [JBPopup] anchored above an editor range, re-anchoring on
- * scroll/caret events and disposing cleanly via the parent [Disposable].
+ * Builds and shows a non-modal [JBPopup] anchored above (or below) an editor range, with a
+ * triangular wedge pointing at the line of code being narrated. Re-anchors on scroll/caret
+ * events and disposes cleanly via the parent [Disposable].
+ *
+ * Orientation is chosen at first show and frozen for the remainder of the popup's life:
+ * popup above + wedge pointing down (preferred), else popup below + wedge pointing up. Freezing
+ * means a rescroll that drains the room above will let the popup float off the top of the
+ * viewport rather than flip-flopping orientation under the user.
  *
  * The popup itself is stateless w.r.t. navigation — the action layer disposes and rebuilds
  * the popup on every step transition. This keeps the popup logic simple (no diffing) and
@@ -77,6 +91,8 @@ class WalkthroughPopup(
     private val parentDisposable: Disposable
 ) {
     private val scheme = EditorColorsManager.getInstance().globalScheme
+    /** True when the popup sits above the line and the wedge points down at it. Frozen at init. */
+    private val pointsDown: Boolean = decideInitialOrientation()
     private val popup: JBPopup
     private val anchorAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable)
     @Volatile private var disposed = false
@@ -89,6 +105,10 @@ class WalkthroughPopup(
             .setFocusable(true)
             .setCancelOnClickOutside(false)
             .setCancelOnWindowDeactivation(false)
+            // Disable the platform's rectangular border + shadow — the BalloonPanel paints its own
+            // rounded body and tail, and a rectangular shadow around it would betray the bounds.
+            .setShowBorder(false)
+            .setShowShadow(false)
             .setMinSize(JBUI.size(360, 120))
             .createPopup()
 
@@ -148,6 +168,21 @@ class WalkthroughPopup(
         })
     }
 
+    /**
+     * `setShowShadow(false)` on the popup builder removes the platform's drawn shadow, but on
+     * macOS the heavy-weight Window the popup parents into still casts a native shadow around
+     * its rectangular bounds — visible as a halo around the wedge. Setting `Window.shadow=false`
+     * on the rootPane disables that native shadow. No-op on Linux/Windows where the property
+     * isn't honoured.
+     */
+    private fun suppressNativeWindowShadow() {
+        if (disposed) return
+        if (popup.isDisposed) return
+        val content = popup.content ?: return
+        val rootPane: JRootPane = SwingUtilities.getRootPane(content) ?: return
+        rootPane.putClientProperty("Window.shadow", java.lang.Boolean.FALSE)
+    }
+
     private fun setPopupWindowVisible(visible: Boolean) {
         if (disposed) return
         if (popup.isDisposed) return
@@ -166,6 +201,7 @@ class WalkthroughPopup(
         popup.content?.preferredSize?.let { popup.size = it }
         val initial = computeAnchor() ?: return
         popup.show(initial)
+        suppressNativeWindowShadow()
         // Defensive re-anchor: if Swing rounding or a font-size discrepancy made the realized
         // popup taller than the prefSize hint, recompute. Both `computeAnchor` calls run on the
         // same EDT pump, so contentComponent's screen origin is stable — comparing screen Y is
@@ -182,6 +218,32 @@ class WalkthroughPopup(
         if (!popup.isDisposed) popup.cancel()
     }
 
+    private fun decideInitialOrientation(): Boolean {
+        // Use a popup-height estimate before we've measured the real content. Most narrations
+        // come out ~200px tall (160 scroll body + ~30 button row + paddings + tail), so this is
+        // accurate enough for the above/below decision in the common case. Worst case: the
+        // estimate is off by tens of pixels and we pick the wrong side; the popup still works,
+        // just oriented suboptimally for that one step.
+        return try {
+            val docLen = editor.document.textLength
+            val startVisual = editor.offsetToVisualPosition(rangeStartOffset.coerceAtMost(docLen))
+            val endVisual = editor.offsetToVisualPosition(rangeEndOffset.coerceAtMost(docLen))
+            val startXY = editor.visualPositionToXY(startVisual)
+            val endXY = editor.visualPositionToXY(endVisual)
+            val visible = editor.scrollingModel.visibleArea
+            choosePlacement(
+                rangeStartY = startXY.y,
+                rangeEndY = endXY.y,
+                lineHeight = editor.lineHeight,
+                popupHeight = ESTIMATED_POPUP_HEIGHT,
+                visibleTopY = visible.y,
+                gap = JBUI.scale(POPUP_GAP_DP)
+            ).pointsDown
+        } catch (_: Throwable) {
+            true
+        }
+    }
+
     private fun computeAnchor(): RelativePoint? {
         // Both `visualPositionToXY` and `scrollingModel.visibleArea` are in editor-content
         // coordinates (rooted at `editor.contentComponent`), the same space `RelativePoint`
@@ -192,15 +254,13 @@ class WalkthroughPopup(
             val endVisual = editor.offsetToVisualPosition(rangeEndOffset.coerceAtMost(docLen))
             val startXY = editor.visualPositionToXY(startVisual)
             val endXY = editor.visualPositionToXY(endVisual)
-            val visible = editor.scrollingModel.visibleArea
-            val y = chooseAnchorY(
-                rangeStartY = startXY.y,
-                rangeEndY = endXY.y,
-                lineHeight = editor.lineHeight,
-                popupHeight = popupHeightHint(),
-                visibleTopY = visible.y,
-                gap = JBUI.scale(4)
-            )
+            val gap = JBUI.scale(POPUP_GAP_DP)
+            val popupH = popupHeightHint()
+            // Frozen orientation: do NOT re-decide here. If the user has scrolled away from
+            // where there was room above, the popup floats off-screen rather than flipping
+            // mid-session — the wedge keeps pointing the same direction at the line.
+            val y = if (pointsDown) startXY.y - popupH - gap
+                    else endXY.y + editor.lineHeight + gap
             RelativePoint(editor.contentComponent, java.awt.Point(startXY.x, y))
         } catch (_: Throwable) {
             null
@@ -236,11 +296,14 @@ class WalkthroughPopup(
     private fun buildContent(): JComponent {
         val bg = scheme.defaultBackground
         val fg = scheme.defaultForeground
+        // Accent border — saturated blue chosen to read clearly against editor backgrounds in
+        // both light and dark themes. Hard-coded rather than pulled from the editor scheme so
+        // every theme gets the same "this is the walkthrough" highlight.
+        val borderColor = JBColor(Color(0x3592C4), Color(0x4FA3D9))
         val font = Font(Font.MONOSPACED, Font.PLAIN, scheme.editorFontSize)
 
-        val panel = JPanel(BorderLayout(0, 4)).apply {
+        val panel = BalloonPanel(pointsDown = pointsDown, bodyBg = bg, borderColor = borderColor).apply {
             background = bg
-            border = BorderFactory.createEmptyBorder(8, 12, 8, 12)
         }
 
         // Narration body — hidden when null. Rendered as HTML so the markdown subset and
@@ -335,22 +398,170 @@ class WalkthroughPopup(
         return html.replaceFirst("<html>", "<html><head><style>$css</style></head>")
     }
 
+    /**
+     * Custom-painted root panel for the popup — a rounded-rectangle body with a triangular
+     * wedge ("tail") on the side that abuts the line of code. Children are laid out with
+     * [BorderLayout]; an empty border reserves space for the tail on the appropriate side so
+     * children don't overlap it.
+     *
+     * Painting traces a single combined outline (body + tail) so the border stroke is seamless
+     * across the join.
+     */
+    private class BalloonPanel(
+        private val pointsDown: Boolean,
+        private val bodyBg: Color,
+        private val borderColor: Color
+    ) : JPanel(BorderLayout(0, 4)) {
+
+        init {
+            // Non-opaque so paintComponent can render the rounded shape without a square bg
+            // showing through behind it.
+            isOpaque = false
+            val tailH = JBUI.scale(WEDGE_HEIGHT_DP)
+            val padH = JBUI.scale(BODY_PADDING_DP)
+            val padV = JBUI.scale(BODY_PADDING_DP)
+            val strokeInset = JBUI.scale(BORDER_STROKE_DP)
+            // Reserve room for the tail on the side it sticks out from, plus stroke width on
+            // the body sides so the bright border isn't clipped by the panel bounds. The tail
+            // height is outside the body's rounded rect — children must not extend into that
+            // strip.
+            border = BorderFactory.createEmptyBorder(
+                padV + (if (!pointsDown) tailH else strokeInset),
+                padH + strokeInset,
+                padV + (if (pointsDown) tailH else strokeInset),
+                padH + strokeInset
+            )
+        }
+
+        override fun paintComponent(g: Graphics) {
+            super.paintComponent(g)
+            val g2 = g.create() as Graphics2D
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                val tailH = JBUI.scale(WEDGE_HEIGHT_DP).toFloat()
+                val tailW = JBUI.scale(WEDGE_WIDTH_DP).toFloat()
+                val tailInsetX = JBUI.scale(WEDGE_INSET_X_DP).toFloat()
+                val cr = JBUI.scale(BALLOON_CORNER_RADIUS_DP).toFloat()
+                // Inset the outline by half the stroke width so a centered stroke isn't clipped
+                // by the panel bounds. Without this, a 2 px stroke renders as ~1 px on the outer
+                // edges (the outer half is painted into the panel's clip and discarded).
+                val strokeHalf = JBUI.scale(BORDER_STROKE_DP) / 2f
+
+                val left = strokeHalf
+                val right = (width - 1).toFloat() - strokeHalf
+                val bodyTop = if (pointsDown) strokeHalf else tailH
+                val bodyBottom = (height - 1).toFloat() - if (pointsDown) tailH else strokeHalf
+                val tipBottomY = (height - 1).toFloat() - strokeHalf
+                val tipTopY = strokeHalf
+                val tailLeft = tailInsetX
+                val tailRight = tailInsetX + tailW
+                val tailMid = tailInsetX + tailW / 2f
+
+                // Trace the outline clockwise starting at top-left after the corner.
+                val path = Path2D.Float()
+                path.moveTo(left + cr, bodyTop)
+
+                if (!pointsDown) {
+                    // Wedge pointing UP — drawn on the top edge between corners.
+                    path.lineTo(tailLeft, bodyTop)
+                    path.lineTo(tailMid, tipTopY)
+                    path.lineTo(tailRight, bodyTop)
+                }
+
+                // Top edge → top-right corner
+                path.lineTo(right - cr, bodyTop)
+                path.quadTo(right, bodyTop, right, bodyTop + cr)
+                // Right edge
+                path.lineTo(right, bodyBottom - cr)
+                path.quadTo(right, bodyBottom, right - cr, bodyBottom)
+
+                if (pointsDown) {
+                    // Wedge pointing DOWN — drawn on the bottom edge between corners.
+                    path.lineTo(tailRight, bodyBottom)
+                    path.lineTo(tailMid, tipBottomY)
+                    path.lineTo(tailLeft, bodyBottom)
+                }
+
+                // Bottom edge → bottom-left corner
+                path.lineTo(left + cr, bodyBottom)
+                path.quadTo(left, bodyBottom, left, bodyBottom - cr)
+                // Left edge → top-left corner
+                path.lineTo(left, bodyTop + cr)
+                path.quadTo(left, bodyTop, left + cr, bodyTop)
+                path.closePath()
+
+                g2.color = bodyBg
+                g2.fill(path)
+                g2.color = borderColor
+                g2.stroke = BasicStroke(JBUI.scale(BORDER_STROKE_DP).toFloat())
+                g2.draw(path)
+            } finally {
+                g2.dispose()
+            }
+        }
+    }
+
     companion object {
         /** Height to assume when the popup hasn't laid out yet and content has no preferred size. */
         private const val FALLBACK_POPUP_HEIGHT = 200
 
+        /** Pre-measurement estimate used when deciding orientation before the panel exists. */
+        private const val ESTIMATED_POPUP_HEIGHT = 220
+
+        /** Gap, in DP, between the wedge tip and the line edge it points at. */
+        private const val POPUP_GAP_DP = 2
+
+        /** Height (DP) of the triangular wedge. */
+        private const val WEDGE_HEIGHT_DP = 8
+
+        /** Width (DP) of the triangular wedge. */
+        private const val WEDGE_WIDTH_DP = 14
+
+        /** Distance (DP) from the panel's left edge to the wedge's left edge. */
+        private const val WEDGE_INSET_X_DP = 12
+
+        /** Corner radius (DP) of the rounded body. */
+        private const val BALLOON_CORNER_RADIUS_DP = 8
+
+        /** Internal padding (DP) between the body's outer edge and its child content. */
+        private const val BODY_PADDING_DP = 8
+
+        /** Stroke width (DP) of the accent border around the body + wedge. */
+        private const val BORDER_STROKE_DP = 2
+
+        /** Geometry decision: top-Y for the popup, plus whether the wedge points down (above-line) or up (below-line). */
+        data class AnchorPlacement(val y: Int, val pointsDown: Boolean)
+
         /**
-         * Choose the popup's top-Y so it never covers the highlighted range. Prefers
-         * above-the-range (popup bottom sits `gap` px above the start line); falls back to
-         * below-the-range (below the *end* line — matters for multi-line ranges) when there
-         * isn't enough room above the visible area. All inputs/outputs are in editor-content
-         * coordinates (i.e. relative to `editor.contentComponent`, the same space as
+         * Choose the popup's top-Y and orientation. Prefers above-the-range (popup bottom and
+         * wedge tip sit `gap` px above the start line); falls back to below-the-range (wedge
+         * tip sits `gap` px below the end line — multi-line aware) when there isn't enough
+         * room above the visible area. All inputs/outputs are in editor-content coordinates
+         * (i.e. relative to `editor.contentComponent`, the same space as
          * `editor.visualPositionToXY` and `editor.scrollingModel.visibleArea`).
          *
          * Note: when the resolved `rangeEndOffset` lands exactly at end-of-line K,
          * `offsetToVisualPosition(endOffset)` returns line K+1 col 0, so `rangeEndY` already
          * sits at the start of line K+1 and the below-fallback ends up one line further down
          * than strictly necessary. Harmless overshoot — never underlaps the range.
+         */
+        internal fun choosePlacement(
+            rangeStartY: Int,
+            rangeEndY: Int,
+            lineHeight: Int,
+            popupHeight: Int,
+            visibleTopY: Int,
+            gap: Int
+        ): AnchorPlacement {
+            val above = rangeStartY - popupHeight - gap
+            val below = rangeEndY + lineHeight + gap
+            return if (above >= visibleTopY) AnchorPlacement(above, pointsDown = true)
+                   else AnchorPlacement(below, pointsDown = false)
+        }
+
+        /**
+         * Back-compat shim returning just the Y coordinate; preserves the original
+         * pre-wedge contract for callers that don't care about orientation.
          */
         internal fun chooseAnchorY(
             rangeStartY: Int,
@@ -359,12 +570,13 @@ class WalkthroughPopup(
             popupHeight: Int,
             visibleTopY: Int,
             gap: Int
-        ): Int {
-            val above = rangeStartY - popupHeight - gap
-            val below = rangeEndY + lineHeight + gap
-            // Above the range is preferred. Flip below only when above would land outside the
-            // visible area (range near the top of the viewport).
-            return if (above >= visibleTopY) above else below
-        }
+        ): Int = choosePlacement(
+            rangeStartY = rangeStartY,
+            rangeEndY = rangeEndY,
+            lineHeight = lineHeight,
+            popupHeight = popupHeight,
+            visibleTopY = visibleTopY,
+            gap = gap
+        ).y
     }
 }
