@@ -310,6 +310,7 @@ class WalkthroughSession private constructor(
             val popup = WalkthroughPopup(
                 editor = editor,
                 rangeStartOffset = resolved.startOffset,
+                rangeEndOffset = resolved.endOffset,
                 state = state,
                 handlers = handlers,
                 parentDisposable = stepDisp

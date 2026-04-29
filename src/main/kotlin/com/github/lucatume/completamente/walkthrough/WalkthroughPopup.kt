@@ -67,6 +67,7 @@ data class WalkthroughPopupHandlers(
 class WalkthroughPopup(
     private val editor: Editor,
     private val rangeStartOffset: Int,
+    private val rangeEndOffset: Int,
     private val state: WalkthroughPopupState,
     private val handlers: WalkthroughPopupHandlers,
     private val parentDisposable: Disposable
@@ -119,8 +120,20 @@ class WalkthroughPopup(
 
     fun show() {
         if (disposed) return
-        val anchor = computeAnchor() ?: return
-        popup.show(anchor)
+        // Best-effort hint to AbstractPopup.show() — the platform's layout pass may overwrite
+        // `size` during show, so the post-show re-anchor below is the real correctness
+        // mechanism. Setting prefSize first reduces the visible jump in the common case.
+        popup.content?.preferredSize?.let { popup.size = it }
+        val initial = computeAnchor() ?: return
+        popup.show(initial)
+        // Defensive re-anchor: if Swing rounding or a font-size discrepancy made the realized
+        // popup taller than the prefSize hint, recompute. Both `computeAnchor` calls run on the
+        // same EDT pump, so contentComponent's screen origin is stable — comparing screen Y is
+        // equivalent to comparing local Y.
+        val refined = computeAnchor() ?: return
+        if (!popup.isDisposed && popup.isVisible && refined.screenPoint != initial.screenPoint) {
+            popup.setLocation(refined.screenPoint)
+        }
     }
 
     fun dispose() {
@@ -130,17 +143,35 @@ class WalkthroughPopup(
     }
 
     private fun computeAnchor(): RelativePoint? {
-        // Convert the range start to a screen point above the visual line. Clamp to the visible
-        // area so the popup stays attached to the editor even if the range is scrolled off.
+        // Both `visualPositionToXY` and `scrollingModel.visibleArea` are in editor-content
+        // coordinates (rooted at `editor.contentComponent`), the same space `RelativePoint`
+        // consumes — so the comparison and arithmetic in `chooseAnchorY` is well-defined.
         return try {
-            val visualPos = editor.offsetToVisualPosition(rangeStartOffset.coerceAtMost(editor.document.textLength))
-            val xy = editor.visualPositionToXY(visualPos)
-            // Offset above the line so the popup doesn't cover the highlighted code.
-            val point = java.awt.Point(xy.x, maxOf(0, xy.y - 8))
-            RelativePoint(editor.contentComponent, point)
+            val docLen = editor.document.textLength
+            val startVisual = editor.offsetToVisualPosition(rangeStartOffset.coerceAtMost(docLen))
+            val endVisual = editor.offsetToVisualPosition(rangeEndOffset.coerceAtMost(docLen))
+            val startXY = editor.visualPositionToXY(startVisual)
+            val endXY = editor.visualPositionToXY(endVisual)
+            val visible = editor.scrollingModel.visibleArea
+            val y = chooseAnchorY(
+                rangeStartY = startXY.y,
+                rangeEndY = endXY.y,
+                lineHeight = editor.lineHeight,
+                popupHeight = popupHeightHint(),
+                visibleTopY = visible.y,
+                gap = JBUI.scale(4)
+            )
+            RelativePoint(editor.contentComponent, java.awt.Point(startXY.x, y))
         } catch (_: Throwable) {
             null
         }
+    }
+
+    /** Best estimate of popup height — `popup.size` once shown, content preferred-size otherwise. */
+    private fun popupHeightHint(): Int {
+        val current = popup.size
+        if (current != null && current.height > 0) return current.height
+        return popup.content?.preferredSize?.height ?: FALLBACK_POPUP_HEIGHT
     }
 
     private fun scheduleReanchor() {
@@ -226,4 +257,37 @@ class WalkthroughPopup(
             margin = JBUI.insets(2, 6)
             addActionListener { onClick() }
         }
+
+    companion object {
+        /** Height to assume when the popup hasn't laid out yet and content has no preferred size. */
+        private const val FALLBACK_POPUP_HEIGHT = 200
+
+        /**
+         * Choose the popup's top-Y so it never covers the highlighted range. Prefers
+         * above-the-range (popup bottom sits `gap` px above the start line); falls back to
+         * below-the-range (below the *end* line — matters for multi-line ranges) when there
+         * isn't enough room above the visible area. All inputs/outputs are in editor-content
+         * coordinates (i.e. relative to `editor.contentComponent`, the same space as
+         * `editor.visualPositionToXY` and `editor.scrollingModel.visibleArea`).
+         *
+         * Note: when the resolved `rangeEndOffset` lands exactly at end-of-line K,
+         * `offsetToVisualPosition(endOffset)` returns line K+1 col 0, so `rangeEndY` already
+         * sits at the start of line K+1 and the below-fallback ends up one line further down
+         * than strictly necessary. Harmless overshoot — never underlaps the range.
+         */
+        internal fun chooseAnchorY(
+            rangeStartY: Int,
+            rangeEndY: Int,
+            lineHeight: Int,
+            popupHeight: Int,
+            visibleTopY: Int,
+            gap: Int
+        ): Int {
+            val above = rangeStartY - popupHeight - gap
+            val below = rangeEndY + lineHeight + gap
+            // Above the range is preferred. Flip below only when above would land outside the
+            // visible area (range near the top of the viewport).
+            return if (above >= visibleTopY) above else below
+        }
+    }
 }
