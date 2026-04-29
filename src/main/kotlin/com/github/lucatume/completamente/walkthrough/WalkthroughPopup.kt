@@ -1,6 +1,8 @@
 package com.github.lucatume.completamente.walkthrough
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.github.lucatume.completamente.services.DebugLog
@@ -9,6 +11,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
@@ -27,6 +30,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingUtilities
 
 /**
  * State passed to the popup so it can render — pure data, decouples the popup from the
@@ -112,10 +116,46 @@ class WalkthroughPopup(
             }
         })
 
+        // Hide the popup window while the IDE is in the background so it doesn't float over
+        // other applications. We can't use `setCancelOnWindowDeactivation(true)` because that
+        // would tear the walkthrough down on every alt-tab; instead we toggle the underlying
+        // Swing window's visibility and let the popup itself stay alive across the focus
+        // cycle. ApplicationActivationListener fires only on full app-level activation
+        // changes, not on intra-IDE focus moves (e.g. switching tool windows), so the popup
+        // stays put while the user is in the IDE.
+        val app = ApplicationManager.getApplication()
+        val connection = app.messageBus.connect(parentDisposable)
+        connection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+            override fun applicationActivated(ideFrame: IdeFrame) {
+                setPopupWindowVisible(true)
+            }
+
+            override fun applicationDeactivated(ideFrame: IdeFrame) {
+                setPopupWindowVisible(false)
+            }
+        })
+        // Cover the cold-start case: if the popup is built while the IDE is already in the
+        // background (rare, but possible during slow agent runs), hide immediately on first
+        // show — the listener above only fires on transitions.
+        if (!app.isActive) {
+            // Defer until after `show()` has parented the content into a window.
+            SwingUtilities.invokeLater { if (!disposed) setPopupWindowVisible(false) }
+        }
+
         Disposer.register(parentDisposable, Disposable {
             disposed = true
             if (!popup.isDisposed) popup.cancel()
         })
+    }
+
+    private fun setPopupWindowVisible(visible: Boolean) {
+        if (disposed) return
+        if (popup.isDisposed) return
+        val content = popup.content ?: return
+        val window = SwingUtilities.getWindowAncestor(content) ?: return
+        if (window.isVisible != visible) {
+            window.isVisible = visible
+        }
     }
 
     fun show() {
@@ -182,6 +222,12 @@ class WalkthroughPopup(
             if (disposed) return@addRequest
             if (popup.isDisposed) return@addRequest
             if (!popup.isVisible) return@addRequest
+            // popup.isVisible stays true even when we've toggled the underlying Window off
+            // for app deactivation. Skip the reanchor in that case — repositioning a hidden
+            // window is wasted work and has caused multi-monitor affinity quirks on some
+            // JDK+macOS combinations historically.
+            val window = SwingUtilities.getWindowAncestor(popup.content)
+            if (window == null || !window.isVisible) return@addRequest
             val anchor = computeAnchor() ?: return@addRequest
             popup.setLocation(anchor.screenPoint)
         }, 16)
