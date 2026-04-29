@@ -211,6 +211,10 @@ class WalkthroughPopup(
                 // tracks theme changes for free.
                 document.putProperty("IgnoreCharsetDirective", true)
                 text = wrapWithStyle(NarrationRenderer.toHtml(state.narration), font, fg)
+                // JEditorPane parks the caret at end-of-document on `text =`, which makes
+                // the enclosing JScrollPane track-to-caret-scroll to the bottom on first
+                // show. Pin caret to the top so long narrations open scrolled to the top.
+                caretPosition = 0
                 addHyperlinkListener { e ->
                     if (e.eventType == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
                         e.url?.toExternalForm()?.let { com.intellij.ide.BrowserUtil.browse(it) }
