@@ -42,8 +42,7 @@ data class WalkthroughPopupState(
     val canGoLast: Boolean,
     /**
      * Footer status line to display in italics. `null` hides the line.
-     * Spec values: `"(range adjusted)"` after clamp, `"(range no longer valid)"` after the
-     * RangeMarker loses validity.
+     * Set to `"(range no longer valid)"` after the RangeMarker loses validity post-edit.
      */
     val footerStatus: String? = null
 )

@@ -38,8 +38,7 @@ internal data class ResolvedStep(
     val step: WalkthroughStep,
     val virtualFile: VirtualFile,
     val startOffset: Int,
-    val endOffset: Int,
-    val clamped: Boolean
+    val endOffset: Int
 )
 
 /**
@@ -290,11 +289,7 @@ class WalkthroughSession private constructor(
                 }
             })
 
-            val footer = when {
-                !highlighter.isValid -> "(range no longer valid)"
-                resolved.clamped -> "(range adjusted)"
-                else -> null
-            }
+            val footer = if (!highlighter.isValid) "(range no longer valid)" else null
             val state = WalkthroughPopupState(
                 narration = resolved.step.narration,
                 currentIndex = navigator.currentIndex,
@@ -378,8 +373,8 @@ class WalkthroughSession private constructor(
 
     companion object {
         /**
-         * Resolve [step] against the project. Returns [Resolution.Ok] with the file, offsets,
-         * and clamp flag; [Resolution.Skip] with a human-readable reason otherwise.
+         * Resolve [step] against the project. Returns [Resolution.Ok] with the file and clamped
+         * offsets; [Resolution.Skip] with a human-readable reason otherwise.
          *
          * Must be called inside a read action.
          */
@@ -394,9 +389,9 @@ class WalkthroughSession private constructor(
             }
             val doc = com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getDocument(vf)
                 ?: return Resolution.Skip("no document")
-            val (startOffset, endOffset, clamped) = clampToDocument(doc, step.range)
+            val (startOffset, endOffset) = clampToDocument(doc, step.range)
                 ?: return Resolution.Skip("range out of bounds")
-            return Resolution.Ok(ResolvedStep(step, vf, startOffset, endOffset, clamped))
+            return Resolution.Ok(ResolvedStep(step, vf, startOffset, endOffset))
         }
 
         private fun findFileInContentRoots(project: Project, relPath: String): VirtualFile? {
@@ -410,7 +405,7 @@ class WalkthroughSession private constructor(
         private fun clampToDocument(
             doc: com.intellij.openapi.editor.Document,
             range: StepRange
-        ): Triple<Int, Int, Boolean>? {
+        ): Pair<Int, Int>? {
             val maxLine = (doc.lineCount - 1).coerceAtLeast(0)
             val startLine = range.startLine.coerceIn(0, maxLine)
             val endLine = range.endLine.coerceIn(0, maxLine)
@@ -418,14 +413,10 @@ class WalkthroughSession private constructor(
             val endLineLength = doc.getLineEndOffset(endLine) - doc.getLineStartOffset(endLine)
             val startCol = range.startCol.coerceIn(0, startLineLength)
             val endCol = range.endCol.coerceIn(0, endLineLength)
-            val clamped = startLine != range.startLine ||
-                endLine != range.endLine ||
-                startCol != range.startCol ||
-                endCol != range.endCol
             val startOffset = doc.getLineStartOffset(startLine) + startCol
             val endOffset = doc.getLineStartOffset(endLine) + endCol
             if (endOffset <= startOffset) return null
-            return Triple(startOffset, endOffset, clamped)
+            return startOffset to endOffset
         }
 
         /**
