@@ -14,13 +14,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   file, runs the configured command with its working directory set to the project root,
   and post-processes the CLI's STDOUT exactly as before. Tool selection, search, and
   context gathering are delegated to the agent.
-- Order 89 now invokes the configured command via the user's login shell
-  (`$SHELL -lc`, falling back to `/bin/sh`) instead of `ProcessBuilder` with a
-  plugin-side tokenized argv. PATH and other init from `~/.zprofile`/`~/.bash_profile`
-  are picked up, matching what users see in their terminal — fixes `pi: command not
-  found` for IDE launches that didn't inherit a configured shell PATH (Spotlight, Dock,
-  launchd). Quoting is now the shell's job; the plugin no longer ships a POSIX
-  tokenizer.
+- Order 89 now invokes the configured command via the user's interactive shell
+  (`$SHELL -ic`, falling back to `/bin/sh`) instead of `ProcessBuilder` with a
+  plugin-side tokenized argv. PATH and other init from `~/.zshrc`/`~/.bashrc` are
+  picked up, matching what users see in a terminal tab — fixes `pi: command not
+  found` for tools (nvm, asdf, mise, pyenv, …) whose PATH setup lives in interactive
+  rc files rather than `~/.zprofile`/`~/.bash_profile`. The trade-off is real: an
+  interactive shell sources `~/.zshrc`/`~/.bashrc` instead of `~/.zprofile`/
+  `~/.bash_profile`, so users who put PATH exports only in the login-only files
+  will lose them here — move those exports into `~/.zshrc`/`~/.bashrc`, or (zsh)
+  into `~/.zshenv` so both interactive and non-interactive shells see them.
+  Quoting is now the shell's job; the plugin no longer ships a POSIX tokenizer.
 - ESC cancellation now snapshots and signals the shell's descendants before terminating
   the shell wrapper itself, so commands that pipe (`pi … | tee log`) or background
   (`cmd &`) still get torn down cleanly within the 250 ms grace window.

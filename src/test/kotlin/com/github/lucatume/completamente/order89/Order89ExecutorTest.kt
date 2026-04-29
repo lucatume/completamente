@@ -357,12 +357,57 @@ class Order89ExecutorTest : BaseCompletionTest() {
 
     // -- defaultRunProcess (shell wrap) --
 
-    fun testResolveLoginShellFallsBackToShWhenEnvUnset() {
+    fun testResolveShellFallsBackToShWhenEnvUnset() {
         // Can't unset $SHELL on a running JVM portably; just assert the fallback contract by
         // confirming a non-blank value is returned and is a plausible POSIX shell path.
-        val shell = Order89Executor.resolveLoginShell()
-        assertTrue("resolveLoginShell must return non-blank", shell.isNotBlank())
-        assertTrue("resolveLoginShell must return an absolute path", shell.startsWith("/"))
+        val shell = Order89Executor.resolveShell()
+        assertTrue("resolveShell must return non-blank", shell.isNotBlank())
+        assertTrue("resolveShell must return an absolute path", shell.startsWith("/"))
+    }
+
+    fun testBuildShellArgvUsesInteractiveFlag() {
+        // -i (not -l) is load-bearing: it's what makes ~/.zshrc / ~/.bashrc get sourced so PATH
+        // from nvm/asdf/mise applies. A silent regression to -l would re-break "pi: command not
+        // found" for tools whose PATH setup lives in interactive rc files.
+        val argv = Order89Executor.buildShellArgv("/bin/bash", "echo HELLO")
+        assertEquals(listOf("/bin/bash", "-i", "-c", "echo HELLO"), argv)
+    }
+
+    fun testStripShellInitNoiseRemovesBashTtyWarnings() {
+        val raw = """
+            bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+            bash: no job control in this shell
+            actual error from CLI
+        """.trimIndent()
+        val cleaned = Order89Executor.stripShellInitNoise(raw)
+        assertFalse("bash TTY warning should be stripped", cleaned.contains("cannot set terminal"))
+        assertFalse("bash job-control warning should be stripped", cleaned.contains("no job control"))
+        assertTrue("real error should survive", cleaned.contains("actual error from CLI"))
+    }
+
+    fun testStripShellInitNoisePreservesUnrelatedStderr() {
+        val raw = "Error: API key required\nstack trace line 1"
+        assertEquals(raw, Order89Executor.stripShellInitNoise(raw))
+    }
+
+    fun testExtractProgramNameReturnsFirstWord() {
+        assertEquals("claude", Order89Executor.extractProgramName("claude --file /tmp/x.md"))
+        assertEquals("pi", Order89Executor.extractProgramName("  pi --tools read,grep @\"/tmp/x\""))
+    }
+
+    fun testExtractProgramNameSkipsLeadingEnvAssignments() {
+        // Inline env assignments (often API keys) must NOT appear in the logged program word.
+        val program = Order89Executor.extractProgramName(
+            "ANTHROPIC_API_KEY=sk-secret-token-1234 OPENAI_KEY=sk-other claude --file /tmp/x.md"
+        )
+        assertEquals("claude", program)
+        assertFalse("API key must not survive into the program token", program.contains("sk-"))
+    }
+
+    fun testExtractProgramNameHandlesEdgeCases() {
+        assertEquals("<empty>", Order89Executor.extractProgramName(""))
+        assertEquals("<empty>", Order89Executor.extractProgramName("   "))
+        assertEquals("<env-only>", Order89Executor.extractProgramName("FOO=bar BAZ=qux"))
     }
 
     fun testDefaultRunProcessExecutesCommandStringViaShell() {

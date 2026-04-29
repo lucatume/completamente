@@ -279,29 +279,40 @@ object Order89Executor {
     internal const val MAX_STREAM_CHARS: Int = 8 * 1024 * 1024
 
     /**
-     * Resolved login shell used to launch the command. Reads `$SHELL` and falls back to
-     * `/bin/sh` if unset/blank — matches the behavior users see in their terminal so
-     * profile-driven PATH (nvm, asdf, mise) is picked up.
+     * Resolved shell used to launch the command. Reads `$SHELL` and falls back to `/bin/sh`
+     * if unset/blank.
      */
-    internal fun resolveLoginShell(): String =
+    internal fun resolveShell(): String =
         System.getenv("SHELL")?.takeIf { it.isNotBlank() } ?: "/bin/sh"
 
     /**
-     * Default process runner. Launches [commandString] via `$SHELL -lc` with [workingDirectory]
-     * (if non-null), piping stdout/stderr separately. Hands the live [Process] to [session] so
-     * ESC can destroy it. Blocks until the process exits naturally or is killed.
+     * Argv that launches [commandString] under [shell] as an interactive shell. Extracted so
+     * tests can pin the contract (the `-i` flag specifically — silently regressing to `-l` or
+     * dropping it would change which rc files get sourced and re-introduce the original bug).
+     */
+    internal fun buildShellArgv(shell: String, commandString: String): List<String> =
+        listOf(shell, "-i", "-c", commandString)
+
+    /**
+     * Default process runner. Launches [commandString] via `$SHELL -ic` — an interactive
+     * shell that sources `~/.zshrc` / `~/.bashrc` so PATH set up by `nvm`/`asdf`/`mise` and
+     * other interactive-rc init applies, matching what users see in a terminal tab. Login-only
+     * files (`~/.zprofile`, `~/.bash_profile`) are not sourced. Hands the live [Process] to
+     * [session] so ESC can destroy it. Blocks until the process exits naturally or is killed.
      *
-     * The shell handles tokenization and quoting, so users see the same PATH and aliases-from-
-     * profile they get in their interactive terminal.
+     * The shell handles tokenization and quoting, so users can write the command with the same
+     * quoting they'd use in their terminal.
      */
     internal fun defaultRunProcess(
         commandString: String,
         workingDirectory: File?,
         session: Order89ProcessSession
     ): ProcessRunResult {
-        val shell = resolveLoginShell()
-        val pb = ProcessBuilder(shell, "-l", "-c", commandString)
+        val pb = ProcessBuilder(buildShellArgv(resolveShell(), commandString))
         if (workingDirectory != null) pb.directory(workingDirectory)
+        // No TTY → bash prints "cannot set terminal process group" and "no job control".
+        // Redirecting stdin from /dev/null silences those warnings before they hit stderr.
+        pb.redirectInput(ProcessBuilder.Redirect.from(File("/dev/null")))
         val process = pb.start()
         session.setProcess(process)
         // Drain stdout/stderr concurrently to avoid pipe-buffer deadlocks.
@@ -345,8 +356,37 @@ object Order89Executor {
         return CappedRead(buf.toString(), capped)
     }
 
+    /**
+     * Lines emitted by `bash -i` / `zsh -i` when no controlling TTY is attached. They have no
+     * bearing on the user's command and only confuse the error UI when surfaced via [truncateError].
+     */
+    private val SHELL_INIT_NOISE = listOf(
+        Regex("""^bash: cannot set terminal process group.*$"""),
+        Regex("""^bash: no job control in this shell.*$""")
+    )
+
+    internal fun stripShellInitNoise(stderr: String): String =
+        stderr.lineSequence()
+            .filterNot { line -> SHELL_INIT_NOISE.any { it.containsMatchIn(line) } }
+            .joinToString("\n")
+
+    private val ENV_ASSIGNMENT = Regex("""^[A-Za-z_][A-Za-z0-9_]*=.*""")
+
+    /**
+     * Best-effort extraction of the program name from a shell command string for debug logging.
+     * Skips leading `KEY=value` env-var assignments (which often carry secrets like API keys)
+     * so they don't land in idea.log. Returns `<env-only>` if the command has nothing but
+     * assignments, `<empty>` for blank input.
+     */
+    internal fun extractProgramName(commandString: String): String {
+        val tokens = commandString.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        if (tokens.isEmpty()) return "<empty>"
+        val first = tokens.firstOrNull { !ENV_ASSIGNMENT.matches(it) } ?: return "<env-only>"
+        return first
+    }
+
     private fun truncateError(stderr: String, maxLines: Int = 20, maxChars: Int = 2000): String {
-        val trimmed = stderr.trim()
+        val trimmed = stripShellInitNoise(stderr).trim()
         if (trimmed.isEmpty()) return "(no stderr output)"
         val lines = trimmed.lines()
         val tail = if (lines.size > maxLines) lines.takeLast(maxLines).joinToString("\n") else trimmed
@@ -381,7 +421,10 @@ object Order89Executor {
             Files.writeString(tempFile, promptText)
             val absolutePath = tempFile.toAbsolutePath().toString()
             val substituted = substitutePromptFile(command, absolutePath)
-            DebugLog.log("Order89 invoking via ${resolveLoginShell()} -lc: $substituted (cwd=${workingDirectory?.absolutePath ?: "<system temp>"})")
+            // Log only the program word + length so secrets a user inlines in the command
+            // (API keys, tokens) don't land in idea.log. Full command lives in user settings.
+            val program = extractProgramName(substituted)
+            DebugLog.log("Order89 invoking via ${resolveShell()} -ic: $program (${substituted.length} chars, cwd=${workingDirectory?.absolutePath ?: "<system temp>"})")
             val result = try {
                 DebugLog.timed("Order89 process") { runProcess(substituted, workingDirectory, session) }
             } catch (e: Exception) {

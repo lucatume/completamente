@@ -72,6 +72,20 @@ class SettingsConfigurable : Configurable {
             }
             group("Order 89") {
                 row {
+                    comment(
+                        "The command runs through your shell as <code>\$SHELL -ic &lt;command&gt;</code> — " +
+                            "an interactive shell that sources <code>~/.zshrc</code> / <code>~/.bashrc</code>, " +
+                            "so PATH set up by <code>nvm</code>, <code>asdf</code>, <code>mise</code>, etc. " +
+                            "applies just as it does in a terminal tab. Login-only files " +
+                            "(<code>~/.zprofile</code>, <code>~/.bash_profile</code>) are <i>not</i> sourced — " +
+                            "if a tool like <code>pi</code> is missing, ensure its PATH addition lives in your " +
+                            "interactive rc file. <code>%%prompt_file%%</code> is replaced at run time with the " +
+                            "absolute path to the generated prompt file; wrap it in double quotes " +
+                            "(<code>\"%%prompt_file%%\"</code>) so paths with spaces pass as a single argument. " +
+                            "The working directory is the current project root."
+                    )
+                }
+                row {
                     val area = JTextArea(order89CliCommand, 3, 0).apply {
                         lineWrap = true
                         wrapStyleWord = true
@@ -86,15 +100,6 @@ class SettingsConfigurable : Configurable {
                         .onReset { area.text = order89CliCommand }
                         .onIsModified { area.text != order89CliCommand }
                 }.layout(RowLayout.PARENT_GRID)
-                row {
-                    comment(
-                        "<code>%%prompt_file%%</code> is replaced at run time with the absolute path to the " +
-                            "generated prompt file. The command runs through your login shell " +
-                            "(<code>\$SHELL -lc</code>) with its working directory set to the current project " +
-                            "root, so PATH and other init from <code>~/.zprofile</code>/<code>~/.bash_profile</code> apply " +
-                            "just as in your terminal."
-                    )
-                }
             }
             group("Debug") {
                 row {
