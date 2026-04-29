@@ -1,11 +1,14 @@
 package com.github.lucatume.completamente.walkthrough
 
+import kotlinx.serialization.Serializable
+
 /**
  * A range in a project file. Lines and columns are 0-indexed and the column range is
  * end-exclusive — matching IntelliJ's `Document` / `LogicalPosition` / `OpenFileDescriptor`
  * APIs. Every module inside the plugin sees only 0-indexed values; the LLM wire format
  * (1-indexed) is converted by the parser at the boundary.
  */
+@Serializable
 data class StepRange(
     val file: String,           // project-relative path, POSIX separators
     val startLine: Int,
@@ -19,6 +22,7 @@ data class StepRange(
  * The current iteration only assembles linear chains (each step's `children` is empty or has
  * exactly one element); the data class supports an arbitrary tree without modification.
  */
+@Serializable
 data class WalkthroughStep(
     val id: String,
     val parentId: String?,
@@ -28,6 +32,7 @@ data class WalkthroughStep(
 )
 
 /** Complete walkthrough tree, rooted at a single step. */
+@Serializable
 data class Walkthrough(val root: WalkthroughStep)
 
 /**

@@ -16,6 +16,7 @@
         <notificationGroup id="completamente" displayType="STICKY_BALLOON"/>
         <projectService serviceImplementation="com.github.lucatume.completamente.services.CacheWarmingService"/>
         <projectService serviceImplementation="com.github.lucatume.completamente.walkthrough.WalkthroughService"/>
+        <projectService serviceImplementation="com.github.lucatume.completamente.walkthrough.WalkthroughCache"/>
         <inline.completion.provider id="completamente.fim"
                                      order="first"
                                      implementation="com.github.lucatume.completamente.fim.FimInlineCompletionProvider"/>
@@ -37,6 +38,14 @@
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 9"/>
             <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt 9"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt 9"/>
+        </action>
+        <action id="com.github.lucatume.completamente.walkthrough.RecallWalkthroughAction"
+                class="com.github.lucatume.completamente.walkthrough.RecallWalkthroughAction"
+                text="Recall Walkthrough"
+                description="Recall a recent cached walkthrough">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 0"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt 0"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt 0"/>
         </action>
     </actions>
 </idea-plugin>

@@ -84,7 +84,7 @@ class WalkthroughAction : AnAction() {
                 spawnCancelWatcher(indicator, processSession, project, taskCancelled)
                 val result = WalkthroughExecutor.execute(request, settings, workingDir, processSession)
                 ApplicationManager.getApplication().invokeLater {
-                    onResultEDT(project, editor, service, runId, result)
+                    onResultEDT(project, editor, service, runId, result, request.prompt, request.filePath)
                 }
             }
         }
@@ -118,7 +118,9 @@ class WalkthroughAction : AnAction() {
         editor: Editor,
         service: WalkthroughService,
         runId: Long,
-        result: WalkthroughResult
+        result: WalkthroughResult,
+        prompt: String,
+        originFilePath: String
     ) {
         if (project.isDisposed) return
         // Race guard: if the user re-triggered while we were in flight, this run id is stale
@@ -146,6 +148,10 @@ class WalkthroughAction : AnAction() {
             notifyError(project, "Every step in the walkthrough was unresolvable (file missing, outside project, or binary).")
             return
         }
+        // Cache the freshly-built walkthrough before starting the session. Cache fingerprints
+        // are captured here (under a read action inside `put`) so subsequent edits the user
+        // makes during the live session don't pre-stale the entry.
+        WalkthroughCache.getInstance(project).put(prompt, originFilePath, walkthrough)
         Disposer.register(service, session)
         service.setActive(session)
         session.start()
