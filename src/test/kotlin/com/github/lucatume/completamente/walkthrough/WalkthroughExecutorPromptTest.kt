@@ -161,6 +161,58 @@ class WalkthroughExecutorPromptTest : BaseCompletionTest() {
         )
     }
 
+    fun testPromptInstructsAgentToInvestigateBeforeAnswering() {
+        // Shallow output is the failure mode we're guarding against. The prompt must push the
+        // agent to use its file-read/grep tools, not just paraphrase the embedded selection.
+        val result = WalkthroughExecutor.buildPrompt(makeRequest())
+        assertTrue("Prompt must contain a research/investigation section",
+            result.contains("<WalkthroughResearch>") && result.contains("</WalkthroughResearch>")
+        )
+        assertTrue("Prompt must tell the agent to read related files from disk",
+            result.contains("read it from disk")
+        )
+        assertTrue("Reminder must echo the investigate instruction",
+            result.contains("Investigate before answering")
+        )
+    }
+
+    fun testPromptRequiresCrossingIntegrationBoundaries() {
+        // The headline failure mode: a frontend call's walkthrough never lands in the matching
+        // server handler. The prompt must explicitly require it AND illustrate it with a
+        // concrete negative example — the example is the load-bearing piece a future "shorten
+        // the prompt" refactor is most likely to silently weaken.
+        val result = WalkthroughExecutor.buildPrompt(makeRequest())
+        assertTrue("Prompt must explicitly require landing a step on the other side of process/language boundaries",
+            result.contains("other side") && result.contains("boundary")
+        )
+        assertTrue("Prompt must include a concrete cross-boundary negative example so the rule is illustrated, not just stated",
+            result.contains("fetch(") && result.contains("shallow")
+        )
+    }
+
+    fun testPromptSetsDepthExpectations() {
+        // Without a step-count target the agent tends to emit 1-2 trivial steps.
+        val result = WalkthroughExecutor.buildPrompt(makeRequest())
+        assertTrue("Prompt must contain a depth/step-count guidance section",
+            result.contains("<WalkthroughDepth>")
+        )
+        assertTrue("Prompt should suggest a 4–10 step range for non-trivial selections",
+            result.contains("4–10")
+        )
+    }
+
+    fun testPromptForbidsShallowNarration() {
+        // Narration that just paraphrases the code is the visible symptom of the shallow-output
+        // bug. Prompt must steer toward the *why*, not the *what*.
+        val result = WalkthroughExecutor.buildPrompt(makeRequest())
+        assertTrue("Prompt must contain a narration-style section",
+            result.contains("<WalkthroughNarrationStyle>")
+        )
+        assertTrue("Prompt should contrast shallow vs useful narration with a concrete example",
+            result.contains("Shallow:") && result.contains("Useful:")
+        )
+    }
+
     // -- execute (with fake runProcess) --
 
     private fun pathFromAtToken(commandString: String): Path {
