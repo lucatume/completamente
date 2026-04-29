@@ -1,6 +1,11 @@
 package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.BaseCompletionTest
+import com.github.lucatume.completamente.services.AgentProcessSession
+import com.github.lucatume.completamente.services.MAX_PROMPT_FILE_CHARS
+import com.github.lucatume.completamente.services.PROMPT_FILE_PLACEHOLDER
+import com.github.lucatume.completamente.services.PROMPT_FILE_WINDOW_CHARS
+import com.github.lucatume.completamente.services.ProcessRunResult
 import com.github.lucatume.completamente.services.Settings
 import java.io.File
 import java.nio.file.Files
@@ -78,25 +83,17 @@ class Order89ExecutorTest : BaseCompletionTest() {
 
     fun testBuildPromptIncludesSelectionLineColRange() {
         val result = Order89Executor.buildPrompt(
-            makeRequest(selectionText = "println(\"hi\")", startLine = 2, startCol = 5, endLine = 2, endCol = 18)
+            makeRequest(selectionText = "x", startLine = 12, startCol = 4, endLine = 12, endCol = 6)
         )
-        assertTrue("Should include 1-based line:col range", result.contains("Selection: 2:5-2:18"))
+        assertTrue(result.contains("Selection: 12:4-12:6"))
     }
 
-    fun testBuildPromptIncludesEscapedPosixPathForFile() {
-        val result = Order89Executor.buildPrompt(
-            makeRequest(filePath = "/Users/u/some path with spaces/File.kt", selectionText = "x")
+    fun testBuildPromptIncludesReferencedFilesBlockWhenNonEmpty() {
+        val request = makeRequest(
+            selectionText = "x",
+            referencedFilePaths = listOf("/a/Helper.kt", "/b/Has \"Quote\".kt")
         )
-        assertTrue(
-            "File path must be wrapped in escaped POSIX form",
-            result.contains("File: \"/Users/u/some path with spaces/File.kt\"")
-        )
-    }
-
-    fun testBuildPromptIncludesEscapedReferencedFilePaths() {
-        val result = Order89Executor.buildPrompt(
-            makeRequest(selectionText = "x", referencedFilePaths = listOf("/a/Helper.kt", "/b/Has \"Quote\".kt"))
-        )
+        val result = Order89Executor.buildPrompt(request)
         assertTrue(result.contains("<Order89ReferencedFiles>"))
         assertTrue(result.contains("\"/a/Helper.kt\""))
         assertTrue(result.contains("\"/b/Has \\\"Quote\\\".kt\""))
@@ -110,7 +107,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
 
     fun testBuildPromptWindowsLargeFileAroundSelection() {
         // Build a file large enough to cross MAX_PROMPT_FILE_CHARS so windowing kicks in.
-        val sidePadding = Order89Executor.MAX_PROMPT_FILE_CHARS // 200k chars on each side
+        val sidePadding = MAX_PROMPT_FILE_CHARS // 200k chars on each side
         val padding = "x".repeat(sidePadding)
         val content = padding + "MARKER" + padding
         val request = Order89Request(
@@ -124,7 +121,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             referencedFilePaths = emptyList()
         )
         val result = Order89Executor.buildPrompt(request)
-        val expectedTruncated = sidePadding - Order89Executor.PROMPT_FILE_WINDOW_CHARS
+        val expectedTruncated = sidePadding - PROMPT_FILE_WINDOW_CHARS
         assertTrue(
             "Truncated marker should report $expectedTruncated chars",
             result.contains("[… $expectedTruncated chars truncated]")
@@ -180,39 +177,6 @@ class Order89ExecutorTest : BaseCompletionTest() {
         assertTrue(result.contains("fenced code block using triple backticks"))
     }
 
-    // -- escapePosixPath --
-
-    fun testEscapePosixPathWrapsInQuotes() {
-        assertEquals("\"/usr/local/bin\"", Order89Executor.escapePosixPath("/usr/local/bin"))
-    }
-
-    fun testEscapePosixPathEscapesEmbeddedQuotes() {
-        assertEquals("\"/a/b\\\"c\"", Order89Executor.escapePosixPath("/a/b\"c"))
-    }
-
-    fun testEscapePosixPathEscapesBackslashes() {
-        assertEquals("\"/a\\\\b\"", Order89Executor.escapePosixPath("/a\\b"))
-    }
-
-    // -- substitutePromptFile --
-
-    fun testSubstitutePromptFileReplacesPlaceholder() {
-        val command = "agent --in $PROMPT_FILE_PLACEHOLDER -p go"
-        assertEquals("agent --in /tmp/x.md -p go", Order89Executor.substitutePromptFile(command, "/tmp/x.md"))
-    }
-
-    fun testSubstitutePromptFileEscapesPathQuotesForDoubleQuotedSegment() {
-        val command = "agent @\"$PROMPT_FILE_PLACEHOLDER\""
-        // path contains a literal double-quote; expect it to be backslash-escaped.
-        val sub = Order89Executor.substitutePromptFile(command, "/tmp/x\"y.md")
-        assertEquals("agent @\"/tmp/x\\\"y.md\"", sub)
-    }
-
-    fun testSubstitutePromptFileWithNoPlaceholderReturnsCommandUnchanged() {
-        val command = "agent --in something -p go"
-        assertEquals(command, Order89Executor.substitutePromptFile(command, "/tmp/x.md"))
-    }
-
     // -- execute (with fake runProcess) --
 
     /** Helper: extract the temp-file path from a command string containing `@"/path"`. */
@@ -231,7 +195,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
             workingDirectory = null,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { commandString, _, _ ->
                 captured.set(commandString)
                 ProcessRunResult(0, "Some preamble.\n\n```kotlin\nval x = 42\n```\n", "")
@@ -253,7 +217,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
             workingDirectory = workingDir,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { _, dir, _ ->
                 captured.set(dir)
                 ProcessRunResult(0, "```\nok\n```", "")
@@ -269,7 +233,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
             workingDirectory = null,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { commandString, _, _ ->
                 val path = pathFromAtToken(commandString)
                 capturedTempPath.set(path)
@@ -290,7 +254,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
             workingDirectory = null,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { commandString, _, _ ->
                 captured.set(pathFromAtToken(commandString))
                 ProcessRunResult(2, "", "boom")
@@ -308,7 +272,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
             workingDirectory = null,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { _, _, _ -> ProcessRunResult(0, "", "") }
         )
         assertFalse("Empty stdout must NOT silently delete the selection", result.success)
@@ -321,7 +285,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("agent @\"$PROMPT_FILE_PLACEHOLDER\""),
             workingDirectory = null,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { _, _, _ -> ProcessRunResult(0, "```\npartial\n```", "", stdoutTruncated = true) }
         )
         assertFalse("Truncated stdout must NOT be applied as a partial replacement", result.success)
@@ -335,7 +299,7 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("agent --no-placeholder"),
             workingDirectory = null,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { _, _, _ -> ran = true; ProcessRunResult(0, "", "") }
         )
         assertFalse(result.success)
@@ -349,187 +313,10 @@ class Order89ExecutorTest : BaseCompletionTest() {
             request,
             settingsWithCommand("   "),
             workingDirectory = null,
-            session = Order89ProcessSession(),
+            session = AgentProcessSession(),
             runProcess = { _, _, _ -> error("must not run") }
         )
         assertFalse(result.success)
-    }
-
-    // -- defaultRunProcess (shell wrap) --
-
-    fun testResolveShellFallsBackToShWhenEnvUnset() {
-        // Can't unset $SHELL on a running JVM portably; just assert the fallback contract by
-        // confirming a non-blank value is returned and is a plausible POSIX shell path.
-        val shell = Order89Executor.resolveShell()
-        assertTrue("resolveShell must return non-blank", shell.isNotBlank())
-        assertTrue("resolveShell must return an absolute path", shell.startsWith("/"))
-    }
-
-    fun testBuildShellArgvUsesInteractiveFlag() {
-        // -i (not -l) is load-bearing: it's what makes ~/.zshrc / ~/.bashrc get sourced so PATH
-        // from nvm/asdf/mise applies. A silent regression to -l would re-break "pi: command not
-        // found" for tools whose PATH setup lives in interactive rc files.
-        val argv = Order89Executor.buildShellArgv("/bin/bash", "echo HELLO")
-        assertEquals(listOf("/bin/bash", "-i", "-c", "echo HELLO"), argv)
-    }
-
-    fun testStripShellInitNoiseRemovesBashTtyWarnings() {
-        val raw = """
-            bash: cannot set terminal process group (-1): Inappropriate ioctl for device
-            bash: no job control in this shell
-            actual error from CLI
-        """.trimIndent()
-        val cleaned = Order89Executor.stripShellInitNoise(raw)
-        assertFalse("bash TTY warning should be stripped", cleaned.contains("cannot set terminal"))
-        assertFalse("bash job-control warning should be stripped", cleaned.contains("no job control"))
-        assertTrue("real error should survive", cleaned.contains("actual error from CLI"))
-    }
-
-    fun testStripShellInitNoisePreservesUnrelatedStderr() {
-        val raw = "Error: API key required\nstack trace line 1"
-        assertEquals(raw, Order89Executor.stripShellInitNoise(raw))
-    }
-
-    fun testExtractProgramNameReturnsFirstWord() {
-        assertEquals("claude", Order89Executor.extractProgramName("claude --file /tmp/x.md"))
-        assertEquals("pi", Order89Executor.extractProgramName("  pi --tools read,grep @\"/tmp/x\""))
-    }
-
-    fun testExtractProgramNameSkipsLeadingEnvAssignments() {
-        // Inline env assignments (often API keys) must NOT appear in the logged program word.
-        val program = Order89Executor.extractProgramName(
-            "ANTHROPIC_API_KEY=sk-secret-token-1234 OPENAI_KEY=sk-other claude --file /tmp/x.md"
-        )
-        assertEquals("claude", program)
-        assertFalse("API key must not survive into the program token", program.contains("sk-"))
-    }
-
-    fun testExtractProgramNameHandlesEdgeCases() {
-        assertEquals("<empty>", Order89Executor.extractProgramName(""))
-        assertEquals("<empty>", Order89Executor.extractProgramName("   "))
-        assertEquals("<env-only>", Order89Executor.extractProgramName("FOO=bar BAZ=qux"))
-    }
-
-    fun testDefaultRunProcessExecutesCommandStringViaShell() {
-        val session = Order89ProcessSession()
-        val result = Order89Executor.defaultRunProcess(
-            "echo HELLO",
-            workingDirectory = null,
-            session = session
-        )
-        assertEquals(0, result.exitCode)
-        assertTrue("stdout should contain echoed sentinel, got: ${result.stdout}", result.stdout.contains("HELLO"))
-        assertEquals("", result.stderr.trim().lines().filter { !it.startsWith("Warning:") && it.isNotBlank() }.joinToString("\n"))
-    }
-
-    fun testDefaultRunProcessPassesCommandStringVerbatimToShell() {
-        // A quoted argument with embedded whitespace must arrive at echo as a single argument.
-        // If we were tokenizing in-plugin, "two words" would either become one token or we'd
-        // have to escape — the shell handles it for us.
-        val session = Order89ProcessSession()
-        val result = Order89Executor.defaultRunProcess(
-            "echo 'two words'",
-            workingDirectory = null,
-            session = session
-        )
-        assertEquals(0, result.exitCode)
-        assertTrue(result.stdout.contains("two words"))
-    }
-
-    fun testDefaultRunProcessNonZeroExitCapturesStderr() {
-        val session = Order89ProcessSession()
-        val result = Order89Executor.defaultRunProcess(
-            "echo oops 1>&2; exit 7",
-            workingDirectory = null,
-            session = session
-        )
-        assertEquals(7, result.exitCode)
-        assertTrue("stderr should capture the redirected message, got: '${result.stderr}'", result.stderr.contains("oops"))
-    }
-
-    fun testDefaultRunProcessHonorsWorkingDirectory() {
-        val session = Order89ProcessSession()
-        val tmp = File(System.getProperty("java.io.tmpdir"))
-        val result = Order89Executor.defaultRunProcess(
-            "pwd",
-            workingDirectory = tmp,
-            session = session
-        )
-        assertEquals(0, result.exitCode)
-        // macOS resolves /tmp to /private/tmp; just check the trailing path matches.
-        val pwdLine = result.stdout.trim()
-        assertTrue("pwd output ($pwdLine) should end with the configured tmp dir (${tmp.absolutePath})",
-            pwdLine.endsWith(tmp.absolutePath) || pwdLine == tmp.canonicalPath
-        )
-    }
-
-    fun testDefaultRunProcessCancelKillsLongRunningCommand() {
-        val session = Order89ProcessSession()
-        val started = System.nanoTime()
-        // Schedule a cancel from a pooled thread shortly after the process starts.
-        val canceller = Thread {
-            Thread.sleep(150)
-            session.cancel()
-        }
-        canceller.isDaemon = true
-        canceller.start()
-        val result = Order89Executor.defaultRunProcess(
-            "sleep 10",
-            workingDirectory = null,
-            session = session
-        )
-        val elapsedMs = (System.nanoTime() - started) / 1_000_000
-        // cancel() destroys the shell, which terminates `sleep` (single-command exec). Allow
-        // generous slack so this isn't flaky on loaded CI.
-        assertTrue("Process should exit well before 10s sleep completes; took ${elapsedMs}ms",
-            elapsedMs < 5_000)
-        // The shell exits non-zero when killed by SIGTERM; we don't assert on the exact code.
-        assertNotNull(result)
-    }
-
-    // -- Order89ProcessSession --
-
-    fun testProcessSessionDestroyKillsProcess() {
-        // Use `cat` from /dev/stdin so it blocks; we can then destroy it.
-        val pb = ProcessBuilder("cat").redirectErrorStream(true)
-        val process = pb.start()
-        val session = Order89ProcessSession()
-        session.setProcess(process)
-
-        session.cancel()
-        // After cancel the process must be dead within a short window.
-        val exited = process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)
-        assertTrue("Process should be terminated by cancel()", exited)
-        assertFalse("Process should no longer be alive", process.isAlive)
-    }
-
-    fun testProcessSessionDestroysProcessSetAfterCancel() {
-        val session = Order89ProcessSession()
-        session.cancel()
-
-        val pb = ProcessBuilder("cat")
-        val process = pb.start()
-        session.setProcess(process)
-
-        val exited = process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)
-        assertTrue("Process attached after cancel should be force-destroyed", exited)
-    }
-
-    fun testProcessSessionRecheckClosesCancelRace() {
-        // Simulate the race: cancel() runs after setProcess reads the cancelled flag (false)
-        // but before it stores the process. We model this by inverting the order: store the
-        // process while cancelled is already true, exercising the post-store re-check path.
-        val session = Order89ProcessSession()
-        session.cancel()    // sets cancelled = true; processRef is still null
-
-        val pb = ProcessBuilder("cat")
-        val process = pb.start()
-        session.setProcess(process)    // post-store re-check must destroy
-
-        assertTrue(
-            "Re-check after store must terminate a process registered into a cancelled session",
-            process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)
-        )
     }
 
     // -- post-processing (preserved) --

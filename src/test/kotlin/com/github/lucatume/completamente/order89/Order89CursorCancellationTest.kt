@@ -1,6 +1,7 @@
 package com.github.lucatume.completamente.order89
 
 import com.github.lucatume.completamente.BaseCompletionTest
+import com.github.lucatume.completamente.services.AgentProcessSession
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
@@ -12,7 +13,7 @@ class Order89CursorCancellationTest : BaseCompletionTest() {
 
     private fun makeTestSession(range: RangeMarker): Order89Session {
         val future = CompletableFuture<Order89Result>()
-        return Order89Session(future, Order89ProcessSession(), null, range)
+        return Order89Session(future, AgentProcessSession(), null, range)
     }
 
     private fun findSessionAtCaret(

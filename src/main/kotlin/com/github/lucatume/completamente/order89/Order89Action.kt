@@ -1,5 +1,6 @@
 package com.github.lucatume.completamente.order89
 
+import com.github.lucatume.completamente.services.AgentProcessSession
 import com.github.lucatume.completamente.services.DebugLog
 import com.github.lucatume.completamente.completion.collectReferencedFiles
 import com.github.lucatume.completamente.services.SettingsState
@@ -99,7 +100,7 @@ data class Order89StatusDisplay(
 
 data class Order89Session(
     val future: Future<Order89Result>,
-    val processSession: Order89ProcessSession,
+    val processSession: AgentProcessSession,
     val statusDisplay: Order89StatusDisplay?,
     val range: RangeMarker
 )
@@ -165,7 +166,7 @@ class Order89Action : AnAction() {
         val insertionOffset = doc.getLineStartOffset(targetLine)
         val statusDisplay = insertStatusLines(editor, insertionOffset, dialog.promptText)
 
-        val processSession = Order89ProcessSession()
+        val processSession = AgentProcessSession()
         val workingDir = project.basePath?.let { File(it) }
         val future: Future<Order89Result> = ApplicationManager.getApplication().executeOnPooledThread<Order89Result> {
             Order89Executor.execute(request, settings, workingDir, processSession)
