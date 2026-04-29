@@ -1,0 +1,8 @@
+<Walkthrough>
+  <Step id="1" file="src/does-not-exist.kt" range="1:1-1:5">
+    <Narration>This step references a file that doesn't exist in the project — the session must skip it (or fail to open if it's the only step).</Narration>
+  </Step>
+  <Step id="2" file="src/sample.kt" range="1:1-1:30">
+    <Narration>This step is resolvable; the session should land here after skipping step 1.</Narration>
+  </Step>
+</Walkthrough>

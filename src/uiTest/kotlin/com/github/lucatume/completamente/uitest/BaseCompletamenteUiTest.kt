@@ -54,6 +54,7 @@ abstract class BaseCompletamenteUiTest {
         configureSettings(
             llamaUrl = llamaServer.baseUrl,
             order89CliCommand = fakeAgent.buildOrder89Command(fixture = "empty.txt"),
+            walkthroughCliCommand = fakeAgent.buildWalkthroughCommand(fixture = "empty.txt"),
         )
         llamaServer.reset()
     }
@@ -77,7 +78,20 @@ abstract class BaseCompletamenteUiTest {
 
     /** Set Order 89 fixture by rebuilding the cli command and pushing it into Settings. */
     protected fun useFakeAgentFixture(fixture: String) {
-        configureSettings(llamaUrl = llamaServer.baseUrl, order89CliCommand = fakeAgent.buildOrder89Command(fixture))
+        configureSettings(
+            llamaUrl = llamaServer.baseUrl,
+            order89CliCommand = fakeAgent.buildOrder89Command(fixture),
+            walkthroughCliCommand = fakeAgent.buildWalkthroughCommand(fixture = "empty.txt"),
+        )
+    }
+
+    /** Set the Walkthrough fixture by rebuilding its CLI command and pushing it into Settings. */
+    protected fun useFakeWalkthroughFixture(fixture: String) {
+        configureSettings(
+            llamaUrl = llamaServer.baseUrl,
+            order89CliCommand = fakeAgent.buildOrder89Command(fixture = "empty.txt"),
+            walkthroughCliCommand = fakeAgent.buildWalkthroughCommand(fixture),
+        )
     }
 
     /** Stage the next /infill response from fake llama. */
@@ -90,7 +104,7 @@ abstract class BaseCompletamenteUiTest {
         llamaServer.enqueueRaw("/infill", body, status)
     }
 
-    private fun configureSettings(llamaUrl: String, order89CliCommand: String) {
+    private fun configureSettings(llamaUrl: String, order89CliCommand: String, walkthroughCliCommand: String) {
         val script = """
             var pluginId = com.intellij.openapi.extensions.PluginId.findId('com.github.lucatume.completamente')
             var pluginCl = com.intellij.ide.plugins.PluginManagerCore.findPlugin(pluginId).getPluginClassLoader()
@@ -99,6 +113,7 @@ abstract class BaseCompletamenteUiTest {
             var service = com.intellij.openapi.application.ApplicationManager.getApplication().getService(stateClass)
             service.setServerUrl('${escapeJs(llamaUrl)}')
             service.setOrder89CliCommand('${escapeJs(order89CliCommand)}')
+            service.setWalkthroughCliCommand('${escapeJs(walkthroughCliCommand)}')
         """.trimIndent()
         robot.runJs(script, runInEdt = true)
     }

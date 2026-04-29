@@ -1,0 +1,9 @@
+<Walkthrough>
+  <Step id="1" file="src/sample.kt" range="1:1-1:30">
+    <Narration>This is the first step. It points at the start of the sample file.</Narration>
+  </Step>
+  <Step id="2" file="src/sample.kt" range="2:1-2:30">
+    <Narration>The second step lands one line below.</Narration>
+  </Step>
+  <Step id="3" file="src/sample.kt" range="3:1-3:5"/>
+</Walkthrough>

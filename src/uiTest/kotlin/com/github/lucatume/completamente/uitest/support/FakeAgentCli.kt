@@ -13,6 +13,9 @@ class FakeAgentCli private constructor(val scriptPath: Path) {
     fun buildOrder89Command(fixture: String): String =
         "${shellQuote(scriptPath.toString())} --fixture ${shellQuote(fixture)} \"%%prompt_file%%\""
 
+    /** Same shell-quoting protocol as Order 89; the fake-agent.sh stub is feature-agnostic. */
+    fun buildWalkthroughCommand(fixture: String): String = buildOrder89Command(fixture)
+
     private fun shellQuote(s: String): String =
         if (s.contains(' ') || s.contains('"')) "\"${s.replace("\"", "\\\"")}\"" else s
 
