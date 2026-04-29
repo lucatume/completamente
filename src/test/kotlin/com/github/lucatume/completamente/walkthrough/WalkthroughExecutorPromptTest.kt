@@ -201,6 +201,29 @@ class WalkthroughExecutorPromptTest : BaseCompletionTest() {
         )
     }
 
+    fun testPromptInstructsAgentToSkipBoilerplate() {
+        // Without an explicit "skip boilerplate" rule, the agent tends to dedicate steps to
+        // imports, getters/setters, trivial constructors, DI wiring — the structural scaffolding
+        // around the logic rather than the logic itself. The user wants steps on what the code
+        // *decides*, not on what the language requires it to *declare*.
+        val result = WalkthroughExecutor.buildPrompt(makeRequest())
+        assertTrue("Prompt must contain a focus/scope section",
+            result.contains("<WalkthroughFocus>") && result.contains("</WalkthroughFocus>")
+        )
+        assertTrue("Prompt must explicitly steer away from boilerplate and toward business logic",
+            result.contains("boilerplate") && result.contains("business logic")
+        )
+        assertTrue("Prompt must enumerate concrete categories to skip so the rule is illustrated, not just stated",
+            result.contains("imports") && result.contains("getters")
+        )
+        assertTrue("Prompt must keep the carve-out for selections that ARE boilerplate so a future shortening doesn't drop it",
+            result.contains("anchor the first <Step> there")
+        )
+        assertTrue("Prompt must keep the observable-behaviour heuristic that anchors the rule",
+            result.contains("observable behaviour")
+        )
+    }
+
     fun testPromptForbidsShallowNarration() {
         // Narration that just paraphrases the code is the visible symptom of the shallow-output
         // bug. Prompt must steer toward the *why*, not the *what*.
