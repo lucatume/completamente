@@ -320,16 +320,15 @@ class WalkthroughSession private constructor(
             })
 
             val footer = if (marker.isValid) null else "(range no longer valid)"
-            val startColPx = try {
-                editor.visualPositionToXY(
-                    com.intellij.openapi.editor.VisualPosition(
-                        resolved.step.range.startLine,
-                        resolved.step.range.startCol,
-                    )
-                ).x
-            } catch (_: Throwable) {
-                0
-            }
+            // Anchor the wedge on the first visible (non-whitespace) character of the
+            // highlighted range's first line — not the literal `startCol`. The walkthrough
+            // agent often emits `range="L:1-..."` for indented code; honoring that literally
+            // would point the wedge at the gutter instead of the code the user is reading.
+            val anchorOffset = computeAnchorOffset(
+                editor.document.charsSequence,
+                resolved.startOffset,
+                resolved.endOffset,
+            )
             // Build nav state from navigator. Index discipline: NavButton.{FIRST,PREV,NEXT,LAST}.ordinal.
             val navEnabled = BooleanArray(4).also {
                 it[NarrationInlay.NavButton.FIRST.ordinal] = navigator.canGoFirst()
@@ -346,7 +345,7 @@ class WalkthroughSession private constructor(
                 narration = resolved.step.narration,
                 stepCounter = "step ${navigator.currentIndex}/${navigator.totalReachable}",
                 footerStatus = footer,
-                startColPx = startColPx,
+                anchorOffset = anchorOffset,
                 parentDisposable = stepDisp,
                 navEnabled = navEnabled,
                 navCallbacks = navCallbacks,

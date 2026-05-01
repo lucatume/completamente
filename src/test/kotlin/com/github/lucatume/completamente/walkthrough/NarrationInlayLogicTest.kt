@@ -27,7 +27,7 @@ class NarrationInlayLogicTest : BaseCompletionTest() {
         startColPx: Int = 100,
     ): NarrationInlay.Renderer {
         val editor = openEditor()
-        return NarrationInlay.Renderer(editor, narration, stepCounter, footerStatus, startColPx,
+        return NarrationInlay.Renderer(editor, narration, stepCounter, footerStatus, { startColPx },
             disabledNav().first, disabledNav().second)
     }
 
@@ -35,7 +35,7 @@ class NarrationInlayLogicTest : BaseCompletionTest() {
 
     fun testInlayRowWidthMatchesContentComponentWidthOrFallback() {
         val editor = openEditor()
-        val r = NarrationInlay.Renderer(editor, "x", "step 1/1", null, 0,
+        val r = NarrationInlay.Renderer(editor, "x", "step 1/1", null, { 0 },
             disabledNav().first, disabledNav().second)
         val actual = r.calcWidthInPixels(stubInlay())
         val ccWidth = editor.contentComponent.width
@@ -46,7 +46,7 @@ class NarrationInlayLogicTest : BaseCompletionTest() {
 
     private fun captureBodyFillRect(target: Rectangle, startColPx: Int = 100): RecordingGraphics2D.CapturedFillRect {
         val editor = openEditor()
-        val r = NarrationInlay.Renderer(editor, "x", "step 1/3", null, startColPx,
+        val r = NarrationInlay.Renderer(editor, "x", "step 1/3", null, { startColPx },
             disabledNav().first, disabledNav().second)
         r.prepareLayout(target.width)
         val img = BufferedImage(target.width, target.height, BufferedImage.TYPE_INT_ARGB)
@@ -113,7 +113,7 @@ class NarrationInlayLogicTest : BaseCompletionTest() {
 
     fun testInlayHeightForBlankNarrationStillIncludesChromeAndWedge() {
         val editor = openEditor()
-        val r = NarrationInlay.Renderer(editor, null, "step 1/3", null, 100,
+        val r = NarrationInlay.Renderer(editor, null, "step 1/3", null, { 100 },
             disabledNav().first, disabledNav().second)
         r.prepareLayout(400)
         val chevronFontSize = (editor.colorsScheme.editorFontSize * NarrationInlay.CHEVRON_FONT_SCALE).toInt()
@@ -152,9 +152,9 @@ class NarrationInlayLogicTest : BaseCompletionTest() {
     fun testChromeRowBaselineYAccountsForFooter() {
         val target = Rectangle(0, 0, 400, 100)
         val editor = openEditor()
-        val rNoFooter = NarrationInlay.Renderer(editor, "x", "step 1/3", null, 0, disabledNav().first, disabledNav().second)
+        val rNoFooter = NarrationInlay.Renderer(editor, "x", "step 1/3", null, { 0 }, disabledNav().first, disabledNav().second)
             .also { it.prepareLayout(target.width) }
-        val rWithFooter = NarrationInlay.Renderer(editor, "x", "step 1/3", "(stale)", 0, disabledNav().first, disabledNav().second)
+        val rWithFooter = NarrationInlay.Renderer(editor, "x", "step 1/3", "(stale)", { 0 }, disabledNav().first, disabledNav().second)
             .also { it.prepareLayout(target.width) }
         // Footer present pushes the chrome row up by exactly one editor.lineHeight.
         assertEquals(
@@ -172,7 +172,7 @@ class NarrationInlayLogicTest : BaseCompletionTest() {
         footerStatus: String? = null,
     ): NarrationInlay.Renderer {
         val editor = openEditor()
-        return NarrationInlay.Renderer(editor, narration, "step 1/3", footerStatus, 0, navEnabled, navCallbacks)
+        return NarrationInlay.Renderer(editor, narration, "step 1/3", footerStatus, { 0 }, navEnabled, navCallbacks)
     }
 
     private fun paintNavRenderer(r: NarrationInlay.Renderer, target: Rectangle): RecordingGraphics2D {
@@ -587,7 +587,7 @@ class NarrationInlayLogicTest : BaseCompletionTest() {
         footerStatus: String? = null,
     ): RecordingGraphics2D {
         val editor = openEditor()
-        val r = NarrationInlay.Renderer(editor, narration, "step 1/3", footerStatus, startColPx,
+        val r = NarrationInlay.Renderer(editor, narration, "step 1/3", footerStatus, { startColPx },
             disabledNav().first, disabledNav().second)
         r.prepareLayout(target.width)
         val img = BufferedImage(target.width.coerceAtLeast(1), target.height.coerceAtLeast(1), BufferedImage.TYPE_INT_ARGB)

@@ -35,13 +35,22 @@ internal class NarrationInlay(
     narration: String?,
     stepCounter: String,
     footerStatus: String?,
-    startColPx: Int,
+    anchorOffset: Int,
     parentDisposable: Disposable,
     navEnabled: BooleanArray,
     navCallbacks: Array<() -> Unit>,
 ) {
 
-    val renderer: Renderer = Renderer(editor, narration, stepCounter, footerStatus, startColPx, navEnabled, navCallbacks)
+    // Wedge X is recomputed every paint from the live editor coords of [anchorOffset]. This
+    // tracks scroll, soft-wrap, font-size changes, and document edits above the range — none
+    // of which would invalidate a value captured once at construction time. The anchor offset
+    // is itself stable under document edits because the platform shifts inlay block-element
+    // anchors with the document, and the offset we hold maps to the same character cell.
+    val renderer: Renderer = Renderer(
+        editor, narration, stepCounter, footerStatus,
+        wedgeXResolver = { resolveAnchorX(editor, anchorOffset) },
+        navEnabled, navCallbacks,
+    )
     private val inlay: Inlay<Renderer>?
 
     /** Exposed to the session so it can read `bounds` for manual hit-testing in `mouseClicked`. */
@@ -77,7 +86,11 @@ internal class NarrationInlay(
         private val narration: String?,
         internal val stepCounter: String,
         internal val footerStatus: String?,
-        val startColPx: Int,
+        // Resolves the desired wedge-tip absolute X (document coords) at paint time. Invoked
+        // from `paintWedge`; called on the EDT only. Lambda over `Int` so tests can pin an
+        // exact value while production wires it to live `editor.offsetToXY` lookups that
+        // refresh on every repaint.
+        private val wedgeXResolver: () -> Int,
         private val navEnabled: BooleanArray,
         private val navCallbacks: Array<() -> Unit>,
     ) : EditorCustomElementRenderer {
@@ -258,9 +271,12 @@ internal class NarrationInlay(
 
         private fun paintWedge(g: Graphics2D, target: Rectangle) {
             // Wedge sits below the body, pointing DOWN at the highlighted line.
-            // Wedge X aligns under `startColPx`, clamped to body bounds.
+            // Wedge X aligns under the live anchor X, clamped to body bounds. The X is
+            // re-resolved every paint so scroll/soft-wrap/font-size/edits above the anchor
+            // can't strand the wedge over stale coordinates.
+            val anchorX = wedgeXResolver()
             val bodyAbsX = target.x + bodyXOffsetPx
-            val ideal = startColPx - bodyAbsX - wedgeWidthPx / 2
+            val ideal = anchorX - bodyAbsX - wedgeWidthPx / 2
             val wedgeLeftWithinBody = ideal.coerceIn(0, (bodyWidthPx - wedgeWidthPx).coerceAtLeast(0))
             val wedgeLeftAbs = bodyAbsX + wedgeLeftWithinBody
             val bodyBottomY = bodyBottomYFor(target)
@@ -379,6 +395,58 @@ internal class NarrationInlay(
         private val ACCENT_COLOR: com.intellij.ui.JBColor =
             com.intellij.ui.JBColor(Color(0x3592C4), Color(0x4FA3D9))
     }
+}
+
+/**
+ * Resolve the live absolute X (document coordinates) of the wedge anchor offset.
+ *
+ * Uses `editor.offsetToXY` (not `visualPositionToXY` of a logical line/col pair) so soft-wrap,
+ * inlays-above, and folding above the anchor are all accounted for by the platform. Falls back
+ * to 0 if the platform throws — the wedge will then clamp to the body's left edge, which is
+ * preferable to crashing the paint pass.
+ */
+internal fun resolveAnchorX(editor: com.intellij.openapi.editor.Editor, anchorOffset: Int): Int {
+    return try {
+        val safe = anchorOffset.coerceIn(0, editor.document.textLength)
+        editor.offsetToXY(safe).x
+    } catch (_: Throwable) {
+        0
+    }
+}
+
+/**
+ * Pure: given a document character sequence and a highlighted half-open `[startOffset, endOffset)`,
+ * return the offset to anchor the wedge under.
+ *
+ * Rule: anchor at the first non-whitespace character on the start line that lies within the
+ * highlighted range. If no such character exists (the range begins with whitespace and ends
+ * before any non-whitespace on that line), fall back to `startOffset`.
+ *
+ * Why: the agent that authors walkthroughs commonly emits `range="L:1-..."` — column 1 in the
+ * 1-indexed wire format — even when the highlighted code on that line is indented. Anchoring
+ * literally on column 0 then points the wedge at empty whitespace, far to the left of the
+ * visible code. Anchoring on the first non-whitespace cell aligns the wedge with the user's
+ * "this thing right here" intent regardless of the agent's column-precision.
+ */
+internal fun computeAnchorOffset(text: CharSequence, startOffset: Int, endOffset: Int): Int {
+    if (startOffset >= text.length) return startOffset
+    val start = startOffset.coerceIn(0, text.length)
+    val end = endOffset.coerceIn(start, text.length)
+    // Find line start (preceding '\n', or 0). The anchor must be on the SAME line as `start`;
+    // we deliberately do NOT search past the line end if `endOffset` reaches further down.
+    var lineStart = start
+    while (lineStart > 0 && text[lineStart - 1] != '\n') lineStart--
+    var lineEnd = start
+    while (lineEnd < text.length && text[lineEnd] != '\n') lineEnd++
+    val scanFrom = maxOf(lineStart, start)
+    val scanTo = minOf(lineEnd, end)
+    var i = scanFrom
+    while (i < scanTo) {
+        val c = text[i]
+        if (c != ' ' && c != '\t') return i
+        i++
+    }
+    return start
 }
 
 /**
