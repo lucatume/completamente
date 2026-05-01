@@ -5,6 +5,7 @@
 .kotlin
 .qodana
 build
+.worktrees
 ref/llama.vim
 ref/llama.cpp
 ref/bin/*.log
