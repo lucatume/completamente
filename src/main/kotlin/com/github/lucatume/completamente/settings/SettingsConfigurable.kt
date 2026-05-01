@@ -1,15 +1,24 @@
 package com.github.lucatume.completamente.settings
 
+import com.github.lucatume.completamente.services.DEFAULT_ORDER89_CLI_COMMAND_CLAUDE
+import com.github.lucatume.completamente.services.DEFAULT_ORDER89_CLI_COMMAND_PI
+import com.github.lucatume.completamente.services.DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE
+import com.github.lucatume.completamente.services.DEFAULT_WALKTHROUGH_CLI_COMMAND_PI
 import com.github.lucatume.completamente.services.SettingsState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 import javax.swing.JTextArea
+
+/** Marker key on [JTextArea]/[javax.swing.JButton] client property used by tests to locate components. */
+internal const val SETTINGS_COMPONENT_ID: String = "completamente.componentId"
 
 class SettingsConfigurable : Configurable {
     private var dialogPanel: DialogPanel? = null
@@ -71,64 +80,42 @@ class SettingsConfigurable : Configurable {
                         .comment("Maximum number of chunks in the queue")
                 }
             }
-            group("Order 89") {
-                row {
-                    comment(
-                        "The command runs through your shell as <code>\$SHELL -ic &lt;command&gt;</code> — " +
-                            "an interactive shell that sources <code>~/.zshrc</code> / <code>~/.bashrc</code>, " +
-                            "so PATH set up by <code>nvm</code>, <code>asdf</code>, <code>mise</code>, etc. " +
-                            "applies just as it does in a terminal tab. Login-only files " +
-                            "(<code>~/.zprofile</code>, <code>~/.bash_profile</code>) are <i>not</i> sourced — " +
-                            "if a tool like <code>pi</code> is missing, ensure its PATH addition lives in your " +
-                            "interactive rc file. <code>%%prompt_file%%</code> is replaced at run time with the " +
-                            "absolute path to the generated prompt file; wrap it in double quotes " +
-                            "(<code>\"%%prompt_file%%\"</code>) so paths with spaces pass as a single argument. " +
-                            "The working directory is the current project root."
-                    )
-                }
-                row {
-                    val area = JTextArea(order89CliCommand, 3, 0).apply {
-                        lineWrap = true
-                        wrapStyleWord = true
-                    }
-                    val scroll = JBScrollPane(area).apply {
-                        horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-                    }
-                    cell(scroll)
-                        .align(com.intellij.ui.dsl.builder.AlignX.FILL)
-                        .resizableColumn()
-                        .onApply { order89CliCommand = area.text }
-                        .onReset { area.text = order89CliCommand }
-                        .onIsModified { area.text != order89CliCommand }
-                }.layout(RowLayout.PARENT_GRID)
-            }
-            group("Walkthrough") {
-                row {
-                    comment(
-                        "Same execution model as Order 89 — <code>\$SHELL -ic</code>, " +
-                            "<code>%%prompt_file%%</code> placeholder, project root as the working directory. " +
-                            "Walkthrough is read-only: the agent must not modify any file. The CLI's stdout " +
-                            "is parsed as a <code>&lt;Walkthrough&gt;...&lt;/Walkthrough&gt;</code> block of " +
-                            "<code>&lt;Step&gt;</code> elements with <code>file=</code> and " +
-                            "<code>range=</code> attributes."
-                    )
-                }
-                row {
-                    val area = JTextArea(walkthroughCliCommand, 3, 0).apply {
-                        lineWrap = true
-                        wrapStyleWord = true
-                    }
-                    val scroll = JBScrollPane(area).apply {
-                        horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-                    }
-                    cell(scroll)
-                        .align(com.intellij.ui.dsl.builder.AlignX.FILL)
-                        .resizableColumn()
-                        .onApply { walkthroughCliCommand = area.text }
-                        .onReset { area.text = walkthroughCliCommand }
-                        .onIsModified { area.text != walkthroughCliCommand }
-                }.layout(RowLayout.PARENT_GRID)
-            }
+            cliCommandGroup(
+                title = "Order 89",
+                idPrefix = "order89",
+                comment =
+                    "The command runs through your shell as <code>\$SHELL -ic &lt;command&gt;</code> — " +
+                        "an interactive shell that sources <code>~/.zshrc</code> / <code>~/.bashrc</code>, " +
+                        "so PATH set up by <code>nvm</code>, <code>asdf</code>, <code>mise</code>, etc. " +
+                        "applies just as it does in a terminal tab. Login-only files " +
+                        "(<code>~/.zprofile</code>, <code>~/.bash_profile</code>) are <i>not</i> sourced — " +
+                        "if a tool like <code>pi</code> is missing, ensure its PATH addition lives in your " +
+                        "interactive rc file. <code>%%prompt_file%%</code> is replaced at run time with the " +
+                        "absolute path to the generated prompt file; wrap it in double quotes " +
+                        "(<code>\"%%prompt_file%%\"</code>) so paths with spaces pass as a single argument. " +
+                        "The working directory is the current project root.",
+                initialText = order89CliCommand,
+                piTemplate = DEFAULT_ORDER89_CLI_COMMAND_PI,
+                claudeTemplate = DEFAULT_ORDER89_CLI_COMMAND_CLAUDE,
+                getCurrent = { order89CliCommand },
+                setCurrent = { order89CliCommand = it },
+            )
+            cliCommandGroup(
+                title = "Walkthrough",
+                idPrefix = "walkthrough",
+                comment =
+                    "Same execution model as Order 89 — <code>\$SHELL -ic</code>, " +
+                        "<code>%%prompt_file%%</code> placeholder, project root as the working directory. " +
+                        "Walkthrough is read-only: the agent must not modify any file. The CLI's stdout " +
+                        "is parsed as a <code>&lt;Walkthrough&gt;...&lt;/Walkthrough&gt;</code> block of " +
+                        "<code>&lt;Step&gt;</code> elements with <code>file=</code> and " +
+                        "<code>range=</code> attributes.",
+                initialText = walkthroughCliCommand,
+                piTemplate = DEFAULT_WALKTHROUGH_CLI_COMMAND_PI,
+                claudeTemplate = DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE,
+                getCurrent = { walkthroughCliCommand },
+                setCurrent = { walkthroughCliCommand = it },
+            )
             group("Debug") {
                 row {
                     checkBox("Enable debug logging")
@@ -178,5 +165,42 @@ class SettingsConfigurable : Configurable {
     override fun reset() {
         loadFromState()
         dialogPanel?.reset()
+    }
+
+    private fun Panel.cliCommandGroup(
+        title: String,
+        idPrefix: String,
+        comment: String,
+        initialText: String,
+        piTemplate: String,
+        claudeTemplate: String,
+        getCurrent: () -> String,
+        setCurrent: (String) -> Unit,
+    ) {
+        group(title) {
+            row { comment(comment) }
+            val area = JTextArea(initialText, 3, 0).apply {
+                lineWrap = true
+                wrapStyleWord = true
+                putClientProperty(SETTINGS_COMPONENT_ID, "$idPrefix.textarea")
+            }
+            val scroll = JBScrollPane(area).apply {
+                horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            }
+            row {
+                cell(scroll)
+                    .align(AlignX.FILL)
+                    .resizableColumn()
+                    .onApply { setCurrent(area.text) }
+                    .onReset { area.text = getCurrent() }
+                    .onIsModified { area.text != getCurrent() }
+            }.layout(RowLayout.PARENT_GRID)
+            row {
+                button("Use pi defaults") { area.text = piTemplate }
+                    .applyToComponent { putClientProperty(SETTINGS_COMPONENT_ID, "$idPrefix.pi-button") }
+                button("Use claude code defaults") { area.text = claudeTemplate }
+                    .applyToComponent { putClientProperty(SETTINGS_COMPONENT_ID, "$idPrefix.claude-button") }
+            }
+        }
     }
 }

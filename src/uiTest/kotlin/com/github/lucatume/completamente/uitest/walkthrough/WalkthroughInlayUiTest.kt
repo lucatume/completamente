@@ -26,7 +26,7 @@ import org.junit.Test
  * the test.
  */
 @Ignore("WIP — see EDT wedge note above; mirrors Order89PopupUiTest's @Ignore.")
-class WalkthroughPopupUiTest : BaseCompletamenteUiTest() {
+class WalkthroughInlayUiTest : BaseCompletamenteUiTest() {
 
     @Test
     fun testHappyPath_threeStepsAdvanceAndClose() {

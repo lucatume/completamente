@@ -14,9 +14,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -26,8 +23,42 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import java.awt.Cursor
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import javax.swing.KeyStroke
+
+/**
+ * Install an AWT mouse-motion listener on [editor]'s content component that flips the cursor
+ * to [Cursor.HAND_CURSOR] while the mouse is inside the bounds of the inlay returned by
+ * [inlayProvider], and back to [Cursor.TEXT_CURSOR] on exit. Listener is removed when [parent]
+ * is disposed.
+ *
+ * Whole-inlay scope (not per-chevron): the body advertises its entire surface as interactive
+ * (clicks anywhere inside route through chevron hit-tests), so the cursor reflects that contract.
+ */
+internal fun installInlayHoverCursor(
+    editor: Editor,
+    inlayProvider: () -> com.intellij.openapi.editor.Inlay<*>?,
+    parent: Disposable,
+) {
+    val cc = editor.contentComponent
+    val listener = object : MouseMotionAdapter() {
+        private var lastInside = false
+        override fun mouseMoved(e: MouseEvent) {
+            val bounds = inlayProvider()?.bounds
+            val inside = bounds != null && bounds.contains(e.x, e.y)
+            if (inside == lastInside) return
+            lastInside = inside
+            cc.cursor = Cursor.getPredefinedCursor(
+                if (inside) Cursor.HAND_CURSOR else Cursor.TEXT_CURSOR
+            )
+        }
+    }
+    cc.addMouseMotionListener(listener)
+    Disposer.register(parent, Disposable { cc.removeMouseMotionListener(listener) })
+}
 
 /**
  * Resolved view of a [WalkthroughStep] — what the IDE needs at navigation time.
@@ -65,9 +96,9 @@ class WalkthroughSession private constructor(
 
     @Volatile private var disposed = false
     private var currentEditor: Editor? = null
-    private var currentHighlighter: RangeHighlighter? = null
-    private var currentPopup: WalkthroughPopup? = null
-    /** Disposable parented to *this* session that owns the per-step listeners + popup + ESC. Cleared on every step transition. */
+    private var currentRangeMarker: com.intellij.openapi.editor.RangeMarker? = null
+    private var currentInlay: NarrationInlay? = null
+    /** Disposable parented to *this* session that owns the per-step listeners + inlay + ESC. Cleared on every step transition. */
     private var stepDisposable: Disposable? = null
 
     init {
@@ -242,9 +273,7 @@ class WalkthroughSession private constructor(
         Disposer.register(this, stepDisp)
         stepDisposable = stepDisp
 
-        // Per-step ESC handler — bound to the editor that hosts this step (which may be a
-        // different editor than the one the user invoked the walkthrough from). Auto-removed
-        // when stepDisp is disposed, so the next step gets a fresh ESC handler on its editor.
+        // ESC is editor-component-scoped (close from anywhere in the editor frame).
         registerEscHandlerOn(editor, stepDisp)
 
         // Spec step 6: scroll/fold/highlight under a single invokeLater so the editor is
@@ -267,61 +296,98 @@ class WalkthroughSession private constructor(
                 LogicalPosition(resolved.step.range.startLine, resolved.step.range.startCol),
                 ScrollType.CENTER
             )
-
-            // No visual highlight on the range — the popup's wedge points at the line instead.
-            // We still register the highlighter so its RangeMarker tracks document edits and the
-            // popup's "(range no longer valid)" footer stays accurate after intervening edits.
-            val highlighter = editor.markupModel.addRangeHighlighter(
-                resolved.startOffset,
-                resolved.endOffset,
-                HighlighterLayer.SELECTION - 1,
-                null,
-                HighlighterTargetArea.EXACT_RANGE
+            // Keep `startLine + 5` in view so the user has lookahead into the highlighted code.
+            // MAKE_VISIBLE is a no-op when already in viewport; on a short viewport it nudges
+            // the scroll just enough to reveal the lookahead line.
+            val maxLine = (editor.document.lineCount - 1).coerceAtLeast(0)
+            val lookaheadLine = (resolved.step.range.startLine + 5).coerceAtMost(maxLine)
+            editor.scrollingModel.scrollTo(
+                LogicalPosition(lookaheadLine, 0),
+                ScrollType.MAKE_VISIBLE
             )
-            currentHighlighter = highlighter
+
+            // RangeMarker tracks the range across document edits; `isValid == false` means the
+            // range was deleted from under us. Used as the "(range no longer valid)" footer
+            // signal — `RangeMarker.isValid` does NOT track text-content edits, only deletion.
+            val marker = editor.document.createRangeMarker(resolved.startOffset, resolved.endOffset)
+            currentRangeMarker = marker
             Disposer.register(stepDisp, Disposable {
                 try {
-                    if (highlighter.isValid) editor.markupModel.removeHighlighter(highlighter)
+                    if (marker.isValid) marker.dispose()
                 } catch (e: IllegalStateException) {
-                    // editor or highlighter may be already disposed
-                    DebugLog.log("WalkthroughSession ignoring highlighter removal on disposed editor: ${e.message}")
+                    DebugLog.log("WalkthroughSession ignoring marker disposal on disposed document: ${e.message}")
                 }
             })
 
-            val footer = if (!highlighter.isValid) "(range no longer valid)" else null
-            val state = WalkthroughPopupState(
-                narration = resolved.step.narration,
-                currentIndex = navigator.currentIndex,
-                totalReachable = navigator.totalReachable,
-                canGoFirst = navigator.canGoFirst(),
-                canGoPrev = navigator.canGoPrev(),
-                canGoNext = navigator.canGoNext(),
-                canGoLast = navigator.canGoLast(),
-                footerStatus = footer
+            val footer = if (marker.isValid) null else "(range no longer valid)"
+            val startColPx = try {
+                editor.visualPositionToXY(
+                    com.intellij.openapi.editor.VisualPosition(
+                        resolved.step.range.startLine,
+                        resolved.step.range.startCol,
+                    )
+                ).x
+            } catch (_: Throwable) {
+                0
+            }
+            // Build nav state from navigator. Index discipline: NavButton.{FIRST,PREV,NEXT,LAST}.ordinal.
+            val navEnabled = BooleanArray(4).also {
+                it[NarrationInlay.NavButton.FIRST.ordinal] = navigator.canGoFirst()
+                it[NarrationInlay.NavButton.PREV.ordinal]  = navigator.canGoPrev()
+                it[NarrationInlay.NavButton.NEXT.ordinal]  = navigator.canGoNext()
+                it[NarrationInlay.NavButton.LAST.ordinal]  = navigator.canGoLast()
+            }
+            val navCallbacks = arrayOf<() -> Unit>(
+                { goFirst() }, { goPrev() }, { goNext() }, { goLast() },
             )
-            val handlers = WalkthroughPopupHandlers(
-                onFirst = { goFirst() },
-                onPrev = { goPrev() },
-                onNext = { goNext() },
-                onLast = { goLast() },
-                onClose = { dispose() }
-            )
-            val popup = WalkthroughPopup(
+            currentInlay = NarrationInlay(
                 editor = editor,
                 rangeStartOffset = resolved.startOffset,
-                rangeEndOffset = resolved.endOffset,
-                state = state,
-                handlers = handlers,
-                parentDisposable = stepDisp
+                narration = resolved.step.narration,
+                stepCounter = "step ${navigator.currentIndex}/${navigator.totalReachable}",
+                footerStatus = footer,
+                startColPx = startColPx,
+                parentDisposable = stepDisp,
+                navEnabled = navEnabled,
+                navCallbacks = navCallbacks,
             )
-            currentPopup = popup
-            popup.show()
+            if (currentInlay?.isAttached() != true) {
+                DebugLog.log("WalkthroughSession: inlay refused at offset=${resolved.startOffset}; disposing session")
+                dispose()
+                return@Runnable
+            }
+
+            // Register chevron click router. BUTTON1-only; right/middle clicks fall through.
+            // Listener parented to stepDisp → auto-removed on every step transition.
+            // Hit-testing is bounds-based against the inlay directly (does not rely on
+            // `EditorMouseEvent.inlay` populating for block-element inlays — observed unreliable
+            // in 2024.3.6 for clicks at the body interior, despite the platform docs).
+            editor.addEditorMouseListener(object : com.intellij.openapi.editor.event.EditorMouseListener {
+                override fun mouseClicked(e: com.intellij.openapi.editor.event.EditorMouseEvent) {
+                    if (e.mouseEvent.button != java.awt.event.MouseEvent.BUTTON1) return
+                    val target = currentInlay ?: return
+                    val bounds = target.attachedInlay?.bounds ?: return
+                    val mx = e.mouseEvent.x
+                    val my = e.mouseEvent.y
+                    if (!bounds.contains(mx, my)) return
+                    val localX = mx - bounds.x
+                    val localY = my - bounds.y
+                    target.renderer.routeClick(localX, localY)?.invoke()
+                    e.consume()
+                }
+            }, stepDisp)
+
+            // Whole-inlay hover → hand cursor. AWT-level listener on contentComponent fires after
+            // EditorImpl's own cursor management, so our setCursor wins. Tracks transitions only
+            // (no per-frame churn). Restores TEXT_CURSOR (the editor body's default) on exit so
+            // the I-beam comes back when the mouse leaves the inlay.
+            installInlayHoverCursor(editor, { currentInlay?.attachedInlay }, stepDisp)
         })
     }
 
     private fun tearDownCurrentSurfaces() {
-        currentPopup = null
-        currentHighlighter = null
+        currentInlay = null
+        currentRangeMarker = null
         val disp = stepDisposable
         stepDisposable = null
         // Disposer.dispose is idempotent for already-disposed disposables but logs a warning

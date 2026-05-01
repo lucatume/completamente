@@ -192,7 +192,7 @@ class SettingsStateTest : BaseCompletionTest() {
     fun testOrder89CliCommandDefaultIsBundledPiInvocation() {
         val state = SettingsState()
         val settings = state.toSettings()
-        assertEquals(DEFAULT_ORDER89_CLI_COMMAND, settings.order89CliCommand)
+        assertEquals(DEFAULT_ORDER89_CLI_COMMAND_PI, settings.order89CliCommand)
         assertTrue(
             "Default command must include the prompt-file placeholder",
             settings.order89CliCommand.contains("%%prompt_file%%")
@@ -239,5 +239,33 @@ class SettingsStateTest : BaseCompletionTest() {
         state.loadState(source)
 
         assertTrue(state.debugLogging)
+    }
+
+    // -- pi / claude code template constants --
+
+    fun testAllCliTemplatesContainPromptFilePlaceholder() {
+        // Every template must contain the `%%prompt_file%%` placeholder so substitution works.
+        for ((name, value) in listOf(
+            "DEFAULT_ORDER89_CLI_COMMAND_PI" to DEFAULT_ORDER89_CLI_COMMAND_PI,
+            "DEFAULT_ORDER89_CLI_COMMAND_CLAUDE" to DEFAULT_ORDER89_CLI_COMMAND_CLAUDE,
+            "DEFAULT_WALKTHROUGH_CLI_COMMAND_PI" to DEFAULT_WALKTHROUGH_CLI_COMMAND_PI,
+            "DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE" to DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE,
+        )) {
+            assertTrue("$name must contain %%prompt_file%%", value.contains("%%prompt_file%%"))
+        }
+    }
+
+    fun testPiAndClaudeTemplatesAreDistinct() {
+        // A copy-paste regression that left both templates the same would silently land users
+        // on the wrong CLI when they click "Use claude code defaults". Lock the distinction.
+        assertFalse(DEFAULT_ORDER89_CLI_COMMAND_PI == DEFAULT_ORDER89_CLI_COMMAND_CLAUDE)
+        assertFalse(DEFAULT_WALKTHROUGH_CLI_COMMAND_PI == DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE)
+    }
+
+    fun testInitialWalkthroughDefaultIsPiTemplate() {
+        // Order 89's default is already covered by `testOrder89CliCommandDefaultIsBundledPiInvocation`
+        // above; cover the Walkthrough analog here so the shipping defaults for both groups are
+        // pinned.
+        assertEquals(DEFAULT_WALKTHROUGH_CLI_COMMAND_PI, SettingsState().walkthroughCliCommand)
     }
 }

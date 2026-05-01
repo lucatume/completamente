@@ -106,7 +106,7 @@ object WalkthroughParser {
         val steps = mutableListOf<RawStep>()
         for (match in matches) {
             val attrs = parseAttrs(match.groupValues[1])
-            val body = match.groupValues.getOrNull(2)
+            val body = match.groupValues[2]
             val file = attrs["file"]
                 ?: return Result.failure(ParseFailure(
                     "<Step> is missing required 'file' attribute"
@@ -131,9 +131,9 @@ object WalkthroughParser {
             }
             // Empty or whitespace-only narration is treated as no narration — the popup hides
             // the panel on null, and an empty string would render an awkward blank box.
-            val narration = body
-                ?.let { NARRATION_PATTERN.find(it)?.groupValues?.get(1) }
+            val narration = NARRATION_PATTERN.find(body)?.groupValues?.get(1)
                 ?.let(::decodeXmlEntities)
+                ?.let(::trimBlankLines)
                 ?.takeIf { it.isNotBlank() }
             steps += RawStep(
                 id = attrs["id"]?.let(::decodeXmlEntities),
@@ -158,6 +158,9 @@ object WalkthroughParser {
         }
         return out
     }
+
+    internal fun trimBlankLines(s: String): String =
+        s.lines().dropWhile { it.isBlank() }.dropLastWhile { it.isBlank() }.joinToString("\n")
 
     private fun decodeXmlEntities(s: String): String =
         s.replace("&lt;", "<")

@@ -7,11 +7,17 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-const val DEFAULT_ORDER89_CLI_COMMAND: String =
+const val DEFAULT_ORDER89_CLI_COMMAND_PI: String =
     "pi --tools read,grep,find,ls @\"%%prompt_file%%\" -p \"Execute the instructions in the files\""
 
-const val DEFAULT_WALKTHROUGH_CLI_COMMAND: String =
+const val DEFAULT_ORDER89_CLI_COMMAND_CLAUDE: String =
+    "claude -p --tools Read,Grep,Glob,LS < \"%%prompt_file%%\""
+
+const val DEFAULT_WALKTHROUGH_CLI_COMMAND_PI: String =
     "pi --tools read,grep,find,ls @\"%%prompt_file%%\" -p \"Read the instructions in the file and produce the walkthrough\""
+
+const val DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE: String =
+    "claude -p --tools Read,Grep,Glob,LS < \"%%prompt_file%%\""
 
 @Service(Service.Level.APP)
 @State(
@@ -31,10 +37,10 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     var maxQueuedChunks: Int = 16
 
     // Order 89
-    var order89CliCommand: String = DEFAULT_ORDER89_CLI_COMMAND
+    var order89CliCommand: String = DEFAULT_ORDER89_CLI_COMMAND_PI
 
     // Walkthrough
-    var walkthroughCliCommand: String = DEFAULT_WALKTHROUGH_CLI_COMMAND
+    var walkthroughCliCommand: String = DEFAULT_WALKTHROUGH_CLI_COMMAND_PI
 
     // Debug
     var debugLogging: Boolean = false

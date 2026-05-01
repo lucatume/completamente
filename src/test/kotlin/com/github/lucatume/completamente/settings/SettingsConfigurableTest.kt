@@ -1,24 +1,23 @@
 package com.github.lucatume.completamente.settings
 
 import com.github.lucatume.completamente.BaseCompletionTest
-import com.github.lucatume.completamente.services.DEFAULT_ORDER89_CLI_COMMAND
+import com.github.lucatume.completamente.services.DEFAULT_ORDER89_CLI_COMMAND_CLAUDE
+import com.github.lucatume.completamente.services.DEFAULT_ORDER89_CLI_COMMAND_PI
+import com.github.lucatume.completamente.services.DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE
+import com.github.lucatume.completamente.services.DEFAULT_WALKTHROUGH_CLI_COMMAND_PI
 import com.github.lucatume.completamente.services.SettingsState
+import java.awt.Container
+import javax.swing.JButton
+import javax.swing.JTextArea
 
 class SettingsConfigurableTest : BaseCompletionTest() {
 
     override fun tearDown() {
         try {
-            val defaults = SettingsState()
-            val state = SettingsState.getInstance()
-            state.serverUrl = defaults.serverUrl
-            state.contextSize = defaults.contextSize
-            state.nPredict = defaults.nPredict
-            state.autoSuggestions = defaults.autoSuggestions
-            state.ringNChunks = defaults.ringNChunks
-            state.ringChunkSize = defaults.ringChunkSize
-            state.maxQueuedChunks = defaults.maxQueuedChunks
-            state.order89CliCommand = defaults.order89CliCommand
-            state.debugLogging = defaults.debugLogging
+            // Restore the persisted state to defaults via the same copy used at apply time, so
+            // adding a new field to SettingsState doesn't introduce a fresh "leaks between tests"
+            // hole in this teardown.
+            com.intellij.util.xmlb.XmlSerializerUtil.copyBean(SettingsState(), SettingsState.getInstance())
         } finally {
             super.tearDown()
         }
@@ -176,7 +175,7 @@ class SettingsConfigurableTest : BaseCompletionTest() {
 
         val field = SettingsConfigurable::class.java.getDeclaredField("order89CliCommand")
         field.isAccessible = true
-        assertEquals(DEFAULT_ORDER89_CLI_COMMAND, field.get(configurable) as String)
+        assertEquals(DEFAULT_ORDER89_CLI_COMMAND_PI, field.get(configurable) as String)
     }
 
     fun testApplyWritesOrder89CliCommandToState() {
@@ -208,6 +207,42 @@ class SettingsConfigurableTest : BaseCompletionTest() {
         method.isAccessible = true
         method.invoke(configurable)
 
-        assertEquals(DEFAULT_ORDER89_CLI_COMMAND, state.order89CliCommand)
+        assertEquals(DEFAULT_ORDER89_CLI_COMMAND_PI, state.order89CliCommand)
+    }
+
+    // -- pi / claude code template buttons --
+
+    fun testTemplateButtonsResetTextareaToTheirDefaults() {
+        val cases = listOf(
+            Triple("order89.textarea", "order89.pi-button", DEFAULT_ORDER89_CLI_COMMAND_PI),
+            Triple("order89.textarea", "order89.claude-button", DEFAULT_ORDER89_CLI_COMMAND_CLAUDE),
+            Triple("walkthrough.textarea", "walkthrough.pi-button", DEFAULT_WALKTHROUGH_CLI_COMMAND_PI),
+            Triple("walkthrough.textarea", "walkthrough.claude-button", DEFAULT_WALKTHROUGH_CLI_COMMAND_CLAUDE),
+        )
+        for ((areaId, buttonId, expected) in cases) {
+            val configurable = SettingsConfigurable()
+            val component = configurable.createComponent() as Container
+            val area = findById<JTextArea>(component, areaId)
+            area.text = "sentinel-$buttonId"
+
+            findById<JButton>(component, buttonId).doClick()
+
+            assertEquals("$buttonId must reset $areaId", expected, area.text)
+        }
+    }
+
+    private inline fun <reified T : javax.swing.JComponent> findById(root: Container, id: String): T {
+        val matches = walkComponents(root).filterIsInstance<T>()
+            .filter { it.getClientProperty(SETTINGS_COMPONENT_ID) == id }.toList()
+        assertEquals("Expected exactly one ${T::class.simpleName} with id=$id", 1, matches.size)
+        return matches.single()
+    }
+
+    private fun walkComponents(root: Container): Sequence<java.awt.Component> = sequence {
+        yield(root)
+        for (child in root.components) {
+            if (child is Container) yieldAll(walkComponents(child))
+            else yield(child)
+        }
     }
 }

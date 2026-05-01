@@ -224,6 +224,33 @@ class WalkthroughExecutorPromptTest : BaseCompletionTest() {
         )
     }
 
+    fun testPromptInstructsAgentThatStartColumnIsTheWedgeAnchor() {
+        // The inlay's wedge points at the start column of each <Step>'s range. The agent must
+        // know this so it picks a column that lands on the most informative token.
+        val result = WalkthroughExecutor.buildPrompt(makeRequest())
+        assertTrue(
+            "Prompt must mention the start column as the wedge anchor",
+            result.contains("start column"),
+        )
+        assertTrue(
+            "Prompt must reference the visual indicator (wedge or indicator)",
+            result.contains("wedge") || result.contains("indicator"),
+        )
+        // Anti-assertions: the prompt must NOT tell the agent to default to column 1 or the first
+        // column under any common phrasing.
+        val antiPatterns = listOf(
+            Regex("column 1\\b.*(always|by default|preferred)"),
+            Regex("(default|always|prefer)\\s+(?:to\\s+)?(?:column|col)\\s*1\\b"),
+            Regex("first\\s+column.*(always|by default|preferred|default)"),
+        )
+        for (pattern in antiPatterns) {
+            assertFalse(
+                "Prompt must not encourage column-1-always behavior; matched pattern: $pattern",
+                pattern.containsMatchIn(result),
+            )
+        }
+    }
+
     fun testPromptForbidsShallowNarration() {
         // Narration that just paraphrases the code is the visible symptom of the shallow-output
         // bug. Prompt must steer toward the *why*, not the *what*.

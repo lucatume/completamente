@@ -260,4 +260,39 @@ class WalkthroughParserTest : BaseCompletionTest() {
         val result = WalkthroughParser.parse(raw)
         assertTrue("Negative line value must fail: $result", result.isFailure)
     }
+
+    // -- narration blank-line trimming --
+
+    fun testParsePreservesInternalBlankLines() {
+        val raw = "<Walkthrough><Step file=\"x.kt\" range=\"1:1-1:2\"><Narration>first\n\nsecond</Narration></Step></Walkthrough>"
+        val result = WalkthroughParser.parse(raw)
+        assertTrue(result.isSuccess)
+        assertEquals("first\n\nsecond", result.getOrThrow()!!.root.narration)
+    }
+
+    fun testParseStripsBothEndsAndPreservesIndentation() {
+        // Indented body content pins the contract that trim drops only whole-blank lines —
+        // a future "simplification" to s.trim() would strip the leading two spaces and fail.
+        val raw = "<Walkthrough><Step file=\"x.kt\" range=\"1:1-1:2\"><Narration>\n\n  first\n\n  second\n\n</Narration></Step></Walkthrough>"
+        val result = WalkthroughParser.parse(raw)
+        assertTrue(result.isSuccess)
+        assertEquals("  first\n\n  second", result.getOrThrow()!!.root.narration)
+    }
+
+    fun testParseTreatsWhitespaceOnlyLinesAsBlankAtEnds() {
+        // Tabs / spaces alone on a line count as blank for trim per Kotlin's String.isBlank().
+        val raw = "<Walkthrough><Step file=\"x.kt\" range=\"1:1-1:2\"><Narration>\n\t\n   \nactual\n  \t  \n</Narration></Step></Walkthrough>"
+        val result = WalkthroughParser.parse(raw)
+        assertTrue(result.isSuccess)
+        assertEquals("actual", result.getOrThrow()!!.root.narration)
+    }
+
+    fun testParseHandlesCarriageReturnLineEndings() {
+        // String.lines() splits on \r\n / \n / \r. Guard against a future refactor that switches
+        // to split("\n") and silently corrupts CRLF narration.
+        val raw = "<Walkthrough><Step file=\"x.kt\" range=\"1:1-1:2\"><Narration>\r\n\r\nfirst\r\n\r\n</Narration></Step></Walkthrough>"
+        val result = WalkthroughParser.parse(raw)
+        assertTrue(result.isSuccess)
+        assertEquals("first", result.getOrThrow()!!.root.narration)
+    }
 }
