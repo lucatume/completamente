@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-05-02
+
+### Added
+- Walkthrough: a new code-explanation flow. Select code, invoke the action, type a
+  prompt — a user-configured agentic CLI generates a sequence of narration steps over
+  the selection. Each step renders as an inline block-element inlay with a bordered
+  wedge anchored at the first non-whitespace character of the target range; the wedge X
+  recomputes live as the editor reflows. Markdown and HTML narration render as rich
+  text and scroll to top on first show, the narration block hides while the IDE app is
+  backgrounded, and step-tree navigation lets you walk forward and back through the
+  generated steps. Up to 5 walkthroughs are cached per project with a recall action to
+  revisit prior runs without re-invoking the agent.
+
 ### Changed
 - Order 89 now shells out to a user-configured agentic CLI instead of calling a local
   llama.cpp `/completion` endpoint. The plugin writes the prompt + selection to a temp
@@ -53,6 +66,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Empty or truncated CLI output is surfaced as an error notification instead of silently
   replacing the selection with nothing. Output streams are bounded at 8 MB to avoid OOM
   on runaway agents.
+- Order 89 preserves trailing newlines from the original selection in the replacement
+  text, so a multi-line selection ending with a newline doesn't lose it on splice.
 
 ## [0.0.4] - 2026-03-20
 
